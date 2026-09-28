@@ -5,6 +5,41 @@
     #adm-patient-results .hpno{color:#0072BC;font-weight:700}
     #adm-patient-results .empty{padding:10px 12px;color:#64748B;cursor:default}
     #adm-patient-results .empty:hover{background:#fff;color:#64748B}
+
+    /* ---- Discharge screen: billing summary + clinical summary ---- */
+    #discharge-modal .modal-content{max-width:880px !important}
+    #adm-bill-card{border:1px solid #DCE4EC;border-radius:6px;overflow:hidden;margin-bottom:16px}
+    #adm-bill-head{background:#0b5fa5;color:#fff;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:.4px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+    #adm-bill-head button{background:#fff;color:#0b5fa5;border:none;border-radius:3px;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:.3px;padding:5px 10px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+    #adm-bill-head button:hover{background:#E7F3FC}
+    #adm-bill-body{background:#fff}
+    #adm-bill-scroll{max-height:190px;overflow-y:auto}
+    #adm-bill-table{width:100%;border-collapse:collapse;font-size:11px}
+    #adm-bill-table th{background:#E6EEF5;color:#222;font-size:10px;text-transform:uppercase;letter-spacing:.3px;text-align:left;padding:6px 8px;border-bottom:2px solid #b2c8de;position:sticky;top:0}
+    #adm-bill-table td{padding:6px 8px;border-bottom:1px solid #E1E8F0}
+    #adm-bill-table .num{text-align:right;white-space:nowrap}
+    #adm-bill-table .ctr{text-align:center}
+    #adm-bill-table .empty{text-align:center;padding:14px;color:#8A94A6}
+    #adm-bill-foot{background:#F8FAFC;border-top:1px solid #E1E8F0;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px;color:#64748B}
+    #adm-bill-foot .due{color:#C0392B;font-weight:800;font-size:12.5px}
+    #adm-bill-foot .clear{color:#1E7A34;font-weight:800}
+    #adm-outcome-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    #adm-outcome-grid .full{grid-column:span 2}
+    #adm-outcome-grid label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#64748B;margin-bottom:5px}
+    #adm-outcome-grid select,#adm-outcome-grid input,#adm-outcome-grid textarea{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;font-family:inherit;background:#fff;color:#222;box-sizing:border-box}
+    #adm-outcome-grid textarea{resize:vertical}
+    #adm-outcome-grid select:focus,#adm-outcome-grid input:focus,#adm-outcome-grid textarea:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
+    #adm-outcome-grid .req{color:#e74c3c}
+    #adm-pending-warning{background:#FEF5E0;border:1px solid #F0AD4E;border-left:4px solid #f0ad4e;color:#8A5A00;border-radius:4px;padding:10px 12px;font-size:12px;margin-bottom:14px;display:none;align-items:flex-start;gap:9px}
+    #adm-pending-warning.show{display:flex}
+    #adm-pending-warning svg{width:16px;height:16px;fill:none;stroke:#B9770E;stroke-width:2;flex-shrink:0;margin-top:1px}
+    #adm-charge-modal .modal-content{max-width:520px !important}
+    #adm-charge-total{display:flex;justify-content:space-between;align-items:center;background:#F1F5F9;border:1px solid #C9D4E0;border-radius:4px;padding:10px 12px;font-size:12px}
+    #adm-charge-total b{color:#1E7A34;font-size:15px}
+    @media (max-width:640px){
+        #adm-outcome-grid{grid-template-columns:1fr}
+        #adm-outcome-grid .full{grid-column:span 1}
+    }
 </style>
 
 <div class="card">
@@ -47,11 +82,12 @@
                         <th>Type</th>
                         <th>Doctor</th>
                         <th>Status</th>
+                        <th>Discharge Summary</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="admissions-table">
-                    <tr><td colspan="10" style="text-align:center;">Loading...</td></tr>
+                    <tr><td colspan="11" style="text-align:center;">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -135,7 +171,7 @@
     </div>
 </div>
 
-<!-- Discharge Modal -->
+<!-- Discharge Modal: billing summary + clinical discharge summary -->
 <div class="modal" id="discharge-modal">
     <div class="modal-content" style="max-width:480px;">
         <div class="modal-header">
@@ -144,14 +180,116 @@
         </div>
         <div class="modal-body">
             <div id="discharge-summary" style="background:#F0F4F8;border:1px solid #DCE4EC;border-radius:6px;padding:12px;margin-bottom:16px;font-size:13px;"></div>
-            <div class="form-group">
-                <label for="discharge-notes">Discharge Notes</label>
-                <textarea id="discharge-notes" placeholder="Summary of discharge status / instructions (optional)"></textarea>
+
+            <!-- Outstanding-billing warning (shown only when a real balance is due) -->
+            <div id="adm-pending-warning">
+                <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span id="adm-pending-warning-text"></span>
+            </div>
+
+            <!-- BILLING SUMMARY (live invoices + line items) -->
+            <div id="adm-bill-card">
+                <div id="adm-bill-head">
+                    <span><i class="fa-solid fa-receipt"></i> Billing Summary</span>
+                    <span style="display:flex;gap:8px;align-items:center;">
+                        <span style="color:#D1E5F7;font-size:10px;" id="adm-bill-count"></span>
+                        <button type="button" id="adm-open-charge"><i class="fa-solid fa-plus"></i> Add Billing Item</button>
+                    </span>
+                </div>
+                <div id="adm-bill-body">
+                    <div id="adm-bill-scroll">
+                        <div class="empty" style="padding:14px;text-align:center;color:#8A94A6;font-size:12px;">Loading billing summary...</div>
+                    </div>
+                </div>
+                <div id="adm-bill-foot">
+                    <span>Auto-generated from the patient's invoices &amp; billing items</span>
+                    <span>Fee To Be Paid: <span id="adm-bill-due" class="due">GHS 0.00</span></span>
+                </div>
+            </div>
+
+            <!-- CLINICAL DISCHARGE SUMMARY -->
+            <div id="adm-outcome-grid">
+                <div>
+                    <label for="discharge-outcome">Discharge Outcome <span class="req">*</span></label>
+                    <select id="discharge-outcome" required>
+                        <option value="">-- Select Outcome --</option>
+                        <option value="Improved">Improved</option>
+                        <option value="Unchanged">Unchanged</option>
+                        <option value="Referred">Referred</option>
+                        <option value="Transferred Out">Transferred Out</option>
+                        <option value="Discharged on Medical Advice">Discharged on Medical Advice</option>
+                        <option value="Absconded">Absconded</option>
+                        <option value="Died">Died</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="discharge-followup">Follow-up Date</label>
+                    <input type="date" id="discharge-followup">
+                </div>
+                <div class="full">
+                    <label for="discharge-final-dx">Final Diagnosis <span class="req">*</span></label>
+                    <input type="text" id="discharge-final-dx" maxlength="255" placeholder="Confirmed diagnosis at discharge">
+                </div>
+                <div class="full">
+                    <label for="discharge-notes">Discharge Notes</label>
+                    <textarea id="discharge-notes" rows="2" placeholder="Summary of discharge status / instructions (optional)"></textarea>
+                </div>
             </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" id="cancel-discharge">Cancel</button>
             <button class="btn btn-danger" id="confirm-discharge"><i class="fa-solid fa-check"></i> Confirm Discharge</button>
+        </div>
+    </div>
+</div>
+
+<!-- ADD BILLING CHARGE MODAL -->
+<div class="modal" id="adm-charge-modal">
+    <div class="modal-content" style="max-width:520px;">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-cart-plus"></i> Add Patient Billing Charge</h3>
+            <button class="modal-close" id="close-adm-charge">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="adm-charge-invoice">Add To Invoice <span class="req" style="color:#e74c3c">*</span></label>
+                <select id="adm-charge-invoice">
+                    <option value="">-- Select an open invoice --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="adm-charge-category">Billing Category <span class="req" style="color:#e74c3c">*</span></label>
+                <select id="adm-charge-category">
+                    <option value="">-- Select Item / Category --</option>
+                    <option value="other|dressing">Gauze / Dressing Material</option>
+                    <option value="other|maintenance">Maintenance Fee</option>
+                    <option value="other|consumables">Medical Consumables (Syringes, Gloves, IV sets)</option>
+                    <option value="bed|accommodation">Accommodation / Bed Charge</option>
+                    <option value="other|other">Other Custom Charge</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="adm-charge-desc">Description / Details <span class="req" style="color:#e74c3c">*</span></label>
+                <input type="text" id="adm-charge-desc" maxlength="255" placeholder="e.g. Sterile Gauze Pack (X-large) or Ward Stay Day 3">
+            </div>
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group">
+                    <label for="adm-charge-qty">Quantity</label>
+                    <input type="number" id="adm-charge-qty" min="1" step="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="adm-charge-price">Unit Price (GHS)</label>
+                    <input type="number" id="adm-charge-price" min="0" step="0.01" placeholder="0.00">
+                </div>
+            </div>
+            <div id="adm-charge-total">
+                <span class="fw-bold" style="color:#475569;">Total Line Amount:</span>
+                <b id="adm-charge-total-value">GHS 0.00</b>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancel-adm-charge">Cancel</button>
+            <button class="btn btn-primary" id="save-adm-charge"><i class="fa-solid fa-check"></i> Add to Invoice</button>
         </div>
     </div>
 </div>
@@ -232,9 +370,22 @@ function renderAdmissions(tbody) {
             <td><span class="badge badge-secondary">${escHtml(a.admission_type || 'Routine')}</span></td>
             <td>${escHtml(a.admitting_doctor || '-')}</td>
             <td><span class="badge ${badge}">${escHtml(a.status)}</span></td>
+            <td>${dischargedMeta(a)}</td>
             <td>${dischargeBtn}</td>
         </tr>`;
     }).join('');
+}
+
+// Discharge summary cell: outcome, final diagnosis and follow-up date are
+// stored on the admission, so they show here for already-discharged patients.
+function dischargedMeta(a) {
+    if (a.status !== 'Discharged') return '<span style="color:#95A5A6;">—</span>';
+    const parts = [];
+    if (a.discharge_outcome) parts.push('<span class="badge badge-info">' + escHtml(a.discharge_outcome) + '</span>');
+    if (a.final_diagnosis) parts.push('<div style="font-size:11px;margin-top:3px;">' + escHtml(a.final_diagnosis) + '</div>');
+    if (a.follow_up_date) parts.push('<div style="font-size:10.5px;color:#64748B;margin-top:2px;">Follow-up: ' + escHtml(a.follow_up_date) + '</div>');
+    if (a.discharged_at) parts.push('<div style="font-size:10.5px;color:#64748B;">' + fmtDateTime(a.discharged_at) + '</div>');
+    return parts.length ? parts.join(' ') : '<span style="color:#95A5A6;">—</span>';
 }
 
 function setupAdmissionListeners() {
@@ -248,6 +399,29 @@ function setupAdmissionListeners() {
     document.getElementById('close-discharge-modal').addEventListener('click', closeDischargeModal);
     document.getElementById('cancel-discharge').addEventListener('click', closeDischargeModal);
     document.getElementById('confirm-discharge').addEventListener('click', submitDischarge);
+
+    // Billing charge dialog (opened from the discharge billing summary)
+    document.getElementById('adm-open-charge').addEventListener('click', openChargeModal);
+    document.getElementById('close-adm-charge').addEventListener('click', closeChargeModal);
+    document.getElementById('cancel-adm-charge').addEventListener('click', closeChargeModal);
+    document.getElementById('save-adm-charge').addEventListener('click', saveCharge);
+    document.getElementById('adm-charge-qty').addEventListener('input', updateChargeTotal);
+    document.getElementById('adm-charge-price').addEventListener('input', updateChargeTotal);
+    document.getElementById('adm-charge-category').addEventListener('change', function() {
+        // Prefill a sensible description from the chosen category.
+        const map = {
+            'other|dressing': 'Dressing Material / Gauze',
+            'other|maintenance': 'Maintenance Fee',
+            'other|consumables': 'Medical Consumables',
+            'bed|accommodation': 'Accommodation / Bed Charge',
+            'other|other': 'Custom Charge'
+        };
+        const desc = document.getElementById('adm-charge-desc');
+        if (desc && !desc.value.trim()) {
+            const label = map[this.value];
+            if (label) desc.value = label;
+        }
+    });
 
     document.getElementById('filter-adm-ward').addEventListener('change', loadAdmissions);
     document.getElementById('filter-adm-status').addEventListener('change', loadAdmissions);
@@ -415,23 +589,218 @@ function openDischargeModal(id) {
          <div><strong style="color:#0072BC;">WARD / BED:</strong> ${escHtml(admission.ward_name || '-')} · ${escHtml(admission.bed_number || '-')}</div>
          <div><strong style="color:#0072BC;">ADMITTED:</strong> ${fmtDateTime(admission.admission_date)} · ${escHtml(admission.admission_type || '')}</div>`;
     document.getElementById('discharge-notes').value = '';
+    document.getElementById('discharge-outcome').value = '';
+    document.getElementById('discharge-final-dx').value = '';
+    document.getElementById('discharge-followup').value = '';
+    document.getElementById('adm-pending-warning').classList.remove('show');
     document.getElementById('discharge-modal').classList.add('show');
+    loadAdmissionBilling();
 }
 
 function closeDischargeModal() {
     document.getElementById('discharge-modal').classList.remove('show');
+    document.getElementById('adm-charge-modal').classList.remove('show');
     dischargeTarget = null;
+}
+
+/* ============ DISCHARGE : BILLING SUMMARY (live invoice data) ============ */
+let admBilling = { invoices: [], items: [], outstanding: 0 };
+
+async function loadAdmissionBilling() {
+    if (!dischargeTarget) return;
+    const scroll = document.getElementById('adm-bill-scroll');
+    scroll.innerHTML = '<div class="empty">Loading billing summary...</div>';
+    try {
+        const res = await fetch(
+            '/hms/backend/api/invoices.php?action=patient_billing&patient_id=' + dischargeTarget.patient_id
+            + (dischargeTarget.visit_id ? '&visit_id=' + dischargeTarget.visit_id : '')
+        );
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Could not load billing');
+
+        admBilling = { invoices: data.invoices || [], items: data.items || [], outstanding: data.outstanding || 0 };
+        renderAdmissionBilling();
+    } catch (error) {
+        scroll.innerHTML = '<div class="empty">Could not load the billing summary — ' + escHtml(error.message) + '</div>';
+        document.getElementById('adm-bill-due').textContent = 'GHS 0.00';
+        document.getElementById('adm-bill-due').className = 'clear';
+        document.getElementById('adm-bill-count').textContent = '';
+    }
+}
+
+function renderAdmissionBilling() {
+    const scroll = document.getElementById('adm-bill-scroll');
+    const inv = admBilling.invoices;
+    const items = admBilling.items;
+
+    // Only unsettled invoices can take another charge.
+    const openInvoices = inv.filter(i => i.status === 'pending' || i.status === 'partial' || i.status === 'draft');
+    document.getElementById('adm-bill-count').textContent =
+        inv.length ? (inv.length + (inv.length === 1 ? ' invoice' : ' invoices')) : '';
+
+    if (!inv.length) {
+        scroll.innerHTML = '<div class="empty">No invoice has been raised for this patient yet.</div>';
+    } else {
+        const statusLabel = { draft: 'Draft', pending: 'Pending', partial: 'Partial', paid: 'Paid', cancelled: 'Cancelled' };
+        let html = '<table id="adm-bill-table"><thead><tr>'
+            + '<th>Item</th><th>Description</th><th class="ctr">Qty</th><th class="num">Unit (GHS)</th><th class="num">Total (GHS)</th>'
+            + '</tr></thead><tbody>';
+        let any = false;
+        inv.forEach(invoice => {
+            const mine = items.filter(it => String(it.invoice_id) === String(invoice.id));
+            if (!mine.length) {
+                html += '<tr><td>' + escHtml(invoice.invoice_number) + '</td><td colspan="4" class="empty" style="padding:8px;">'
+                    + 'No line items on this invoice &middot; <strong>' + escHtml(statusLabel[invoice.status] || invoice.status) + '</strong></td></tr>';
+                any = true;
+                return;
+            }
+            mine.forEach(it => {
+                any = true;
+                html += '<tr>'
+                    + '<td>' + escHtml(invoice.invoice_number) + '</td>'
+                    + '<td>' + escHtml(it.description || it.item_type) + '</td>'
+                    + '<td class="ctr">' + Number(it.quantity || 1) + '</td>'
+                    + '<td class="num">' + admMoney(it.unit_price) + '</td>'
+                    + '<td class="num" style="font-weight:700;">' + admMoney(it.total_price) + '</td>'
+                    + '</tr>';
+            });
+        });
+        html += '</tbody></table>';
+        scroll.innerHTML = any ? html : '<div class="empty">No billing items recorded.</div>';
+    }
+
+    // Fee to be paid = real outstanding balance across the open invoices.
+    const dueEl = document.getElementById('adm-bill-due');
+    const outstanding = Number(admBilling.outstanding) || 0;
+    dueEl.textContent = admMoney(outstanding);
+    dueEl.className = outstanding > 0 ? 'due' : 'clear';
+
+    // Warn staff only when there is a genuine balance outstanding.
+    const warn = document.getElementById('adm-pending-warning');
+    if (outstanding > 0) {
+        document.getElementById('adm-pending-warning-text').innerHTML =
+            'This patient has an outstanding balance of <strong>' + admMoney(outstanding)
+            + '</strong> on ' + (openInvoices.length === 1 ? '1 open invoice' : openInvoices.length + ' open invoices')
+            + '. You can still discharge, but the balance stays on the account.';
+        warn.classList.add('show');
+    } else {
+        warn.classList.remove('show');
+    }
+
+    // Keep the "add charge" invoice picker in step with the billing summary.
+    const pick = document.getElementById('adm-charge-invoice');
+    const keep = pick.value;
+    pick.innerHTML = openInvoices.length
+        ? openInvoices.map(i => '<option value="' + i.id + '">' + escHtml(i.invoice_number) + ' — ' + admMoney(i.net_amount) + ' (' + escHtml(statusLabel[i.status] || i.status) + ')</option>').join('')
+        : '<option value="">-- No open invoice to add to --</option>';
+    if (keep && openInvoices.some(i => String(i.id) === String(keep))) pick.value = keep;
+    document.getElementById('adm-open-charge').disabled = !openInvoices.length;
+    document.getElementById('adm-open-charge').style.opacity = openInvoices.length ? '1' : '.5';
+    document.getElementById('adm-open-charge').style.cursor = openInvoices.length ? 'pointer' : 'not-allowed';
+}
+
+function admMoney(v) {
+    const n = Number(v) || 0;
+    return 'GHS ' + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/* ============ ADD BILLING CHARGE ============ */
+function updateChargeTotal() {
+    const qty = Math.max(parseInt(document.getElementById('adm-charge-qty').value, 10) || 0, 0);
+    const price = parseFloat(document.getElementById('adm-charge-price').value) || 0;
+    document.getElementById('adm-charge-total-value').textContent = admMoney(qty * price);
+}
+
+function openChargeModal() {
+    if (!dischargeTarget) return;
+    const openInvoices = admBilling.invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled');
+    if (!openInvoices.length) {
+        showAlert('This patient has no open invoice — raise an invoice before adding charges.', 'error');
+        return;
+    }
+    document.getElementById('adm-charge-category').value = '';
+    document.getElementById('adm-charge-desc').value = '';
+    document.getElementById('adm-charge-qty').value = '1';
+    document.getElementById('adm-charge-price').value = '';
+    updateChargeTotal();
+    document.getElementById('adm-charge-modal').classList.add('show');
+}
+
+function closeChargeModal() {
+    document.getElementById('adm-charge-modal').classList.remove('show');
+}
+
+async function saveCharge() {
+    if (!dischargeTarget) return;
+    const invoiceId = document.getElementById('adm-charge-invoice').value;
+    const category = document.getElementById('adm-charge-category').value;
+    const description = document.getElementById('adm-charge-desc').value.trim();
+    const quantity = Math.max(parseInt(document.getElementById('adm-charge-qty').value, 10) || 0, 1);
+    const unitPrice = parseFloat(document.getElementById('adm-charge-price').value) || 0;
+
+    if (!invoiceId) { showAlert('Select the invoice to add this charge to.', 'error'); return; }
+    if (!category) { showAlert('Select a billing category.', 'error'); return; }
+    if (!description) { showAlert('Enter a description for the charge.', 'error'); return; }
+    if (!(unitPrice > 0)) { showAlert('Enter a unit price greater than zero.', 'error'); return; }
+
+    const parts = category.split('|');
+    const saveBtn = document.getElementById('save-adm-charge');
+    saveBtn.disabled = true;
+    try {
+        const res = await fetch('/hms/backend/api/invoices.php?action=add_item&invoice_id=' + invoiceId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                item_type: parts[0],
+                description: description,
+                quantity: quantity,
+                unit_price: unitPrice
+            })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Could not add the charge');
+
+        closeChargeModal();
+        showAlert('Charge added — invoice total is now ' + admMoney(data.net_amount), 'success');
+        await loadAdmissionBilling();
+    } catch (error) {
+        showAlert(error.message, 'error');
+    } finally {
+        saveBtn.disabled = false;
+    }
 }
 
 async function submitDischarge() {
     if (!dischargeTarget) return;
+
+    const outcome = document.getElementById('discharge-outcome').value;
+    const finalDx = document.getElementById('discharge-final-dx').value.trim();
+    const followUp = document.getElementById('discharge-followup').value;
+
+    if (!outcome) { showAlert('Select the discharge outcome.', 'error'); return; }
+    if (!finalDx) { showAlert('Enter the final diagnosis.', 'error'); return; }
+
+    // Last confirmation when a real balance is still outstanding.
+    if (Number(admBilling.outstanding) > 0) {
+        const proceed = window.confirm(
+            'This patient still has ' + admMoney(admBilling.outstanding) + ' outstanding. '
+            + 'Discharge anyway? The balance remains on the account.'
+        );
+        if (!proceed) return;
+    }
+
     const confirmBtn = document.getElementById('confirm-discharge');
     confirmBtn.disabled = true;
     try {
         const response = await fetch('/hms/backend/api/admissions.php?action=discharge&id=' + dischargeTarget.id, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ discharge_notes: document.getElementById('discharge-notes').value })
+            body: JSON.stringify({
+                discharge_notes: document.getElementById('discharge-notes').value,
+                discharge_outcome: outcome,
+                final_diagnosis: finalDx,
+                follow_up_date: followUp
+            })
         });
         const data = await response.json();
         if (!data.success) throw new Error(data.error || 'Discharge failed');

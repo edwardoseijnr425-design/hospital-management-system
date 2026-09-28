@@ -3,7 +3,8 @@
 //   GET                          ?status=ALL|Admitted|Discharged&ward_id=N&q=text  -> admissions list
 //   GET  ?action=available_beds&ward_id=N                                          -> available beds for a ward
 //   POST ?action=admit                                                             -> admit a patient (creates admission + occupies the bed)
-//   POST ?action=discharge&id=N                                                    -> discharge (releases the bed + closes the record)
+//   POST ?action=discharge&id=N                                                    -> discharge (outcome + final diagnosis,
+//                                                                                    optional follow-up date, releases the bed)
 require_once __DIR__ . '/../config/config.php';
 
 header('Content-Type: application/json');
@@ -187,11 +188,37 @@ function dischargePatient() {
         jsonResponse(['error' => 'Admission already discharged'], 400);
     }
 
+    // Clinical discharge summary. The outcome and final diagnosis are recorded
+    // on the admission itself; the follow-up date is optional.
+    $outcome = trim($data['discharge_outcome'] ?? '');
+    $finalDx = trim($data['final_diagnosis'] ?? '');
+    $followUp = trim($data['follow_up_date'] ?? '');
+
+    $allowedOutcomes = [
+        'Improved', 'Unchanged', 'Referred', 'Absconded',
+        'Transferred Out', 'Died', 'Discharged on Medical Advice',
+    ];
+    if ($outcome === '' || !in_array($outcome, $allowedOutcomes, true)) {
+        jsonResponse(['error' => 'Select a valid discharge outcome'], 400);
+    }
+    if ($finalDx === '') {
+        jsonResponse(['error' => 'Final diagnosis is required'], 400);
+    }
+    if (strlen($finalDx) > 255) {
+        jsonResponse(['error' => 'Final diagnosis is too long (max 255 characters)'], 400);
+    }
+    if ($followUp !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $followUp)) {
+        jsonResponse(['error' => 'Follow-up date is not valid'], 400);
+    }
+
     try {
         $db->update('admissions', [
-            'status'         => 'Discharged',
-            'discharged_at'  => date('Y-m-d H:i:s'),
-            'discharge_notes' => trim($data['discharge_notes'] ?? ''),
+            'status'            => 'Discharged',
+            'discharged_at'     => date('Y-m-d H:i:s'),
+            'discharge_notes'   => trim($data['discharge_notes'] ?? ''),
+            'discharge_outcome' => $outcome,
+            'final_diagnosis'   => $finalDx,
+            'follow_up_date'    => $followUp !== '' ? $followUp : null,
         ], 'id = ?', [$id]);
 
         // Release the bed so it can be used again
@@ -200,7 +227,12 @@ function dischargePatient() {
                 'id = ?', [(int)$admission['bed_id']]);
         }
 
-        logAudit('UPDATE', 'admissions', $id, $admission, ['status' => 'Discharged']);
+        logAudit('UPDATE', 'admissions', $id, $admission, [
+            'status'            => 'Discharged',
+            'discharge_outcome' => $outcome,
+            'final_diagnosis'   => $finalDx,
+            'follow_up_date'    => $followUp !== '' ? $followUp : null,
+        ]);
         jsonResponse(['success' => true, 'message' => 'Patient discharged successfully']);
     } catch (Exception $e) {
         error_log("Discharge error: " . $e->getMessage());

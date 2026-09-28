@@ -3,7 +3,9 @@
 //   GET  ?action=list                       -> invoices (filters: status, q)
 //   GET  ?action=detail&id=N                -> invoice + line items
 //   GET  ?action=stats                      -> totals / pending / paid / outstanding
+//   GET  ?action=patient_billing&patient_id=N&visit_id=N -> billing summary for the discharge screen
 //   POST ?action=create                     -> create invoice + items
+//   POST ?action=add_item&invoice_id=N      -> add a single charge line to an open invoice
 //   PUT  ?action=status&id=N                -> update invoice status
 require_once __DIR__ . '/../config/config.php';
 
@@ -22,10 +24,14 @@ if ($method === 'GET' && $action === 'detail') {
     listTransactions();
 } elseif ($method === 'GET' && $action === 'areas') {
     revenueAreas();
+} elseif ($method === 'GET' && $action === 'patient_billing') {
+    patientBilling();
 } elseif ($method === 'GET') {
     listInvoices();
 } elseif ($method === 'POST' && $action === 'create') {
     createInvoice();
+} elseif ($method === 'POST' && $action === 'add_item') {
+    addInvoiceItem();
 } elseif ($method === 'PUT' && $action === 'status') {
     updateInvoiceStatus();
 } else {
@@ -197,6 +203,144 @@ function updateInvoiceStatus() {
         jsonResponse(['success' => true]);
     } catch (Exception $e) {
         jsonResponse(['error' => 'Failed to update invoice'], 500);
+    }
+}
+
+// Billing summary shown on the discharge screen: the patient's open invoices
+// with their line items, plus the outstanding balance for this admission.
+function patientBilling() {
+    $patientId = (int)($_GET['patient_id'] ?? 0);
+    if (!$patientId) {
+        jsonResponse(['error' => 'Patient ID is required'], 400);
+    }
+    $visitId = !empty($_GET['visit_id']) ? (int)$_GET['visit_id'] : null;
+
+    $db = Database::getInstance();
+
+    // Prefer the invoices raised against this admission's visit; fall back to
+    // every open invoice for the patient so nothing is hidden from staff.
+    $sql = "SELECT i.id, i.invoice_number, i.visit_id, i.total_amount, i.discount_amount,
+                   i.tax_amount, i.net_amount, i.status, i.created_at
+            FROM invoices i
+            WHERE i.patient_id = ? AND i.status <> 'cancelled'";
+    $params = [$patientId];
+    if ($visitId) {
+        $sql .= " AND (i.visit_id = ? OR i.visit_id IN (
+                    SELECT id FROM patient_visits WHERE patient_id = ? AND visit_date >=
+                    (SELECT MIN(visit_date) FROM patient_visits WHERE patient_id = ?)
+                 ))";
+        $params = [$patientId, $visitId, $patientId, $patientId];
+    }
+    $sql .= " ORDER BY i.created_at DESC";
+    $invoices = $db->fetchAll($sql, $params);
+
+    $items = [];
+    if ($invoices) {
+        $ids = array_column($invoices, 'id');
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        $items = $db->fetchAll("SELECT * FROM billing_items WHERE invoice_id IN ($in) ORDER BY id", $ids);
+    }
+
+    // Outstanding = invoices still awaiting payment (pending / partial).
+    $outstanding = 0.0;
+    foreach ($invoices as $inv) {
+        if ($inv['status'] === 'pending' || $inv['status'] === 'partial') {
+            $outstanding += (float)$inv['net_amount'];
+        }
+    }
+
+    jsonResponse([
+        'success'     => true,
+        'invoices'    => $invoices,
+        'items'       => $items,
+        'outstanding' => round($outstanding, 2),
+    ]);
+}
+
+// Add a single charge line to an open invoice and re-total it. Used by the
+// "Add Billing Item" dialog on the discharge screen.
+function addInvoiceItem() {
+    $data = getPostData();
+    $invoiceId = (int)($_GET['invoice_id'] ?? 0);
+    if (!$invoiceId) {
+        jsonResponse(['error' => 'Invoice ID is required'], 400);
+    }
+
+    $description = trim($data['description'] ?? '');
+    $qty = max((int)($data['quantity'] ?? 1), 1);
+    $price = round((float)($data['unit_price'] ?? 0), 2);
+
+    $allowedTypes = ['consultation', 'procedure', 'drug', 'lab_test', 'radiology', 'bed', 'other'];
+    $type = in_array($data['item_type'] ?? '', $allowedTypes, true) ? $data['item_type'] : 'other';
+
+    if ($description === '') {
+        jsonResponse(['error' => 'Description is required'], 400);
+    }
+    if (strlen($description) > 255) {
+        jsonResponse(['error' => 'Description is too long (max 255 characters)'], 400);
+    }
+    if ($price <= 0 || $price > 999999.99) {
+        jsonResponse(['error' => 'Enter a valid unit price'], 400);
+    }
+
+    $db = Database::getInstance();
+    $invoice = $db->fetchOne("SELECT * FROM invoices WHERE id = ?", [$invoiceId]);
+    if (!$invoice) {
+        jsonResponse(['error' => 'Invoice not found'], 404);
+    }
+    if ($invoice['status'] === 'cancelled') {
+        jsonResponse(['error' => 'Cannot add charges to a cancelled invoice'], 400);
+    }
+    if ($invoice['status'] === 'paid') {
+        jsonResponse(['error' => 'This invoice is already settled — reopen it before adding charges'], 400);
+    }
+
+    $lineTotal = round($qty * $price, 2);
+
+    try {
+        $db->beginTransaction();
+        $db->insert('billing_items', [
+            'invoice_id'  => $invoiceId,
+            'item_type'   => $type,
+            'item_id'     => 0,
+            'description' => $description,
+            'quantity'    => $qty,
+            'unit_price'  => $price,
+            'total_price' => $lineTotal,
+        ]);
+
+        // Re-total the invoice from its line items so the stored figures and
+        // the line items can never drift apart.
+        $sums = $db->fetchOne(
+            "SELECT COALESCE(SUM(total_price), 0) AS gross
+             FROM billing_items WHERE invoice_id = ?",
+            [$invoiceId]
+        );
+        $gross = (float)$sums['gross'];
+        $discount = (float)$invoice['discount_amount'];
+        $tax = (float)$invoice['tax_amount'];
+        $net = max($gross - $discount + $tax, 0);
+
+        $db->update('invoices', [
+            'total_amount' => $gross,
+            'net_amount'   => $net,
+        ], 'id = ?', [$invoiceId]);
+
+        $db->commit();
+        logAudit('UPDATE', 'invoices', $invoiceId, $invoice, [
+            'added_item'   => $description,
+            'net_amount'   => $net,
+        ]);
+        jsonResponse([
+            'success'   => true,
+            'invoice_id' => $invoiceId,
+            'net_amount' => $net,
+            'line_total' => $lineTotal,
+        ]);
+    } catch (Exception $e) {
+        $db->rollback();
+        error_log("Add billing item error: " . $e->getMessage());
+        jsonResponse(['error' => 'Failed to add the charge'], 500);
     }
 }
 

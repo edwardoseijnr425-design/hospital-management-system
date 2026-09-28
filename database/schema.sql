@@ -420,6 +420,9 @@ CREATE TABLE admissions (
     status ENUM('Admitted', 'Discharged') DEFAULT 'Admitted',
     discharged_at DATETIME DEFAULT NULL,
     discharge_notes TEXT,
+    discharge_outcome VARCHAR(100) DEFAULT NULL,
+    final_diagnosis VARCHAR(255) DEFAULT NULL,
+    follow_up_date DATE DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (patient_id) REFERENCES patient_registrations(id),
     FOREIGN KEY (ward_id) REFERENCES wards(id),
@@ -518,7 +521,27 @@ CREATE TABLE audit_trails (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- DHIMS monthly indicator overrides
+-- The monthly DHIMS indicators in reports.php are computed live from the
+-- clinical tables. This table stores an explicit, audited manual correction
+-- for a single indicator in a single reporting month, used when a figure has
+-- to be reported from an external source. The report always shows the computed
+-- value alongside any override, and the override can be cleared again.
+CREATE TABLE dhims_indicator_overrides (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    indicator_key VARCHAR(60) NOT NULL,
+    report_month DATE NOT NULL,
+    override_value DECIMAL(14, 2) NOT NULL,
+    reason VARCHAR(255) DEFAULT NULL,
+    updated_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (updated_by) REFERENCES users(id),
+    UNIQUE KEY uniq_indicator_month (indicator_key, report_month)
+);
+
 -- Create indexes for performance
+CREATE INDEX idx_dhims_overrides_month ON dhims_indicator_overrides(report_month);
 CREATE INDEX idx_patient_registrations_hospital_number ON patient_registrations(hospital_number);
 CREATE INDEX idx_patient_registrations_sponsor ON patient_registrations(sponsor_id);
 CREATE INDEX idx_patient_visits_patient ON patient_visits(patient_id);
