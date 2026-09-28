@@ -1,5 +1,5 @@
 <?php
-// Laboratory & Ward Dashboard (EHMS-style 3-column layout).
+// Laboratory Dashboard (EHMS-style 3-column layout).
 // Server-side prologue: resolve the logged-in staff name, role, and today's date
 // for the login-status card. The shell (dashboard.php) already authenticated.
 require_once __DIR__ . '/../../backend/config/config.php';
@@ -7,7 +7,7 @@ $__labStaff = getCurrentUserName() ?: 'STAFF';
 $__labRole  = getCurrentUserRole() ?: 'STAFF';
 ?>
 <style>
-/* ================= LAB & WARD DASHBOARD : CLASSIC EHMS 3-COLUMN LAYOUT =================
+/* ================= LAB DASHBOARD : CLASSIC EHMS 3-COLUMN LAYOUT =================
    Scoped under #lab-page. The shell (dashboard.php) has no Bootstrap dependency,
    so every utility below is defined locally. Font Awesome icons are available
    because the shell already loads frontend/assets/fontawesome/css/all.min.css. */
@@ -84,12 +84,12 @@ $__labRole  = getCurrentUserRole() ?: 'STAFF';
 }
 </style>
 
-<!-- LAB & WARD DASHBOARD -->
+<!-- LAB DASHBOARD -->
 <div id="lab-page">
 
   <!-- TOP BAR -->
   <div class="lab-topbar">
-    <div class="lab-topbar-title">EHMS LAB &amp; WARD DASHBOARD</div>
+    <div class="lab-topbar-title">EHMS LAB DASHBOARD</div>
     <div class="lab-topbar-right">
       <span>HMS - HEALTHCARE MANAGEMENT SYSTEM</span>
       <span class="lab-nav-btn" onclick="labGoHome()">HOME</span>
@@ -141,38 +141,6 @@ $__labRole  = getCurrentUserRole() ?: 'STAFF';
     <!-- ======================= CENTER CONTENT ======================= -->
     <div class="lab-content">
 
-      <!-- WARD DETAILS & DISCHARGE MANAGEMENT -->
-      <div class="lab-panel">
-        <div class="lab-panel-head">Ward Details &amp; Discharge Management</div>
-        <form class="lab-form-grid" id="dischargeForm">
-          <label for="dischPatient">Patient ID / Name</label>
-          <select id="dischPatient" required>
-            <option value="">-- Select Admitted Patient --</option>
-          </select>
-
-          <label for="dischBed">Ward &amp; Bed No.</label>
-          <input type="text" id="dischBed" placeholder="Ward / Bed auto-filled" readonly>
-
-          <label for="dischType">Discharge Type</label>
-          <select id="dischType">
-            <option value="Routine Discharge">Routine Discharge</option>
-            <option value="Discharge Against Medical Advice (DAMA)">Discharge Against Medical Advice (DAMA)</option>
-            <option value="Transferred to Another Facility">Transferred to Another Facility</option>
-            <option value="Deceased">Deceased</option>
-          </select>
-
-          <label for="dischDate">Discharge Date</label>
-          <input type="date" id="dischDate">
-
-          <label for="dischNotes">Discharge Notes / Summary</label>
-          <textarea id="dischNotes" placeholder="Enter diagnosis summary, treatment given, discharge medications, and follow-up plan..."></textarea>
-
-          <div class="lab-form-actions">
-            <button type="button" class="lab-btn-submit" id="processDischargeBtn" onclick="processDischarge()">Process Discharge</button>
-          </div>
-        </form>
-      </div>
-
       <!-- ENTRIES FORM -->
       <div class="lab-panel">
         <div class="lab-panel-head">Entries Form</div>
@@ -214,7 +182,7 @@ $__labRole  = getCurrentUserRole() ?: 'STAFF';
         </div>
       </div>
 
-      <div class="lab-footer">HMS - LAB &amp; WARD DASHBOARD &middot; live data from the hospital management system</div>
+      <div class="lab-footer">HMS - LAB DASHBOARD &middot; live data from the hospital management system</div>
     </div>
 
     <!-- ======================= RIGHT SIDEBAR ======================= -->
@@ -301,7 +269,6 @@ var CURRENT_LAB_STAFF = <?php echo json_encode($__labStaff); ?>;
 var labData = [];
 var labResultsMap = {};
 var visitsCache = [];
-var admittedCache = [];
 var DISPATCH_KEY = 'hms:lab-dispatched';
 var LAB_PRICES = { haematology: 'GHS 150.00', biochemistry: 'GHS 220.00', microbiology: 'GHS 180.00', parasitology: 'GHS 90.00' };
 var LAB_VIEW = 'requested';
@@ -309,8 +276,7 @@ var LAB_VIEW = 'requested';
 async function initLabManagement() {
     setupLabEvents();
     loadUnreadCount();
-    setDischargeDateToday();
-    await Promise.all([loadVisits(), loadAdmitted(), loadLabRequests()]);
+    await Promise.all([loadVisits(), loadLabRequests()]);
 }
 
 function setupLabEvents() {
@@ -320,8 +286,6 @@ function setupLabEvents() {
     if (closeRes) closeRes.addEventListener('click', closeResultModal);
     var entryForm2 = document.getElementById('labResultEntryForm');
     if (entryForm2) entryForm2.addEventListener('submit', handleEntrySubmit);
-    var dischPatient = document.getElementById('dischPatient');
-    if (dischPatient) dischPatient.addEventListener('change', onDischargePatientChange);
 }
 
 /* ================= TOP BAR / NAV ================= */
@@ -363,77 +327,6 @@ async function loadUnreadCount() {
             }
         }
     } catch (e) { console.error('Unread count error:', e); }
-}
-
-/* ================= WARD DISCHARGE ================= */
-async function loadAdmitted() {
-    try {
-        var r = await fetch('/hms/backend/api/admissions.php?action=list&status=ADMITTED');
-        var d = await r.json();
-        admittedCache = (d.success && d.admissions) ? d.admissions : [];
-    } catch (e) {
-        console.error('Admissions load error:', e);
-        admittedCache = [];
-    }
-    var sel = document.getElementById('dischPatient');
-    sel.innerHTML = '<option value="">-- Select Admitted Patient --</option>'
-        + admittedCache.map(function (a) {
-            return '<option value="' + a.id + '">' + escHtml(a.patient_name + ' (' + a.hospital_number + ')') + '</option>';
-        }).join('');
-}
-
-function onDischargePatientChange() {
-    var id = document.getElementById('dischPatient').value;
-    var a = admittedCache.find(function (x) { return String(x.id) === String(id); });
-    document.getElementById('dischBed').value = a ? (a.ward_name + ' / Bed ' + a.bed_number + (a.bed_type ? ' (' + a.bed_type + ')' : '')) : '';
-}
-
-function setDischargeDateToday() {
-    var el = document.getElementById('dischDate');
-    if (el) el.value = new Date().toISOString().slice(0, 10);
-}
-
-function resetDischargeForm() {
-    document.getElementById('dischPatient').value = '';
-    document.getElementById('dischBed').value = '';
-    document.getElementById('dischNotes').value = '';
-    document.getElementById('dischType').value = 'Routine Discharge';
-    setDischargeDateToday();
-}
-
-async function processDischarge() {
-    var admissionId = document.getElementById('dischPatient').value;
-    if (!admissionId) { showAlert('Select an admitted patient to discharge.', 'error'); return; }
-    var type = document.getElementById('dischType').value;
-    var notes = document.getElementById('dischNotes').value.trim();
-    var dateVal = document.getElementById('dischDate').value;
-    var fullNotes = 'Discharge type: ' + type + (notes ? ' | ' + notes : '');
-    if (!window.confirm('Discharge this patient and release their bed? This action updates the admission record.')) return;
-
-    var btn = document.getElementById('processDischargeBtn');
-    btn.disabled = true;
-    btn.textContent = 'Processing...';
-    try {
-        var r = await fetch('/hms/backend/api/admissions.php?action=discharge&id=' + admissionId, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ discharge_notes: fullNotes, discharged_at: dateVal ? dateVal + ' 00:00:00' : '' })
-        });
-        var d = await r.json();
-        if (d.success) {
-            showAlert(d.message || 'Patient discharged successfully.', 'success');
-            resetDischargeForm();
-            await loadAdmitted();
-        } else {
-            showAlert(d.error || 'Discharge failed', 'error');
-        }
-    } catch (e) {
-        console.error('Discharge error:', e);
-        showAlert('Network error. Please try again.', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Process Discharge';
-    }
 }
 
 /* ================= ENTRIES FORM (Lab Request) ================= */
