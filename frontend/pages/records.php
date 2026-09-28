@@ -441,14 +441,12 @@
         </div>
 
         <div class="form-actions">
-          <button type="button" class="btn-action btn-secondary" onclick="nvResetForm()">
-            <svg viewBox="0 0 24 24" fill="white"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
-            Reset
+          <button type="button" class="btn-action btn-secondary" onclick="nvCloseFullPage(event)">
+            <i class="fa fa-undo"></i> CANCEL
           </button>
 
           <button type="submit" class="btn-action btn-primary">
-            <svg viewBox="0 0 24 24" fill="white"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
-            Save Appointment
+            <i class="fa fa-calendar-check"></i> SAVE APPOINTMENT
           </button>
         </div>
 
