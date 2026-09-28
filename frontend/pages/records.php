@@ -429,7 +429,7 @@
         <div class="grid-2col">
 
           <div class="form-group grid-full">
-            <label for="nvPrice">Generated Consultation Fee (GHS) <span class="badge-auto">AUTO CALCULATED</span></label>
+            <label for="nvPrice" style="display:none;">Generated Consultation Fee (GHS) <span class="badge-auto">AUTO CALCULATED</span></label>
             <input type="text" id="nvPrice" class="form-control price-field" readonly required value="GH₵ 50.00">
           </div>
 
