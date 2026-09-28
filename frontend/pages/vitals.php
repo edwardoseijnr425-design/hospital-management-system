@@ -1,3 +1,10 @@
+<?php
+// Vital Signs / Ward Details view with the Clinical Patient Care & Treatment Sheet card.
+// Small server-side prologue: resolve the logged-in staff name for signatures and
+// the "Logging as" footer. The shell (dashboard.php) already authenticated the session.
+require_once __DIR__ . '/../../backend/config/config.php';
+$__clinicStaff = getCurrentUserName() ?: 'Staff';
+?>
 <style>
 /* ================= VITAL SIGNS / WARD DETAILS CARD UI : LOCAL BOOTSTRAP-STYLE UTILITIES =================
    Scoped under #vitals-page because the shell (dashboard.php) has no Bootstrap
@@ -17,8 +24,13 @@
 #vitals-page .mb-1{margin-bottom:.25rem !important}
 #vitals-page .mb-0{margin-bottom:0 !important}
 #vitals-page .me-1{margin-right:.25rem !important}
+#vitals-page .me-3{margin-right:1rem !important}
 #vitals-page .ms-1{margin-left:.25rem !important}
 #vitals-page .ms-2{margin-left:.5rem !important}
+#vitals-page .mt-2{margin-top:.5rem !important}
+#vitals-page .mt-3{margin-top:1rem !important}
+#vitals-page .mt-4{margin-top:1.5rem !important}
+#vitals-page .m-0{margin:0 !important}
 #vitals-page .py-2{padding-top:.5rem !important;padding-bottom:.5rem !important}
 #vitals-page .py-0{padding-top:0 !important;padding-bottom:0 !important}
 #vitals-page .pt-2{padding-top:.5rem !important}
@@ -43,27 +55,39 @@
 #vitals-page .align-items-end{align-items:flex-end}
 #vitals-page .align-items-center{align-items:center}
 #vitals-page .justify-content-between{justify-content:space-between}
+#vitals-page .justify-content-end{justify-content:flex-end}
+#vitals-page .justify-content-center{justify-content:center}
 #vitals-page .flex-wrap{flex-wrap:wrap}
 #vitals-page .gap-2{gap:.5rem}
+#vitals-page .gap-3{gap:1rem}
 #vitals-page .gap-4{gap:1.5rem}
 #vitals-page .gap-5{gap:3rem}
 #vitals-page .d-flex{display:flex}
+#vitals-page .d-block{display:block}
 #vitals-page .form-label{display:inline-block;margin-bottom:.5rem;font-family:inherit}
 #vitals-page .form-select{display:block;width:100%;padding:.375rem .75rem;font-size:12px;line-height:1.5;color:#334155;background-color:#fff;border:1px solid #CBD5E1;border-radius:4px}
 #vitals-page .form-select-sm{padding:.25rem .5rem;font-size:12px}
+#vitals-page .form-control{display:block;width:100%;padding:.375rem .6rem;font-size:12px;line-height:1.5;color:#334155;background-color:#fff;border:1px solid #CBD5E1;border-radius:4px;box-sizing:border-box;font-family:inherit}
+#vitals-page .form-control-sm{padding:.25rem .5rem;font-size:12px}
 #vitals-page .text-center{text-align:center}
 #vitals-page .text-uppercase{text-transform:uppercase}
 #vitals-page .font-weight-bold{font-weight:700}
+#vitals-page .fw-bold{font-weight:700}
 #vitals-page .text-dark{color:#0F172A !important}
 #vitals-page .text-muted{color:#64748B !important}
 #vitals-page .text-secondary{color:#64748B !important}
 #vitals-page .text-white{color:#fff !important}
 #vitals-page .text-primary{color:#0072BC !important}
 #vitals-page .text-success{color:#198754 !important}
+#vitals-page .text-danger{color:#DC2626 !important}
+#vitals-page .text-info{color:#0EA5E9 !important}
 #vitals-page .fs-5{font-size:1.25rem !important}
 #vitals-page .bg-white{background-color:#fff !important}
 #vitals-page .bg-dark{background-color:#1E293B !important}
 #vitals-page .bg-secondary{background-color:#64748B !important}
+#vitals-page .bg-primary{background-color:#0072BC !important}
+#vitals-page .bg-success{background-color:#198754 !important}
+#vitals-page .bg-danger{background-color:#DC2626 !important}
 #vitals-page .bg-warning{background-color:#F59E0B !important}
 #vitals-page .bg-info{background-color:#0EA5E9 !important}
 #vitals-page .bg-success-subtle{background-color:#D1E7DD !important}
@@ -71,6 +95,7 @@
 #vitals-page .border{border:1px solid #E2E8F0 !important}
 #vitals-page .border-top{border-top:1px solid #E2E8F0 !important}
 #vitals-page .border-bottom{border-bottom:1px solid #E2E8F0 !important}
+#vitals-page .border-info{border-color:#0EA5E9 !important}
 #vitals-page .border-secondary-subtle{border-color:#E2E8F0 !important}
 #vitals-page .border-success{border-color:#198754 !important}
 #vitals-page .border-primary{border-color:#0072BC !important}
@@ -80,16 +105,23 @@
 #vitals-page .table-bordered{border:1px solid #E2E8F0}
 #vitals-page .table-bordered > thead > tr > th{border:1px solid #E2E8F0;padding:8px 10px;vertical-align:middle}
 #vitals-page .table-bordered > tbody > tr > td{border:1px solid #E2E8F0;padding:8px 10px;vertical-align:middle}
+#vitals-page .table-striped > tbody > tr:nth-of-type(odd){background-color:rgba(15,45,89,.03)}
 #vitals-page .table-responsive{overflow-x:auto}
 #vitals-page .align-middle{vertical-align:middle}
 #vitals-page .btn-light{background-color:#fff;color:#334155;border:1px solid #E2E8F0}
+#vitals-page .btn-success{background-color:#198754;border:1px solid #198754;color:#fff}
+#vitals-page .btn-success:hover{background-color:#157347;border-color:#157347;color:#fff}
 #vitals-page .btn-outline-primary{background-color:#fff;color:#0072BC;border:1px solid #0072BC}
 #vitals-page .btn-outline-primary:hover{background-color:#0072BC;color:#fff}
+#vitals-page .btn-outline-info{background-color:#fff;color:#0EA5E9;border:1px solid #0EA5E9}
+#vitals-page .btn-outline-info:hover{background-color:#0EA5E9;color:#fff}
+#vitals-page .btn-outline-secondary{background-color:#fff;color:#475569;border:1px solid #CBD5E1}
+#vitals-page .btn-outline-secondary:hover{background-color:#E2E8F0;color:#0F172A}
 </style>
 
 <div class="container-fluid p-3" id="vitals-page" style="background-color: #F8FAFC; min-height: 100vh;">
 
-  <!-- TOP FILTER HEADER PANEL (NO DEPARTMENT, NO PATIENT SELECTOR, NO LOCK BUTTON) -->
+  <!-- TOP FILTER HEADER PANEL -->
   <div class="card border-0 shadow-sm p-3 mb-4" style="border-radius: 8px; background: #FFFFFF;">
     <div class="row g-3 align-items-end">
 
@@ -129,7 +161,7 @@
     </div>
   </div>
 
-  <!-- PATIENT VITAL SIGNS CARDS (populated by JS — one card per patient, matches the Image 1 structure) -->
+  <!-- PATIENT CLINICAL CARE & TREATMENT SHEET CARDS (populated by JS — one per patient) -->
   <div id="wardCardsContainer">
     <div class="card border-0 shadow-sm mb-4" style="border-radius: 8px; border: 1px solid #E2E8F0 !important;">
       <div class="card-body p-4 text-center" style="color:#64748B; font-size:13px;">Loading ward details...</div>
@@ -258,24 +290,80 @@
     </div>
 </div>
 
-<!-- Patient Info Modal (medical summary / nursing notes / medication orders) -->
-<div class="modal" id="patient-info-modal">
-    <div class="modal-content" style="max-width:560px;">
+<!-- Transfer Bed Modal (Change Bed / Transfer Patient) -->
+<div class="modal" id="transfer-bed-modal">
+    <div class="modal-content" style="max-width:520px;">
         <div class="modal-header">
-            <h3 id="patient-info-title">Patient Information</h3>
-            <button class="modal-close" id="close-patient-info-modal">&times;</button>
+            <h3>Change Bed / Transfer Patient</h3>
+            <button class="modal-close" id="close-transfer-bed-modal">&times;</button>
         </div>
-        <div class="modal-body" id="patient-info-body"></div>
-        <div class="modal-footer" style="padding:12px 20px;border-top:1px solid #E2E8F0;text-align:right;">
-            <button type="button" class="btn btn-secondary" id="cancel-patient-info">Close</button>
+        <div class="modal-body">
+            <form id="transfer-bed-form">
+                <input type="hidden" id="transfer-patient-id">
+                <p id="transfer-patient-info" style="margin:0 0 12px;font-size:12px;color:#64748B;"></p>
+                <div class="form-group">
+                    <label for="transfer-ward">Destination Ward *</label>
+                    <select id="transfer-ward" required>
+                        <option value="">Select Ward</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="transfer-bed">Available Bed *</label>
+                    <select id="transfer-bed" required>
+                        <option value="">Select a ward first</option>
+                    </select>
+                </div>
+                <p style="margin:0 0 12px;font-size:11px;color:#94A3B8;">Only beds currently marked <strong>Available</strong> are listed. The patient's previous bed is freed automatically after the transfer.</p>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="confirm-transfer-btn">Transfer Patient</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-transfer-bed">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Treatment Log Modal -->
+<div class="modal" id="add-treatment-modal">
+    <div class="modal-content" style="max-width:520px;">
+        <div class="modal-header">
+            <h3>Log Treatment</h3>
+            <button class="modal-close" id="close-add-treatment-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="add-treatment-form">
+                <input type="hidden" id="treatment-patient-id">
+                <div class="form-group">
+                    <label for="treatment-name">Treatment / Procedure *</label>
+                    <input type="text" id="treatment-name" placeholder="e.g. IV fluids, wound dressing, oxygen therapy" required>
+                </div>
+                <div class="form-group">
+                    <label for="treatment-notes">Staff Notes</label>
+                    <textarea id="treatment-notes" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="treatment-status">Status</label>
+                    <select id="treatment-status">
+                        <option value="Done">Done</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Failed">Failed</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">+ Log Treatment</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-add-treatment">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 <script>
-let wardsData = [];
-let patientContext = {};   // patient_id -> { bed, summary, latestVisit, visits, vitals }
-let draftTimer = null;
+var CURRENT_VITALS_STAFF = <?php echo json_encode($__clinicStaff); ?>;
+var wardsData = [];
+var patientContext = {};   // patient_id -> { bed, summary, latestVisit, visits, vitals }
+var medsCache = {};        // patient_id -> prescription list
+var draftTimer = null;
 const DRAFT_KEY = 'hms:vitals-draft';
 
 async function initVitals() {
@@ -364,6 +452,7 @@ async function fetchOccupiedBeds(wardId) {
 async function renderWardCards(beds, selectedWardId) {
     const container = document.getElementById('wardCardsContainer');
     patientContext = {};
+    medsCache = {};
     let totalPatients = 0;
 
     if (!beds.length) {
@@ -376,15 +465,18 @@ async function renderWardCards(beds, selectedWardId) {
     }
 
     const cardsHTML = [];
+    const rendered = [];
     for (const bed of beds) {
         const ctx = await buildPatientContext(bed);
         if (bed.current_patient_id != null) patientContext[bed.current_patient_id] = ctx;
         totalPatients++;
+        rendered.push(ctx);
         cardsHTML.push(renderPatientCard(ctx));
     }
 
     container.innerHTML = cardsHTML.join('');
     updateCounters(totalPatients, 0);
+    rendered.forEach(fillClinicalData);
 }
 
 async function buildPatientContext(bed) {
@@ -413,12 +505,15 @@ async function buildPatientContext(bed) {
     return { bed: bed, summary: summary, visits: visits, latestVisit: latestVisit, vitals: vitalsList };
 }
 
-/* Image-1 style patient card: ward header -> patient bar -> vitals readings grid -> record footer */
+/* ============================================================
+   CLINICAL PATIENT CARE & TREATMENT SHEET CARD (per patient)
+   ============================================================ */
 function renderPatientCard(ctx) {
     const bed = ctx.bed;
     const s = ctx.summary || {};
     const pid = bed.current_patient_id;
     const readings = ctx.vitals || [];
+    const visit = ctx.latestVisit;
 
     const gridRows = readings.length
         ? readings.map(v => `
@@ -434,64 +529,546 @@ function renderPatientCard(ctx) {
             </tr>`).join('')
         : '<tr><td colspan="8" style="color:#94A3B8;padding:12px;">No vital signs recorded yet — click + RECORD VITALS to add the first reading.</td></tr>';
 
-    return `
-    <div class="card border-0 shadow-sm mb-4" style="border-radius: 8px; border: 1px solid #E2E8F0 !important;">
+    const demoLine = `${escHtml(s.gender || '--')} | ${s.age != null ? escHtml(s.age) + ' Yrs' : '--'} | Genotype: -- | Blood Group: ${escHtml(s.blood_group || '--')}`;
 
-        <!-- CARD WARD TITLE HEADER BAR -->
-        <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
+    return `
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 8px; border: 1px solid #CBD5E1 !important;">
+
+        <!-- CARD HEADER: WARD TITLE & PATIENT CONTROLS -->
+        <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div class="d-flex align-items-center gap-2">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0072BC" stroke-width="2"><path d="M2 4v16"></path><path d="M2 8h18a2 2 0 0 1 2 2v10"></path><path d="M2 17h20"></path><path d="M6 8v9"></path></svg>
                 <span class="font-weight-bold text-dark" style="font-size: 14px;">${escHtml(bed.ward_name || 'Ward')}</span>
+                <span class="badge bg-secondary ms-2">BED ${escHtml(bed.bed_number)}</span>
             </div>
-            <span class="text-muted" style="font-size: 11px;">No Shift Available.</span>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 font-weight-bold px-2 py-1" style="font-size: 11px;" onclick="openTransferModal(${pid})">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                    Change Bed / Transfer Patient
+                </button>
+                <button class="btn btn-sm btn-outline-info text-dark d-flex align-items-center gap-1 font-weight-bold px-2 py-1" style="font-size: 11px;" onclick="window.loadModuleTab && window.loadModuleTab('patient_records')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    Medical Records
+                </button>
+            </div>
         </div>
 
-        <!-- CARD BODY DETAILS -->
         <div class="card-body p-3">
 
-            <!-- PATIENT HEADER BAR -->
-            <div class="p-2 mb-3 rounded d-flex justify-content-between align-items-center flex-wrap" style="background-color: #F1F5F9; border: 1px solid #CBD5E1;">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-secondary font-weight-bold" style="font-size: 11px;">BED ${escHtml(bed.bed_number)}</span>
-                    <span class="badge rounded-circle bg-warning text-dark font-weight-bold" style="width: 22px; height: 22px; line-height: 14px;">${readings.length}</span>
-                    <span class="text-muted" style="font-size: 12px;">(Currently Not On Oxygen)</span>
+            <!-- PATIENT ID & NAME HEADER WITH SVG AVATAR -->
+            <div class="p-3 mb-3 rounded d-flex justify-content-between align-items-center flex-wrap gap-2" style="background-color: #F1F5F9; border: 1px solid #CBD5E1;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 48px; height: 48px; background-color: #0F2D59; flex-shrink: 0;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <h6 class="mb-0 font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 16px;">${escHtml(s.full_name || bed.patient_name || 'PATIENT')}</h6>
+                            <span class="badge bg-primary px-2" style="font-size: 10px;">ID: ${escHtml(s.hospital_number || '--')}</span>
+                        </div>
+                        <small class="text-muted">${demoLine}</small>
+                    </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-info text-white font-weight-bold" style="font-size: 11px;">Blood Group : ${escHtml(s.blood_group || 'NA')}</span>
-                    <span class="font-weight-bold text-uppercase ms-2" style="font-size: 15px; color: #0F2D59;">${escHtml(s.full_name || bed.patient_name || 'PATIENT')}</span>
-                    <button class="btn btn-sm btn-info text-white py-0 px-2 font-weight-bold" style="font-size: 11px;" title="Patient Medical Summary" onclick="openPatientSummary(${pid})">i</button>
-                    <button class="btn btn-sm btn-primary py-0 px-2 font-weight-bold" style="font-size: 11px; background-color: #0072BC;" title="Record Vitals" onclick="openRecordVitalsModal(${pid})">AM</button>
+                    <span class="badge bg-info text-white font-weight-bold" style="font-size: 11px;">Blood Donation :- NA</span>
+                    <span class="badge bg-warning text-dark font-weight-bold" style="font-size: 11px;">(Currently Not On Oxygen)</span>
                 </div>
             </div>
 
-            <!-- VITAL SIGNS READINGS GRID -->
-            <div class="table-responsive rounded border mb-3">
-                <table class="table table-bordered mb-0 text-center" style="font-size: 12px;">
-                    <thead class="text-uppercase" style="background-color: #E2E8F0; color: #0F2D59;">
-                        <tr>
-                            <th>DATE / TIME</th>
-                            <th>TEMP (°C)</th>
-                            <th>BP (MMHG)</th>
-                            <th>HR (BPM)</th>
-                            <th>RR (BPM)</th>
-                            <th>SPO2 (%)</th>
-                            <th>WEIGHT (KG)</th>
-                            <th>NURSE</th>
-                        </tr>
-                    </thead>
-                    <tbody>${gridRows}</tbody>
-                </table>
+            <!-- VITAL SIGNS READINGS -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
+                    <h6 class="font-weight-bold text-uppercase mb-0 d-flex align-items-center gap-2" style="color: #0F2D59; font-size: 13px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0072BC" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                        Vital Signs Readings
+                    </h6>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-light border px-3 font-weight-bold" style="font-size: 12px; color: #0072BC;" onclick="openVitalsHistory(${pid}, 'history')">Vitals History</button>
+                        <button class="btn btn-sm btn-primary font-weight-bold px-3" onclick="openRecordVitalsModal(${pid})" style="background-color: #0072BC; border-radius: 4px;">+ RECORD VITALS</button>
+                    </div>
+                </div>
+                <div class="table-responsive rounded border">
+                    <table class="table table-bordered mb-0 text-center align-middle" style="font-size: 12px;">
+                        <thead class="text-uppercase" style="background-color: #E2E8F0; color: #0F2D59;">
+                            <tr>
+                                <th>DATE / TIME</th>
+                                <th>TEMP (°C)</th>
+                                <th>BP (MMHG)</th>
+                                <th>HR (BPM)</th>
+                                <th>RR (BPM)</th>
+                                <th>SPO2 (%)</th>
+                                <th>WEIGHT (KG)</th>
+                                <th>NURSE</th>
+                            </tr>
+                        </thead>
+                        <tbody>${gridRows}</tbody>
+                    </table>
+                </div>
             </div>
+
+            <!-- SECTION 1: PRESCRIBED MEDICATION -->
+            <div class="mb-4">
+                <h6 class="font-weight-bold text-uppercase mb-2 d-flex align-items-center gap-2" style="color: #0F2D59; font-size: 13px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><rect x="6" y="7" width="12" height="14" rx="2"></rect><path d="M9 3h6v4H9z"></path></svg>
+                    Prescribed Medication
+                </h6>
+                <div class="table-responsive rounded border">
+                    <table class="table table-bordered mb-0 align-middle" style="font-size: 12px;">
+                        <thead class="bg-light text-uppercase" style="font-size: 11px;">
+                            <tr>
+                                <th>DRUG NAME &amp; STRENGTH</th>
+                                <th>DOSAGE</th>
+                                <th>FREQUENCY</th>
+                                <th>DURATION</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="medsBody_${pid}">
+                            <tr><td colspan="5" style="text-align:center;padding:12px;color:#94A3B8;">Loading prescriptions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECTION 2: NURSES / MIDWIVES NOTES -->
+            <div class="mb-4">
+                <h6 class="font-weight-bold text-uppercase mb-2 d-flex align-items-center gap-2" style="color: #0F2D59; font-size: 13px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    Nurses / Midwives Notes
+                </h6>
+                <div class="d-flex gap-2 mb-2 align-items-end flex-wrap">
+                    <div style="flex:1;min-width:260px;">
+                        <textarea id="txtNurseNotes_${pid}" class="form-control form-control-sm" rows="2" placeholder="Add a nurse / midwife note for this patient..."></textarea>
+                    </div>
+                    <button class="btn btn-sm btn-primary font-weight-bold px-3" style="background-color:#0072BC;" onclick="saveNurseNote(${pid})">Save Note Entry</button>
+                </div>
+                <div id="nurseNotesList_${pid}">
+                    <p style="color:#94A3B8;font-size:12px;margin:0;">No nurse notes recorded yet.</p>
+                </div>
+            </div>
+
+            <!-- SECTION 3: TREATMENT SHEET -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
+                    <h6 class="font-weight-bold text-uppercase mb-0 d-flex align-items-center gap-2" style="color: #0F2D59; font-size: 13px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        Treatment Sheet
+                    </h6>
+                    <button class="btn btn-sm btn-outline-primary font-weight-bold px-3 py-1" style="font-size: 11px;" onclick="openAddTreatment(${pid})">+ Log Treatment</button>
+                </div>
+                <div class="table-responsive rounded border">
+                    <table class="table table-striped table-bordered mb-0 align-middle" style="font-size: 12px;">
+                        <thead class="text-uppercase" style="background-color:#E2E8F0;font-size:11px;">
+                            <tr>
+                                <th>DATE / TIME</th>
+                                <th>TREATMENT / PROCEDURE</th>
+                                <th>NOTES</th>
+                                <th>STAFF</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="treatmentsList_${pid}">
+                            <tr><td colspan="5" style="text-align:center;padding:12px;color:#94A3B8;">No treatments logged yet — click + Log Treatment to add the first entry.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECTION 4: BILLING SUMMARY -->
+            <div class="mb-4">
+                <h6 class="font-weight-bold text-uppercase mb-2 d-flex align-items-center gap-2" style="color: #0F2D59; font-size: 13px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2"><path d="M20 6H9a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z"></path><path d="M6 9H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2"></path></svg>
+                    Billing Summary
+                </h6>
+                <div class="table-responsive rounded border mb-2">
+                    <table class="table table-bordered mb-0 align-middle" style="font-size: 12px;">
+                        <thead class="bg-light text-uppercase" style="font-size: 11px;">
+                            <tr>
+                                <th>INVOICE NO</th>
+                                <th>DATE</th>
+                                <th>STATUS</th>
+                                <th class="text-end">NET (GHS)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="billingBody_${pid}">
+                            <tr><td colspan="4" style="text-align:center;padding:12px;color:#94A3B8;">Loading billing...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-responsive rounded border mb-2">
+                    <table class="table table-bordered mb-0 align-middle" style="font-size: 12px;">
+                        <thead class="text-uppercase" style="background-color:#E2E8F0;font-size:11px;">
+                            <tr>
+                                <th>ITEM</th>
+                                <th>DESCRIPTION</th>
+                                <th>QTY</th>
+                                <th>UNIT (GHS)</th>
+                                <th class="text-end">TOTAL (GHS)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="billingItemsBody_${pid}">
+                            <tr><td colspan="5" style="text-align:center;padding:12px;color:#94A3B8;">Loading billing items...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="billingTotals_${pid}" class="p-2 rounded d-flex justify-content-between align-items-center flex-wrap gap-2" style="background-color:#F8FAFC;border:1px solid #E2E8F0;font-size:12px;">
+                    <span class="text-muted">Auto-generated from the patient's invoices &amp; billing items</span>
+                    <span class="font-weight-bold text-danger">Fee To Be Paid: <span class="text-success" id="billingFee_${pid}">GHS 0.00</span></span>
+                </div>
+            </div>
+
+            ${visit ? '' : '<p style="font-size:11px;color:#B45309;">No active visit on record — medication and billing sections may be empty.</p>'}
 
         </div>
 
-        <!-- CARD FOOTER RECORD VITAL BUTTON -->
-        <div class="card-footer bg-white border-top p-2 d-flex justify-content-end gap-2">
-            <button class="btn btn-sm btn-light border px-3 font-weight-bold" style="font-size: 12px; color: #0072BC;" onclick="openVitalsHistory(${pid}, 'history')">Vitals History</button>
-            <button class="btn btn-sm btn-primary font-weight-bold px-4" onclick="openRecordVitalsModal(${pid})" style="background-color: #0072BC; border-radius: 4px;">+ RECORD VITALS</button>
+        <!-- CARD FOOTER: SAVE ACTIONS -->
+        <div class="card-footer bg-white border-top p-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span style="font-size: 11px; color: #64748B;">Logging as: <strong>${escHtml(CURRENT_VITALS_STAFF)}</strong> · Last saved: <span id="lastSaved_${pid}">--</span></span>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary font-weight-bold px-3" style="font-size: 12px;" onclick="saveSheet(${pid}, 'draft')">Save to Draft</button>
+                <button class="btn btn-sm btn-success font-weight-bold px-4" style="font-size: 12px;" onclick="saveSheet(${pid}, 'final')">Save or Update</button>
+            </div>
         </div>
 
     </div>`;
+}
+
+/* ---------- Async fill-in of section data (meds + billing) ---------- */
+function fillClinicalData(ctx) {
+    const pid = ctx.bed.current_patient_id;
+    if (ctx.latestVisit) loadPrescriptions(ctx.latestVisit.id, pid);
+    if (ctx.summary && ctx.summary.hospital_number) loadBilling(ctx.summary.hospital_number, pid);
+    renderNurseNotes(pid);
+    renderTreatments(pid);
+    renderLastSaved(pid);
+}
+
+/* ============================ PRESCRIBED MEDICATION ============================ */
+async function loadPrescriptions(visitId, pid) {
+    const tbody = document.getElementById('medsBody_' + pid);
+    if (!tbody) return;
+    try {
+        const r = await fetch('/hms/backend/api/prescriptions.php?visit_id=' + visitId);
+        const d = await r.json();
+        medsCache[pid] = (d.success && d.prescriptions) ? d.prescriptions : [];
+    } catch (e) {
+        console.error('Prescriptions load error:', e);
+        medsCache[pid] = [];
+    }
+    renderMedications(pid);
+}
+
+function readRxAdmin(pid) {
+    try { const raw = localStorage.getItem('hms:rx-admin-' + pid); return raw ? JSON.parse(raw) : []; }
+    catch (e) { return []; }
+}
+
+function renderMedications(pid) {
+    const tbody = document.getElementById('medsBody_' + pid);
+    if (!tbody) return;
+    const list = medsCache[pid] || [];
+    if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:12px;color:#94A3B8;">No prescriptions recorded for the latest visit yet.</td></tr>';
+        return;
+    }
+    const administered = readRxAdmin(pid);
+    tbody.innerHTML = list.map(rx => {
+        const given = administered.some(x => String(x) === String(rx.id));
+        const baseStatus = rx.status === 'dispensed' ? 'dispensed' : (rx.status === 'cancelled' ? 'cancelled' : 'pending');
+        const effective = given ? 'given' : baseStatus;
+        const badge = effective === 'given' || effective === 'dispensed'
+            ? '<span class="badge bg-success">Administered</span>'
+            : effective === 'cancelled'
+                ? '<span class="badge bg-danger">Cancelled</span>'
+                : '<span class="badge bg-warning text-dark">Pending</span>';
+        const action = effective === 'pending'
+            ? `<button class="btn btn-sm btn-outline-primary py-0 px-2 font-weight-bold" style="font-size:11px;" onclick="giveDose(${pid}, ${rx.id})">Give Dose</button>`
+            : '';
+        return '<tr>' +
+            '<td class="fw-bold">' + escHtml(rx.drug_name || '--') +
+                (rx.generic_name ? ' <span class="text-muted" style="font-weight:400;">(' + escHtml(rx.generic_name) + ')</span>' : '') +
+                (rx.doctor_name ? '<br><small class="text-muted">Dr. ' + escHtml(rx.doctor_name) + '</small>' : '') +
+            '</td>' +
+            '<td>' + escHtml(rx.dosage || '--') + '</td>' +
+            '<td>' + escHtml(rx.frequency || '--') + '</td>' +
+            '<td>' + escHtml(rx.duration || '--') + '</td>' +
+            '<td>' + badge + ' ' + action + '</td>' +
+        '</tr>';
+    }).join('');
+}
+
+function giveDose(pid, rxId) {
+    const list = readRxAdmin(pid);
+    if (!list.some(x => String(x) === String(rxId))) list.push(String(rxId));
+    try { localStorage.setItem('hms:rx-admin-' + pid, JSON.stringify(list)); } catch (e) {}
+    showAlert('Dose marked as administered (browser log).', 'success');
+    renderMedications(pid);
+}
+
+/* ============================ NURSES / MIDWIVES NOTES ============================ */
+function sheetGet(kind, pid) {
+    try { const raw = localStorage.getItem('hms:' + kind + '-' + pid); return raw ? JSON.parse(raw) : []; }
+    catch (e) { return []; }
+}
+
+function sheetSet(kind, pid, arr) {
+    try { localStorage.setItem('hms:' + kind + '-' + pid, JSON.stringify(arr)); } catch (e) {}
+}
+
+function saveNurseNote(pid) {
+    const ta = document.getElementById('txtNurseNotes_' + pid);
+    if (!ta) return;
+    const text = ta.value.trim();
+    if (!text) { showAlert('Type a note before saving.', 'error'); return; }
+    const notes = sheetGet('nurse-notes', pid);
+    notes.push({ text: text, by: CURRENT_VITALS_STAFF, at: new Date().toISOString() });
+    sheetSet('nurse-notes', pid, notes);
+    ta.value = '';
+    renderNurseNotes(pid);
+    showAlert('Note entry saved.', 'success');
+}
+
+function renderNurseNotes(pid) {
+    const holder = document.getElementById('nurseNotesList_' + pid);
+    if (!holder) return;
+    const notes = sheetGet('nurse-notes', pid);
+    if (!notes.length) {
+        holder.innerHTML = '<p style="color:#94A3B8;font-size:12px;margin:0;">No nurse notes recorded yet.</p>';
+        return;
+    }
+    holder.innerHTML = notes.slice().reverse().map(n => `
+        <div class="p-2 mb-2 rounded" style="background:#F1F5F9;border:1px solid #E2E8F0;font-size:12px;">
+            <div style="white-space:pre-wrap;color:#334155;">${escHtml(n.text)}</div>
+            <div class="text-muted" style="font-size:11px;margin-top:4px;">— ${escHtml(n.by || 'Staff')} · ${escHtml(fmtDateTime(n.at))}</div>
+        </div>`).join('');
+}
+
+/* ============================ TREATMENT SHEET ============================ */
+function openAddTreatment(pid) {
+    document.getElementById('treatment-patient-id').value = pid;
+    document.getElementById('add-treatment-form').reset();
+    document.getElementById('add-treatment-modal').classList.add('show');
+}
+
+function closeAddTreatment() {
+    document.getElementById('add-treatment-modal').classList.remove('show');
+}
+
+async function handleAddTreatmentSubmit(e) {
+    e.preventDefault();
+    const pid = document.getElementById('treatment-patient-id').value;
+    const name = document.getElementById('treatment-name').value.trim();
+    if (!pid || !name) { showAlert('Treatment name is required.', 'error'); return; }
+    const list = sheetGet('treatments', pid);
+    list.push({
+        treatment: name,
+        notes: document.getElementById('treatment-notes').value.trim(),
+        status: document.getElementById('treatment-status').value,
+        by: CURRENT_VITALS_STAFF,
+        at: new Date().toISOString()
+    });
+    sheetSet('treatments', pid, list);
+    closeAddTreatment();
+    renderTreatments(pid);
+    showAlert('Treatment logged on the sheet.', 'success');
+}
+
+function renderTreatments(pid) {
+    const tbody = document.getElementById('treatmentsList_' + pid);
+    if (!tbody) return;
+    const list = sheetGet('treatments', pid);
+    if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:12px;color:#94A3B8;">No treatments logged yet — click + Log Treatment to add the first entry.</td></tr>';
+        return;
+    }
+    const statusBadge = s => s === 'Done'
+        ? '<span class="badge bg-success">Done</span>'
+        : s === 'Failed'
+            ? '<span class="badge bg-danger">Failed</span>'
+            : '<span class="badge bg-warning text-dark">' + escHtml(s || 'Pending') + '</span>';
+    tbody.innerHTML = list.slice().reverse().map(t => `
+        <tr>
+            <td class="fw-bold">${escHtml(fmtDateTime(t.at))}</td>
+            <td class="fw-bold">${escHtml(t.treatment)}</td>
+            <td style="white-space:pre-wrap;">${escHtml(t.notes || '--')}</td>
+            <td>${escHtml(t.by || '--')}</td>
+            <td>${statusBadge(t.status)}</td>
+        </tr>`).join('');
+}
+
+/* ============================ BILLING SUMMARY ============================ */
+async function loadBilling(hospitalNumber, pid) {
+    const body = document.getElementById('billingBody_' + pid);
+    const itemsBody = document.getElementById('billingItemsBody_' + pid);
+    const feeEl = document.getElementById('billingFee_' + pid);
+    if (!body || !itemsBody || !hospitalNumber) return;
+    try {
+        const r = await fetch('/hms/backend/api/invoices.php?q=' + encodeURIComponent(hospitalNumber));
+        const d = await r.json();
+        const invoices = (d.success && d.invoices) ? d.invoices : [];
+        if (!invoices.length) {
+            body.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:12px;color:#94A3B8;">No invoices yet for this patient.</td></tr>';
+            itemsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:12px;color:#94A3B8;">No billing items yet.</td></tr>';
+            if (feeEl) feeEl.textContent = 'GHS 0.00';
+            return;
+        }
+        const details = await Promise.all(invoices.map(inv =>
+            fetch('/hms/backend/api/invoices.php?action=detail&id=' + inv.id)
+                .then(x => x.json())
+                .then(dd => (dd.success ? dd.items : []))
+                .catch(() => [])
+        ));
+
+        const statusBadge = s => s === 'paid'
+            ? '<span class="badge bg-success">PAID</span>'
+            : s === 'pending' || s === 'partial'
+                ? '<span class="badge bg-warning text-dark">' + escHtml(String(s).toUpperCase()) + '</span>'
+                : s === 'cancelled'
+                    ? '<span class="badge bg-danger">CANCELLED</span>'
+                    : '<span class="badge bg-secondary">' + escHtml(String(s || '').toUpperCase()) + '</span>';
+
+        body.innerHTML = invoices.map(inv => `
+            <tr>
+                <td class="fw-bold text-primary">${escHtml(inv.invoice_number)}</td>
+                <td>${escHtml(fmtDateTime(inv.created_at))}</td>
+                <td>${statusBadge(inv.status)}</td>
+                <td class="text-end fw-bold">GHS ${Number(inv.net_amount || 0).toFixed(2)}</td>
+            </tr>`).join('');
+
+        let paid = 0, due = 0;
+        invoices.forEach(inv => {
+            const net = Number(inv.net_amount || 0);
+            if (inv.status === 'paid') paid += net;
+            else if (inv.status === 'pending' || inv.status === 'partial') due += net;
+        });
+
+        const allItems = [];
+        invoices.forEach((inv, idx) => (details[idx] || []).forEach(it => {
+            allItems.push({ invoice: inv.invoice_number, it: it });
+        }));
+        itemsBody.innerHTML = allItems.length
+            ? allItems.map(row => `
+                <tr>
+                    <td class="fw-bold">${escHtml(String(row.it.item_type || '').replace('_', ' ').toUpperCase())}</td>
+                    <td>${escHtml(row.it.description || '--')}<br><small class="text-muted">${escHtml(row.invoice)}</small></td>
+                    <td>${escHtml(row.it.quantity != null ? row.it.quantity : '1')}</td>
+                    <td>GHS ${Number(row.it.unit_price || 0).toFixed(2)}</td>
+                    <td class="text-end fw-bold">GHS ${Number(row.it.total_price || 0).toFixed(2)}</td>
+                </tr>`).join('')
+            : '<tr><td colspan="5" style="text-align:center;padding:12px;color:#94A3B8;">No line items on these invoices.</td></tr>';
+
+        if (feeEl) feeEl.textContent = 'GHS ' + due.toFixed(2);
+    } catch (e) {
+        console.error('Billing load error:', e);
+        body.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:12px;color:#C0392B;">Failed to load billing.</td></tr>';
+    }
+}
+
+/* ============================ CHANGE BED / TRANSFER PATIENT ============================ */
+function openTransferModal(pid) {
+    const ctx = patientContext[pid];
+    if (!ctx) return;
+    document.getElementById('transfer-patient-id').value = pid;
+    document.getElementById('transfer-patient-info').textContent =
+        'Transferring: ' + (ctx.summary ? ctx.summary.full_name : ctx.bed.patient_name) +
+        ' · Current: ' + (ctx.bed.ward_name || 'Ward') + ' / Bed ' + ctx.bed.bed_number;
+    const wardSel = document.getElementById('transfer-ward');
+    wardSel.innerHTML = '<option value="">Select Ward</option>' +
+        wardsData.map(w => `<option value="${w.id}">${escHtml(w.ward_name)}</option>`).join('');
+    document.getElementById('transfer-bed').innerHTML = '<option value="">Select a ward first</option>';
+    document.getElementById('transfer-bed-modal').classList.add('show');
+}
+
+async function loadTransferBeds() {
+    const wardId = document.getElementById('transfer-ward').value;
+    const bedSel = document.getElementById('transfer-bed');
+    const pid = document.getElementById('transfer-patient-id').value;
+    const ctx = patientContext[pid];
+    if (!wardId) { bedSel.innerHTML = '<option value="">Select a ward first</option>'; return; }
+    bedSel.innerHTML = '<option value="">Loading beds...</option>';
+    try {
+        const r = await fetch('/hms/backend/api/beds.php?status=Available&ward_id=' + encodeURIComponent(wardId));
+        const d = await r.json();
+        const beds = (d.success && d.beds) ? d.beds : [];
+        const currentBedId = ctx ? ctx.bed.id : null;
+        const opts = beds.filter(b => String(b.id) !== String(currentBedId))
+            .map(b => `<option value="${b.id}">Bed ${escHtml(b.bed_number)} — ${escHtml(b.ward_name)}</option>`).join('');
+        bedSel.innerHTML = opts
+            ? '<option value="">Select available bed</option>' + opts
+            : '<option value="">No beds available in this ward</option>';
+    } catch (e) {
+        console.error('Transfer beds load error:', e);
+        bedSel.innerHTML = '<option value="">Failed to load beds</option>';
+    }
+}
+
+async function handleTransferSubmit(e) {
+    e.preventDefault();
+    const pid = document.getElementById('transfer-patient-id').value;
+    const bedId = document.getElementById('transfer-bed').value;
+    if (!pid || !bedId) { showAlert('Select a destination bed first.', 'error'); return; }
+    const btn = document.getElementById('confirm-transfer-btn');
+    btn.disabled = true;
+    btn.textContent = 'Transferring...';
+    try {
+        const r = await fetch('/hms/backend/api/beds.php?action=assign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bed_id: bedId, patient_id: pid })
+        });
+        const d = await r.json();
+        if (d.success) {
+            showAlert('Patient transferred to the new bed successfully.', 'success');
+            document.getElementById('transfer-bed-modal').classList.remove('show');
+            await filterVitalsByWard();
+        } else {
+            showAlert(d.error || 'Transfer failed', 'error');
+        }
+    } catch (e2) {
+        console.error('Transfer error:', e2);
+        showAlert('Network error. Please try again.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Transfer Patient';
+    }
+}
+
+/* ============================ SAVE TO DRAFT / SAVE OR UPDATE ============================ */
+function saveSheet(pid, mode) {
+    const ta = document.getElementById('txtNurseNotes_' + pid);
+    if (ta && ta.value.trim()) {
+        const notes = sheetGet('nurse-notes', pid);
+        notes.push({ text: ta.value.trim(), by: CURRENT_VITALS_STAFF, at: new Date().toISOString() });
+        sheetSet('nurse-notes', pid, notes);
+        ta.value = '';
+    }
+    const key = 'hms:sheet-' + (mode === 'final' ? 'final' : 'draft') + '-' + pid;
+    const payload = {
+        notes: sheetGet('nurse-notes', pid),
+        treatments: sheetGet('treatments', pid),
+        medsAdmin: sheetGet('rx-admin', pid),
+        savedBy: CURRENT_VITALS_STAFF,
+        at: new Date().toISOString()
+    };
+    try { localStorage.setItem(key, JSON.stringify(payload)); } catch (e) {}
+    renderNurseNotes(pid);
+    renderLastSaved(pid);
+    if (mode === 'final') {
+        showAlert('Treatment sheet saved & updated — logged by ' + CURRENT_VITALS_STAFF + '.', 'success');
+    } else {
+        showAlert('Sheet saved as draft (this browser). Click Save or Update to finalise.', 'info');
+    }
+}
+
+function renderLastSaved(pid) {
+    const el = document.getElementById('lastSaved_' + pid);
+    if (!el) return;
+    let at = null;
+    try {
+        const raw = localStorage.getItem('hms:sheet-final-' + pid);
+        if (raw) at = JSON.parse(raw).at;
+    } catch (e) {}
+    el.textContent = at ? fmtDateTime(at) : '--';
 }
 
 function updateCounters(totalPatients, partialDischarged) {
@@ -605,57 +1182,6 @@ async function editVitals(vitalId, pid) {
     document.getElementById('vitals-draft-banner').style.display = 'none';
 }
 
-/* ============================ PATIENT INFO MODALS ============================ */
-function openPatientSummary(pid) { openPatientInfo(pid, 'summary'); }
-function openNursingNotes(pid) { openPatientInfo(pid, 'notes'); }
-function openMedicationOrders(pid) { openPatientInfo(pid, 'meds'); }
-
-function openPatientInfo(pid, mode) {
-    const ctx = patientContext[pid];
-    if (!ctx) return;
-    const s = ctx.summary || {};
-    let title = 'Patient Information';
-    let html = '';
-    if (mode === 'notes') {
-        title = 'Nursing / Clinical Notes';
-        const notes = ((s.vitals && s.vitals.notes) || s.consultation_notes || '').trim();
-        html = notes
-            ? '<p style="white-space:pre-wrap;font-size:13px;color:#334155;">' + escHtml(notes) + '</p>'
-            : '<p style="color:#94A3B8;font-size:13px;">No clinical notes recorded yet.</p>';
-    } else if (mode === 'meds') {
-        title = 'Medication Orders';
-        html = s.latest_rx
-            ? '<p style="font-size:13px;color:#334155;"><strong>' + escHtml(s.latest_rx) + '</strong></p><p style="font-size:12px;color:#64748B;">Most recently prescribed medication.</p>'
-            : '<p style="color:#94A3B8;font-size:13px;">No medication orders recorded yet.</p>';
-    } else {
-        title = 'Patient Medical Summary';
-        html = '<div style="font-size:12px;color:#334155;line-height:1.8;">' +
-            '<p><strong>Name :</strong> ' + escHtml(s.full_name || '--') + '</p>' +
-            '<p><strong>Hospital No :</strong> ' + escHtml(s.hospital_number || '--') + '</p>' +
-            '<p><strong>Age / Gender :</strong> ' + (s.age != null ? escHtml(s.age) + ' yrs' : '--') + ' / ' + escHtml(s.gender || '--') + '</p>' +
-            '<p><strong>Blood Group :</strong> ' + escHtml(s.blood_group || '--') + '</p>' +
-            '<p><strong>Bed / Ward :</strong> ' + escHtml(s.bed || '--') + ' / ' + escHtml(s.ward || '--') + '</p>' +
-            '<p><strong>Diagnosis :</strong> ' + escHtml(s.diagnosis || '--') + '</p>' +
-            '<p style="margin-bottom:2px;"><strong>Latest Vitals :</strong></p>' +
-            '<p style="margin:0 0 10px 14px;">' + vitalsLine(s.vitals) + '</p>' +
-            '<p><strong>Latest Medication :</strong> ' + escHtml(s.latest_rx || 'None') + '</p>' +
-            '</div>';
-    }
-    document.getElementById('patient-info-title').textContent = title;
-    document.getElementById('patient-info-body').innerHTML = html;
-    document.getElementById('patient-info-modal').classList.add('show');
-}
-
-function vitalsLine(v) {
-    if (!v) return 'No vitals recorded yet.';
-    const when = v.recorded_at ? ' <span style="color:#94A3B8;">(' + escHtml(fmtDateTime(v.recorded_at)) + ')</span>' : '';
-    return 'Temp ' + (v.temperature != null ? v.temperature + '°C' : '--') +
-        ' · BP ' + escHtml(v.blood_pressure || '--') +
-        ' · Pulse ' + (v.pulse != null ? escHtml(v.pulse) : '--') +
-        ' · SpO2 ' + (v.spo2 != null ? escHtml(v.spo2) + '%' : '--') +
-        ' · RR ' + (v.respiratory_rate != null ? escHtml(v.respiratory_rate) : '--') + when;
-}
-
 /* ============================ AUTO-DRAFT (localStorage) ============================ */
 const DRAFT_FIELDS = {
     visit_id: 'vitals-visit',
@@ -764,7 +1290,7 @@ function formatTime(iso) {
     return d.toLocaleString();
 }
 
-/* ============================ SAVE / UPDATE SUBMIT ============================ */
+/* ============================ SAVE / UPDATE SUBMIT (vitals) ============================ */
 async function handleVitalsSubmit(e) {
     e.preventDefault();
 
@@ -810,10 +1336,21 @@ function setupEventListeners() {
     const cancelHistory = document.getElementById('cancel-vitals-history');
     if (cancelHistory) cancelHistory.addEventListener('click', () => document.getElementById('vitals-history-modal').classList.remove('show'));
 
-    const closeInfo = document.getElementById('close-patient-info-modal');
-    if (closeInfo) closeInfo.addEventListener('click', () => document.getElementById('patient-info-modal').classList.remove('show'));
-    const cancelInfo = document.getElementById('cancel-patient-info');
-    if (cancelInfo) cancelInfo.addEventListener('click', () => document.getElementById('patient-info-modal').classList.remove('show'));
+    const closeTransfer = document.getElementById('close-transfer-bed-modal');
+    if (closeTransfer) closeTransfer.addEventListener('click', () => document.getElementById('transfer-bed-modal').classList.remove('show'));
+    const cancelTransfer = document.getElementById('cancel-transfer-bed');
+    if (cancelTransfer) cancelTransfer.addEventListener('click', () => document.getElementById('transfer-bed-modal').classList.remove('show'));
+    const transferWard = document.getElementById('transfer-ward');
+    if (transferWard) transferWard.addEventListener('change', loadTransferBeds);
+    const transferForm = document.getElementById('transfer-bed-form');
+    if (transferForm) transferForm.addEventListener('submit', handleTransferSubmit);
+
+    const closeTreatment = document.getElementById('close-add-treatment-modal');
+    if (closeTreatment) closeTreatment.addEventListener('click', closeAddTreatment);
+    const cancelTreatment = document.getElementById('cancel-add-treatment');
+    if (cancelTreatment) cancelTreatment.addEventListener('click', closeAddTreatment);
+    const treatmentForm = document.getElementById('add-treatment-form');
+    if (treatmentForm) treatmentForm.addEventListener('submit', handleAddTreatmentSubmit);
 }
 
 /* ============================ HELPERS ============================ */

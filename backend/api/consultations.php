@@ -33,7 +33,7 @@ function getConsultations() {
     
     $sql = "SELECT c.*, v.visit_number, v.patient_id, p.hospital_number,
                    CONCAT(p.first_name, ' ', p.last_name) as patient_name,
-                   CONCAT(u.first_name, ' ', u.last_name) as doctor_name
+                   u.full_name AS doctor_name
             FROM consultations c
             JOIN patient_visits v ON c.visit_id = v.id
             JOIN patient_registrations p ON v.patient_id = p.id
