@@ -31,12 +31,14 @@ if ($method === 'GET') {
 function getBeds() {
     $filters = [
         'ward_id' => $_GET['ward_id'] ?? null,
-        'status'  => $_GET['status'] ?? null
+        'status'  => $_GET['status'] ?? null,
+        'q'       => $_GET['q'] ?? null
     ];
 
     $db = Database::getInstance();
 
     $sql = "SELECT b.*, w.ward_name, w.ward_code, r.room_number, r.room_type,
+                   p.hospital_number,
                    CONCAT_WS(' ', p.first_name, NULLIF(p.middle_name, ''), p.last_name) as patient_name
             FROM beds b
             JOIN wards w ON b.ward_id = w.id
@@ -54,6 +56,16 @@ function getBeds() {
     if ($filters['status']) {
         $sql .= " AND b.status = ?";
         $params[] = $filters['status'];
+    }
+
+    if ($filters['q']) {
+        $sql .= " AND (CONCAT_WS(' ', p.first_name, NULLIF(p.middle_name, ''), p.last_name) LIKE ?
+                      OR p.hospital_number LIKE ?
+                      OR b.bed_number LIKE ?)";
+        $like = '%' . $filters['q'] . '%';
+        $params[] = $like;
+        $params[] = $like;
+        $params[] = $like;
     }
 
     $sql .= " ORDER BY w.ward_name, b.bed_number";

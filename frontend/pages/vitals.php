@@ -135,7 +135,7 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
       </div>
 
       <!-- Wards Selection (populated from the wards API) -->
-      <div class="col-md-5">
+      <div class="col-md-4">
         <label class="form-label font-weight-bold text-uppercase mb-1" style="font-size: 11px; color: #1E293B;">Wards</label>
         <select class="form-select form-select-sm shadow-none" id="selWard" style="border-color: #CBD5E1; border-radius: 4px; font-size: 13px;">
           <option value="">-- All Wards --</option>
@@ -143,10 +143,25 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
       </div>
 
       <!-- Search Trigger Button -->
-      <div class="col-md-3 d-flex gap-2">
+      <div class="col-md-4 d-flex gap-2">
         <button type="button" class="btn btn-sm btn-primary w-100 font-weight-bold px-3" onclick="filterVitalsByWard()" style="background-color: #0072BC; border: none; border-radius: 4px; height: 31px;">
-          Search
+          Search Wards
         </button>
+      </div>
+
+    </div>
+    <div class="row g-3 align-items-end mt-1">
+
+      <!-- Search Patient (IPD / Wards) -->
+      <div class="col-md-8">
+        <label class="form-label font-weight-bold text-uppercase mb-1" style="font-size: 11px; color: #1E293B;">Search Patient (IPD / Wards)</label>
+        <input type="text" class="form-control form-control-sm shadow-none" id="txtPatientSearch" placeholder="Search by name, hospital number or bed — e.g. HMS202683952 or BED-MED-03" style="border-color: #CBD5E1; border-radius: 4px; font-size: 13px;" onkeydown="if(event.key==='Enter') filterVitalsByWard()">
+      </div>
+
+      <!-- Find / Clear Patient -->
+      <div class="col-md-4 d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-primary w-100 font-weight-bold px-3" onclick="document.getElementById('txtPatientSearch').value=''; filterVitalsByWard();" style="border-radius: 4px; height: 31px;">Clear</button>
+        <button type="button" class="btn btn-sm btn-primary w-100 font-weight-bold px-3" onclick="filterVitalsByWard()" style="background-color: #0072BC; border: none; border-radius: 4px; height: 31px;">Find Patient</button>
       </div>
 
     </div>
@@ -285,6 +300,59 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
             </div>
             <div class="form-actions" style="margin-top:14px;">
                 <button type="button" class="btn btn-secondary" id="cancel-vitals-history">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Medical Records Modal (patient entries recorded by doctors and nurses) -->
+<div class="modal" id="medical-records-modal">
+    <div class="modal-content" style="max-width:820px;">
+        <div class="modal-header">
+            <h3 id="medical-records-title">Medical Records</h3>
+            <button class="modal-close" id="close-medical-records-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="medical-records-sub" style="margin:0 0 12px;font-size:12px;color:#64748B;"></p>
+
+            <h4 style="margin:14px 0 8px;font-size:12px;color:#0F2D59;text-transform:uppercase;">Doctor Entries</h4>
+            <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead>
+                        <tr style="background:#F1F5F9;color:#0F2D59;">
+                            <th style="padding:8px 10px;border:1px solid #E2E8F0;text-align:left;">Date</th>
+                            <th style="padding:8px 10px;border:1px solid #E2E8F0;text-align:left;">Type</th>
+                            <th style="padding:8px 10px;border:1px solid #E2E8F0;text-align:left;">Details</th>
+                            <th style="padding:8px 10px;border:1px solid #E2E8F0;text-align:left;">Notes / Instructions</th>
+                            <th style="padding:8px 10px;border:1px solid #E2E8F0;text-align:left;">Doctor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="medical-doctor-entries">
+                        <tr><td colspan="5" style="text-align:center;padding:12px;color:#64748B;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 style="margin:14px 0 8px;font-size:12px;color:#0F2D59;text-transform:uppercase;">Nurse / Midwife Entries</h4>
+            <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead>
+                        <tr style="background:#F1F5F9;color:#0F2D59;">
+                            <th style="padding:8px 10px;border:1px solid #E2E8F0;text-align:left;">Date</th>
+                            <th style="padding:8px 10px;border:1px solid #E2E8F0;text-align:left;">Vitals Recorded</th>
+                            <th style="padding:8px 10px;border:1px solid #E2E8F0;text-align:left;">Notes</th>
+                            <th style="padding:8px 10px;border:1px solid #E2E8F0;text-align:left;">Nurse</th>
+                        </tr>
+                    </thead>
+                    <tbody id="medical-nurse-entries">
+                        <tr><td colspan="4" style="text-align:center;padding:12px;color:#64748B;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-actions" style="margin-top:14px;">
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('medical-records-modal').classList.remove('show'); if(window.loadModuleTab) window.loadModuleTab('patient_records');">View Full Profile</button>
+                <button type="button" class="btn btn-secondary" id="cancel-medical-records">Close</button>
             </div>
         </div>
     </div>
@@ -430,11 +498,12 @@ function ensureVisitOption(visit, selectIt) {
 /* ============================ FILTER / RENDER ============================ */
 async function filterVitalsByWard() {
     const wardId = document.getElementById('selWard').value;
+    const q = document.getElementById('txtPatientSearch').value.trim();
     const container = document.getElementById('wardCardsContainer');
     container.innerHTML = '<div class="card border-0 shadow-sm mb-4" style="border-radius:8px;border:1px solid #E2E8F0 !important;"><div class="card-body p-4 text-center" style="color:#64748B;font-size:13px;">Searching ward... please wait.</div></div>';
     try {
-        const beds = await fetchOccupiedBeds(wardId);
-        await renderWardCards(beds, wardId);
+        const beds = await fetchOccupiedBeds(wardId, q);
+        await renderWardCards(beds, wardId, q);
     } catch (error) {
         console.error('Filter vitals error:', error);
         container.innerHTML = '<div class="card border-0 shadow-sm mb-4" style="border-radius:8px;border:1px solid #E2E8F0 !important;"><div class="card-body p-4 text-center" style="color:#C0392B;font-size:13px;">Failed to load ward data. Please try again.</div></div>';
@@ -442,23 +511,29 @@ async function filterVitalsByWard() {
     }
 }
 
-async function fetchOccupiedBeds(wardId) {
-    const qs = wardId ? `?status=Occupied&ward_id=${encodeURIComponent(wardId)}` : '?status=Occupied';
-    const response = await fetch('/hms/backend/api/beds.php' + qs);
+async function fetchOccupiedBeds(wardId, q) {
+    const params = new URLSearchParams();
+    params.set('status', 'Occupied');
+    if (wardId) params.set('ward_id', wardId);
+    if (q) params.set('q', q);
+    const response = await fetch('/hms/backend/api/beds.php?' + params.toString());
     const data = await response.json();
     return (data.success && data.beds) ? data.beds : [];
 }
 
-async function renderWardCards(beds, selectedWardId) {
+async function renderWardCards(beds, selectedWardId, searchQ) {
     const container = document.getElementById('wardCardsContainer');
     patientContext = {};
     medsCache = {};
     let totalPatients = 0;
 
     if (!beds.length) {
+        const scope = searchQ
+            ? ' matching "' + escHtml(searchQ) + '"'
+            : (selectedWardId ? ' in ' + escHtml(getWardName(selectedWardId)) : ' in the selected wards');
         container.innerHTML = `<div class="card border-0 shadow-sm mb-4" style="border-radius:8px;border:1px solid #E2E8F0 !important;">
             <div class="card-body p-4 text-center" style="color:#64748B;font-size:13px;">
-                No patients currently admitted in ${escHtml(selectedWardId ? getWardName(selectedWardId) : 'the selected wards')}.
+                No patients currently admitted ${scope}.
             </div></div>`;
         updateCounters(0, 0);
         return;
@@ -546,7 +621,7 @@ function renderPatientCard(ctx) {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
                     Change Bed / Transfer Patient
                 </button>
-                <button class="btn btn-sm btn-outline-info text-dark d-flex align-items-center gap-1 font-weight-bold px-2 py-1" style="font-size: 11px;" onclick="window.loadModuleTab && window.loadModuleTab('patient_records')">
+                <button class="btn btn-sm btn-outline-info text-dark d-flex align-items-center gap-1 font-weight-bold px-2 py-1" style="font-size: 11px;" onclick="openMedicalRecords(${pid})">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                     Medical Records
                 </button>
@@ -1033,6 +1108,94 @@ async function handleTransferSubmit(e) {
     }
 }
 
+/* ============================ MEDICAL RECORDS (patient entries recorded by doctors & nurses) ============================ */
+function openMedicalRecords(pid) {
+    const ctx = patientContext[pid];
+    if (!ctx) return;
+    const pName = ctx.summary ? ctx.summary.full_name : (ctx.bed.patient_name || 'PATIENT');
+    document.getElementById('medical-records-title').textContent = 'Medical Records — ' + escHtml(pName);
+    document.getElementById('medical-records-sub').textContent = 'Patient entries recorded by doctors (consultations, prescriptions) and nurses (vital signs).';
+    document.getElementById('medical-records-modal').classList.add('show');
+    loadDoctorEntries(pid);
+    loadNurseEntries(pid, ctx);
+}
+
+async function loadDoctorEntries(pid) {
+    const tbody = document.getElementById('medical-doctor-entries');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:12px;color:#64748B;">Loading doctor entries...</td></tr>';
+    let consultations = [], prescriptions = [];
+    try {
+        const r = await fetch('/hms/backend/api/consultations.php?patient_id=' + pid);
+        const d = await r.json();
+        consultations = (d.success && d.consultations) ? d.consultations : [];
+    } catch (e) { console.error('Medical records consultations error:', e); }
+    try {
+        const r = await fetch('/hms/backend/api/prescriptions.php?patient_id=' + pid);
+        const d = await r.json();
+        prescriptions = (d.success && d.prescriptions) ? d.prescriptions : [];
+    } catch (e) { console.error('Medical records prescriptions error:', e); }
+
+    const rows = [];
+    consultations.forEach(c => rows.push({
+        at: c.consultation_date || c.created_at,
+        type: 'Consultation',
+        details: c.diagnosis || '—',
+        notes: c.notes || '',
+        by: c.doctor_name || '—'
+    }));
+    prescriptions.forEach(rx => rows.push({
+        at: rx.prescribed_at,
+        type: 'Prescription',
+        details: (rx.drug_name || '—') + (rx.dosage ? ' · ' + rx.dosage : '') + (rx.frequency ? ' · ' + rx.frequency : '') + (rx.duration ? ' · ' + rx.duration : ''),
+        notes: rx.instructions || '',
+        by: 'Dr. ' + (rx.doctor_name || '—')
+    }));
+    rows.sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+
+    tbody.innerHTML = rows.length
+        ? rows.map(r => `
+            <tr>
+                <td style="padding:6px 8px;border:1px solid #E2E8F0;white-space:nowrap;">${escHtml(fmtDateTime(r.at))}</td>
+                <td style="padding:6px 8px;border:1px solid #E2E8F0;"><span style="background:${r.type === 'Prescription' ? '#0072BC' : '#64748B'};color:#fff;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;">${escHtml(r.type.toUpperCase())}</span></td>
+                <td style="padding:6px 8px;border:1px solid #E2E8F0;font-weight:700;">${escHtml(r.details)}</td>
+                <td style="padding:6px 8px;border:1px solid #E2E8F0;white-space:pre-wrap;">${escHtml(r.notes || '—')}</td>
+                <td style="padding:6px 8px;border:1px solid #E2E8F0;">${escHtml(r.by)}</td>
+            </tr>`).join('')
+        : '<tr><td colspan="5" style="text-align:center;padding:12px;color:#94A3B8;">No doctor entries (consultations or prescriptions) recorded yet.</td></tr>';
+}
+
+async function loadNurseEntries(pid, ctx) {
+    const tbody = document.getElementById('medical-nurse-entries');
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:12px;color:#64748B;">Loading nurse entries...</td></tr>';
+    const all = [];
+    const visits = ctx.visits || [];
+    const cacheLatest = ctx.vitals || [];
+    for (let i = 0; i < visits.length; i++) {
+        let rows = [];
+        if (i === 0 && cacheLatest.length) {
+            rows = cacheLatest;
+        } else {
+            try {
+                const r = await fetch('/hms/backend/api/vitals.php?visit_id=' + visits[i].id);
+                const d = await r.json();
+                rows = (d.success && d.vitals) ? d.vitals : [];
+            } catch (e) { console.error('Medical records vitals error:', e); }
+        }
+        rows.forEach(v => all.push(v));
+    }
+    all.sort((a, b) => new Date(b.recorded_at || 0) - new Date(a.recorded_at || 0));
+
+    tbody.innerHTML = all.length
+        ? all.map(v => `
+            <tr>
+                <td style="padding:6px 8px;border:1px solid #E2E8F0;white-space:nowrap;">${escHtml(fmtDateTime(v.recorded_at))}</td>
+                <td style="padding:6px 8px;border:1px solid #E2E8F0;">Temp ${v.temperature != null ? v.temperature + '°C' : '--'} · BP ${v.blood_pressure_systolic && v.blood_pressure_diastolic ? v.blood_pressure_systolic + '/' + v.blood_pressure_diastolic : '--'} · HR ${v.heart_rate != null ? v.heart_rate : '--'} · RR ${v.respiratory_rate != null ? v.respiratory_rate : '--'} · SpO2 ${v.oxygen_saturation != null ? v.oxygen_saturation + '%' : '--'}</td>
+                <td style="padding:6px 8px;border:1px solid #E2E8F0;white-space:pre-wrap;">${escHtml(v.notes || '—')}</td>
+                <td style="padding:6px 8px;border:1px solid #E2E8F0;">${escHtml(v.nurse_name || '—')}</td>
+            </tr>`).join('')
+        : '<tr><td colspan="4" style="text-align:center;padding:12px;color:#94A3B8;">No vital-sign entries recorded by nurses yet.</td></tr>';
+}
+
 /* ============================ SAVE TO DRAFT / SAVE OR UPDATE ============================ */
 function saveSheet(pid, mode) {
     const ta = document.getElementById('txtNurseNotes_' + pid);
@@ -1335,6 +1498,11 @@ function setupEventListeners() {
     if (closeHistory) closeHistory.addEventListener('click', () => document.getElementById('vitals-history-modal').classList.remove('show'));
     const cancelHistory = document.getElementById('cancel-vitals-history');
     if (cancelHistory) cancelHistory.addEventListener('click', () => document.getElementById('vitals-history-modal').classList.remove('show'));
+
+    const closeMedical = document.getElementById('close-medical-records-modal');
+    if (closeMedical) closeMedical.addEventListener('click', () => document.getElementById('medical-records-modal').classList.remove('show'));
+    const cancelMedical = document.getElementById('cancel-medical-records');
+    if (cancelMedical) cancelMedical.addEventListener('click', () => document.getElementById('medical-records-modal').classList.remove('show'));
 
     const closeTransfer = document.getElementById('close-transfer-bed-modal');
     if (closeTransfer) closeTransfer.addEventListener('click', () => document.getElementById('transfer-bed-modal').classList.remove('show'));

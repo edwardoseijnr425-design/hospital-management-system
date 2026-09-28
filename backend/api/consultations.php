@@ -22,6 +22,7 @@ if ($method === 'GET') {
 function getConsultations() {
     $filters = [
         'visit_id' => $_GET['visit_id'] ?? null,
+        'patient_id' => $_GET['patient_id'] ?? null,
         'doctor_id' => $_GET['doctor_id'] ?? null,
         'status' => $_GET['status'] ?? null,
         'consultation_type' => $_GET['consultation_type'] ?? null,
@@ -45,6 +46,11 @@ function getConsultations() {
     if ($filters['visit_id']) {
         $sql .= " AND c.visit_id = ?";
         $params[] = $filters['visit_id'];
+    }
+
+    if ($filters['patient_id']) {
+        $sql .= " AND v.patient_id = ?";
+        $params[] = $filters['patient_id'];
     }
     
     if ($filters['doctor_id']) {
