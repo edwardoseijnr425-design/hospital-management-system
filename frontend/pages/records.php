@@ -265,7 +265,7 @@ function renderPatientsTable() {
 }
 
 function setupEventListeners() {
-    document.getElementById('register-patient-btn').addEventListener('click', () => openPatientModal());
+    document.getElementById('register-patient-btn').addEventListener('click', () => navigateTo('register-patient'));
     document.getElementById('close-patient-modal').addEventListener('click', closePatientModal);
     document.getElementById('cancel-patient').addEventListener('click', closePatientModal);
     
