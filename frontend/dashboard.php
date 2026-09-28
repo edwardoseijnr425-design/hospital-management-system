@@ -334,6 +334,8 @@ function hcBrandLogo($px = 45) {
             width:100%;
         }
         .system-footer-strip strong{color:#FFD54F;font-weight:800}
+        .system-footer-strip a{color:#ffffff;text-decoration:underline}
+        .system-footer-strip a:hover{color:#FFD54F;text-decoration:underline}
 
         /* ================= RIGHT SIDEBAR : PATIENT SEARCH ================= */
         .sidebar-right{background:#fff;border-left:1px solid #C0C0C0;display:flex;flex-direction:column;min-width:0}
@@ -788,9 +790,10 @@ function hcBrandLogo($px = 45) {
                     </div>
                 </div>
 
-                <!-- System Footer Strip (old EHMS portal contact bar) -->
-                <div class="system-footer-strip">
-                    Email: <strong>eddie.kay@gmail.com</strong> | Phone: <strong>0547 49 74 02</strong>
+                <!-- System Footer Strip (old EHMS portal contact bar) — the shell captures
+                     this banner and auto-appends it to dashboard + every module page -->
+                <div class="hms-support-footer system-footer-strip">
+                    HMS Support: <a href="mailto:support@example.com" style="color:#ffffff;text-decoration:underline;">support@example.com</a> | Phone: +233 00 000 0000
                 </div>
             </div>
         </div>
