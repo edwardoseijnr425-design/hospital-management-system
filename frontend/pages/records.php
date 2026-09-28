@@ -190,6 +190,64 @@
     </div>
 </div>
 
+<!-- Patient Identification Summary Modal (old EHMS patient bar) -->
+<div class="modal" id="patient-summary-modal">
+    <div class="modal-content" style="max-width:860px;">
+        <div class="modal-header">
+            <h3>PATIENT IDENTIFICATION</h3>
+            <button class="modal-close" id="close-summary-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
+                <div style="grid-column:span 2;border-left:3px solid #0072BC;padding-left:8px;">
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Patient Name</div>
+                    <div style="font-size:16px;font-weight:800;color:#0F2D59;" id="patientBarName">-</div>
+                </div>
+                <div style="grid-column:span 2;border-left:3px solid #0072BC;padding-left:8px;">
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Hospital Number</div>
+                    <div style="font-size:16px;font-weight:800;color:#0072BC;" id="patientBarId">-</div>
+                </div>
+                <div style="border-left:3px solid #80C342;padding-left:8px;">
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Gender</div>
+                    <div style="font-size:14px;font-weight:700;" id="patientBarGender">-</div>
+                </div>
+                <div style="border-left:3px solid #80C342;padding-left:8px;">
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Age</div>
+                    <div style="font-size:14px;font-weight:700;" id="patientBarAge">-</div>
+                </div>
+                <div style="grid-column:span 2;border-left:3px solid #F39C12;padding-left:8px;">
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Bed / Ward</div>
+                    <div style="font-size:14px;font-weight:700;" id="patientBarBedWard">Not admitted</div>
+                </div>
+                <div style="border-left:3px solid #E53E3E;padding-left:8px;">
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Blood Pressure</div>
+                    <div style="font-size:14px;font-weight:700;" id="patientBarBP">-</div>
+                </div>
+                <div style="border-left:3px solid #E53E3E;padding-left:8px;">
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Pulse</div>
+                    <div style="font-size:14px;font-weight:700;" id="patientBarPulse">-</div>
+                </div>
+                <div style="border-left:3px solid #E53E3E;padding-left:8px;">
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">SpO2</div>
+                    <div style="font-size:14px;font-weight:700;" id="patientBarSpO2">-</div>
+                </div>
+                <div style="grid-column:span 2;border-left:3px solid #9C27B0;padding-left:8px;">
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Allergies</div>
+                    <div style="font-size:14px;" id="patientBarAllergies">None recorded</div>
+                </div>
+                <div style="grid-column:span 2;border-left:3px solid #0072BC;padding-left:8px;">
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Latest Diagnosis</div>
+                    <div style="font-size:14px;" id="patientBarDiagnosis">-</div>
+                </div>
+                <div style="grid-column:span 2;border-left:3px solid #80C342;padding-left:8px;">
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Latest Prescription</div>
+                    <div style="font-size:14px;" id="patientBarPrescription">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 let patientsData = [];
 let sponsorsData = [];
@@ -275,6 +333,11 @@ function setupEventListeners() {
     document.getElementById('cancel-visit').addEventListener('click', closeVisitModal);
     document.getElementById('visit-form').addEventListener('submit', handleVisitSubmit);
     
+    document.getElementById('close-summary-modal').addEventListener('click', closeSummaryModal);
+    document.getElementById('patient-summary-modal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('patient-summary-modal')) closeSummaryModal();
+    });
+    
     document.getElementById('search-patients').addEventListener('input', debounce(function() {
         if (this.value.length >= 2) {
             loadPatients({ search: this.value });
@@ -359,8 +422,48 @@ async function handlePatientSubmit(e) {
 }
 
 function viewPatient(patientId) {
-    // TODO: Implement patient detail view
-    alert('Patient detail view to be implemented');
+    loadPatientSummary(patientId);
+}
+
+// Patient identification summary (old EHMS patient bar): demographics + bed/ward + latest vitals/diagnosis/prescription
+async function loadPatientSummary(patientId) {
+    try {
+        const response = await fetch(`/hms/backend/api/patients.php?action=summary&id=${patientId}`);
+        const data = await response.json();
+        if (!data.success) {
+            showAlert(data.error || 'Failed to load patient summary', 'error');
+            return;
+        }
+        populatePatientIdentificationBar(data.patient);
+        document.getElementById('patient-summary-modal').classList.add('show');
+    } catch (error) {
+        console.error('Patient summary load error:', error);
+        showAlert('Failed to load patient summary', 'error');
+    }
+}
+
+function populatePatientIdentificationBar(p) {
+    const set = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = (val === null || val === undefined || val === '') ? '-' : val;
+    };
+    const vit = p.vitals || {};
+    const has = v => (v !== null && v !== undefined && v !== '');
+    set('patientBarName', p.full_name);
+    set('patientBarId', p.hospital_number);
+    set('patientBarGender', p.gender);
+    set('patientBarAge', has(p.age) ? p.age + ' yrs' : '-');
+    set('patientBarBedWard', p.bed_ward || 'Not admitted');
+    set('patientBarBP', vit.blood_pressure || '-');
+    set('patientBarPulse', has(vit.pulse) ? vit.pulse + ' bpm' : '-');
+    set('patientBarSpO2', has(vit.spo2) ? vit.spo2 + '%' : '-');
+    set('patientBarAllergies', 'None recorded');
+    set('patientBarDiagnosis', p.diagnosis || 'No diagnosis recorded');
+    set('patientBarPrescription', p.latest_rx || 'No prescription');
+}
+
+function closeSummaryModal() {
+    document.getElementById('patient-summary-modal').classList.remove('show');
 }
 
 function createVisit(patientId) {
