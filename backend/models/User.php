@@ -126,6 +126,15 @@ class User {
         return $this->db->fetchOne($sql, [$userId]);
     }
     
+    public function getByUsername($username) {
+        $sql = "SELECT u.*, d.name as department_name, d.code as department_code
+                FROM users u
+                LEFT JOIN departments d ON u.department_id = d.id
+                WHERE u.username = ?";
+        
+        return $this->db->fetchOne($sql, [$username]);
+    }
+    
     public function getAll($filters = []) {
         $sql = "SELECT u.*, d.name as department_name, d.code as department_code
                 FROM users u

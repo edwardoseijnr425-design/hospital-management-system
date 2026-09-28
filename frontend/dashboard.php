@@ -1124,7 +1124,7 @@ window.fmtDateTime = fmtDateTime;
         var t=(e.target && e.target.closest)?e.target.closest('#btnBackNavigation, .btn-back-nav'):null;
         if(t){ e.preventDefault(); goBackPage(); }
     });
-    if(pwdBtn) pwdBtn.addEventListener('click',function(){ navigateTo('users'); });
+    if(pwdBtn) pwdBtn.addEventListener('click',function(){ navigateTo('change-password'); });
     // Login duration timer : counts UP from the session login timestamp (currentTime - loginTime)
     var timerEl=document.getElementById('login-timer');
     if(timerEl){

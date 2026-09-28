@@ -12,6 +12,10 @@ if ($method === 'POST' && $action === 'login') {
     handleLogout();
 } elseif ($method === 'POST' && $action === 'register') {
     handleRegister();
+} elseif ($method === 'POST' && $action === 'change_password') {
+    handleChangePassword();
+} elseif ($method === 'POST' && $action === 'reset_password') {
+    handleResetPassword();
 } else {
     jsonResponse(['error' => 'Invalid action'], 400);
 }
@@ -88,5 +92,90 @@ function handleRegister() {
         }
         jsonResponse(['error' => 'Registration failed'], 500);
     }
+}
+
+function handleChangePassword() {
+    // Self-service password change: verifies the CURRENT password before updating.
+    requireLogin();
+    
+    $data = getPostData();
+    
+    $errors = validateRequired($data, ['current_password', 'new_password', 'confirm_password']);
+    if (!empty($errors)) {
+        jsonResponse(['errors' => $errors], 400);
+    }
+    
+    $currentPassword = $data['current_password'];
+    $newPassword = $data['new_password'];
+    $confirmPassword = $data['confirm_password'];
+    
+    if ($newPassword !== $confirmPassword) {
+        jsonResponse(['error' => 'New password and confirmation password do not match'], 400);
+    }
+    
+    if (strlen($newPassword) < PASSWORD_MIN_LENGTH) {
+        jsonResponse(['error' => 'Password must be at least ' . PASSWORD_MIN_LENGTH . ' characters'], 400);
+    }
+    
+    $userModel = new User();
+    $user = $userModel->getById(getCurrentUserId());
+    
+    if (!$user) {
+        jsonResponse(['error' => 'User not found'], 404);
+    }
+    
+    if (!verifyPassword($currentPassword, $user['password'])) {
+        jsonResponse(['error' => 'Current password is incorrect'], 400);
+    }
+    
+    $updated = $userModel->update($user['id'], ['password' => $newPassword]);
+    if (!$updated) {
+        jsonResponse(['error' => 'Password update failed'], 500);
+    }
+    
+    logAudit('CHANGE_PASSWORD', 'users', $user['id']);
+    
+    jsonResponse(['success' => true]);
+}
+
+function handleResetPassword() {
+    // Admin username-based password reset (no current-password check).
+    requireLogin();
+    requireRole(['super_admin', 'admin']);
+    
+    $data = getPostData();
+    
+    $errors = validateRequired($data, ['username', 'new_password', 'confirm_password']);
+    if (!empty($errors)) {
+        jsonResponse(['errors' => $errors], 400);
+    }
+    
+    $username = trim($data['username']);
+    $newPassword = $data['new_password'];
+    $confirmPassword = $data['confirm_password'];
+    
+    if ($newPassword !== $confirmPassword) {
+        jsonResponse(['error' => 'New password and confirmation password do not match'], 400);
+    }
+    
+    if (strlen($newPassword) < PASSWORD_MIN_LENGTH) {
+        jsonResponse(['error' => 'Password must be at least ' . PASSWORD_MIN_LENGTH . ' characters'], 400);
+    }
+    
+    $userModel = new User();
+    $target = $userModel->getByUsername($username);
+    
+    if (!$target) {
+        jsonResponse(['error' => 'User not found'], 404);
+    }
+    
+    $updated = $userModel->update($target['id'], ['password' => $newPassword]);
+    if (!$updated) {
+        jsonResponse(['error' => 'Password reset failed'], 500);
+    }
+    
+    logAudit('RESET_PASSWORD', 'users', $target['id']);
+    
+    jsonResponse(['success' => true, 'username' => $target['username']]);
 }
 ?>

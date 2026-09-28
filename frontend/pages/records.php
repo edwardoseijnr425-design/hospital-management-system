@@ -837,7 +837,8 @@ function nvNavHome(e) {
 
 function nvGoPassword(e) {
     if (e) e.preventDefault();
-    if (window.loadModuleTab) window.loadModuleTab('administrator');
+    if (window.navigateTo) window.navigateTo('change-password');
+    else if (window.loadPage) window.loadPage('change-password');
 }
 
 function nvVal(id) { var el = document.getElementById(id); return el ? el.value : ''; }

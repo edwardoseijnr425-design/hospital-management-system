@@ -206,7 +206,7 @@ require_once __DIR__ . '/../../backend/config/config.php';
 <script>/* ================= NAV (top bar) ================= */
 function saNavHome(e) { if (e) e.preventDefault(); if (window.navigateTo) window.navigateTo('dashboard'); else if (window.loadPage) window.loadPage('dashboard'); }
 function saGoBack(e) { if (e) e.preventDefault(); if (window.history && window.history.length > 1) window.history.back(); else saNavHome(null); }
-function saGoPassword(e) { if (e) e.preventDefault(); if (window.loadModuleTab) window.loadModuleTab('administrator'); }
+function saGoPassword(e) { if (e) e.preventDefault(); if (window.navigateTo) window.navigateTo('change-password'); else if (window.loadPage) window.loadPage('change-password'); }
 
 /* ================= PAGE INIT ================= */
 function initScheduleAppointment() {

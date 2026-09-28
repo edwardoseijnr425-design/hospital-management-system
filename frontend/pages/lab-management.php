@@ -306,7 +306,8 @@ function labGoBack() {
 }
 
 function labGoPassword() {
-    if (window.loadModuleTab) window.loadModuleTab('administrator');
+    if (window.navigateTo) window.navigateTo('change-password');
+    else if (window.loadPage) window.loadPage('change-password');
 }
 
 function labLogout() {
