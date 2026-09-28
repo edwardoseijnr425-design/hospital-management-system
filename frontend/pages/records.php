@@ -446,18 +446,25 @@ async function loadRcdSponsors() {
     } catch (e) { console.error('Sponsors load error:', e); }
 }
 
+var rcdDepartments = [];
 async function loadRcdDepartments() {
     try {
         var r = await fetch('/hms/backend/api/users.php?action=departments');
         var d = await r.json();
         if (d.success) {
+            rcdDepartments = d.departments || [];
             var sel = document.getElementById('visit-department');
             if (sel) sel.innerHTML = '<option value="">-- Select Department --</option>'
-                + (d.departments || []).map(function (dep) {
+                + rcdDepartments.map(function (dep) {
                     return '<option value="' + dep.id + '">' + rcdEsc(dep.name) + '</option>';
                 }).join('');
         }
     } catch (e) { console.error('Departments load error:', e); }
+}
+
+function rcdRecordsDeptId() {
+    var d = rcdDepartments.find(function (x) { return /records/i.test(x.name); });
+    return d ? String(d.id) : '';
 }
 
 async function loadRcdPatients() {
@@ -571,13 +578,15 @@ function openRcdVisit(patientId) {
     if (form) form.reset();
     document.getElementById('visit-patient-id').value = p.id;
     document.getElementById('visit-patient-display').value = [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(' ') + ' - ' + p.hospital_number;
+    document.getElementById('visit-type').value = 'NEW';
+    document.getElementById('visit-department').value = rcdRecordsDeptId();
     updateRcdPrice();
     document.getElementById('visit-modal').classList.add('show');
 }
 
 function updateRcdPrice() {
     var type = document.getElementById('visit-type').value;
-    document.getElementById('visit-price').value = RCD_VISIT_PRICES[type] || '';
+    document.getElementById('visit-price').value = RCD_VISIT_PRICES[type] || 'GHS 0.00';
 }
 
 async function submitRcdVisit(e) {
