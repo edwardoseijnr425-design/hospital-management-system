@@ -135,9 +135,9 @@ require_once __DIR__ . '/../../backend/config/config.php';
           </div>
 
           <div class="form-group">
-            <label for="saDoctor">Medical Team <span class="required">*</span></label>
+            <label for="saDoctor">Attending Doctor / Medical Team <span class="required">*</span></label>
             <select id="saDoctor" class="form-control" required>
-              <option value="">-- Select Medical Team --</option>
+              <option value="">-- Select Doctor or Medical Team --</option>
             </select>
           </div>
 
@@ -332,7 +332,7 @@ function saSelectPatient(p) {
 function saHideResults() {
     var resultsBox = document.getElementById('saSearchResults');
     if (resultsBox) resultsBox.style.display = 'none';
-}/* ================= MEDICAL TEAMS ================= */
+}/* ================= MEDICAL TEAMS + SYSTEM DOCTORS ================= */
 var saTeams = {};
 function saLoadReference() {
     var doctorSelect = document.getElementById('saDoctor');
@@ -341,30 +341,60 @@ function saLoadReference() {
     doctorSelect.innerHTML = '';
     if (placeholder) doctorSelect.appendChild(placeholder);
 
+    /* ---- Medical teams (duty/clinical teams) ---- */
     fetch('/hms/backend/api/medicalteams.php?action=list')
         .then(function(r){ return r.json(); })
         .then(function(d){
             var teams = (d && d.medical_teams) || [];
-            if (!teams.length) {
-                var noneOpt = document.createElement('option');
-                noneOpt.disabled = true;
-                noneOpt.textContent = 'No medical teams registered yet';
-                doctorSelect.appendChild(noneOpt);
-                return;
-            }
+            var teamGroup = document.createElement('optgroup');
+            teamGroup.label = '-- MEDICAL TEAMS --';
             teams.forEach(function(team){
                 saTeams[team.id] = { name: team.name, department_id: team.department_id };
                 var opt = document.createElement('option');
                 opt.value = 'team:' + team.id;
                 opt.textContent = team.name;
-                doctorSelect.appendChild(opt);
+                teamGroup.appendChild(opt);
             });
+            if (!teams.length) {
+                var noneOpt = document.createElement('option');
+                noneOpt.disabled = true;
+                noneOpt.textContent = 'No medical teams registered yet';
+                teamGroup.appendChild(noneOpt);
+            }
+            doctorSelect.appendChild(teamGroup);
+        })
+        .catch(function(){ /* ignore - teams unavailable */ });
+
+    /* ---- Doctors from system users (any doctor can take charge) ---- */
+    fetch('/hms/backend/api/users.php?action=list&role=doctor')
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            var doctors = (d && d.users) || [];
+            var docGroup = document.createElement('optgroup');
+            docGroup.label = '-- SYSTEM DOCTORS --';
+            if (doctors.length) {
+                doctors.forEach(function(doc){
+                    var opt = document.createElement('option');
+                    opt.value = 'doc:' + doc.id;
+                    opt.textContent = doc.full_name || ('Doctor #' + doc.id);
+                    docGroup.appendChild(opt);
+                });
+            } else {
+                var noneOpt = document.createElement('option');
+                noneOpt.disabled = true;
+                noneOpt.textContent = 'No doctor accounts yet - any doctor can take charge';
+                docGroup.appendChild(noneOpt);
+            }
+            doctorSelect.appendChild(docGroup);
         })
         .catch(function(){
+            var docGroup = document.createElement('optgroup');
+            docGroup.label = '-- SYSTEM DOCTORS --';
             var noneOpt = document.createElement('option');
             noneOpt.disabled = true;
-            noneOpt.textContent = 'Medical teams could not be loaded';
-            doctorSelect.appendChild(noneOpt);
+            noneOpt.textContent = 'No doctor accounts yet - any doctor can take charge';
+            docGroup.appendChild(noneOpt);
+            doctorSelect.appendChild(docGroup);
         });
 }
 
@@ -375,7 +405,7 @@ async function saSubmitAppointment(e) {
     e.preventDefault();
     var missing = [];
     if (!saVal('saPatientId')) missing.push('Patient');
-    if (!saVal('saDoctor')) missing.push('Medical Team');
+    if (!saVal('saDoctor')) missing.push('Attending Doctor / Medical Team');
     if (!saVal('saDate')) missing.push('Appointment Date');
     if (!saVal('saTime')) missing.push('Preferred Time Slot');
     if (missing.length) {
@@ -389,6 +419,8 @@ async function saSubmitAppointment(e) {
         var teamId = parseInt(doctorValue.split(':')[1], 10);
         var team = saTeams[teamId];
         if (team && team.department_id) { departmentId = parseInt(team.department_id, 10); }
+    } else if (doctorValue.indexOf('doc:') === 0) {
+        doctorId = parseInt(doctorValue.split(':')[1], 10);
     }
 
     var data = {
