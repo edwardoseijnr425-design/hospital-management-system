@@ -12,12 +12,6 @@ $sinceTimestamp = date('l, d/m/Y H:i:s', $loginTimestamp);
 // Elapsed session duration rendered before JS ticks take over
 $elapsedSession = gmdate('H:i:s', max(0, time() - $loginTimestamp));
 $clinicName = 'EDDIE HOSPITAL';
-// Support contact details shown in the dashboard contact banner and in the
-// footer of SPA-loaded module pages. Kept in ONE place so the two never drift
-// apart. These are safe placeholders — set your real support email/phone here
-// (or load them from your environment/config) before deploying.
-$contactEmail = 'support@example.com';
-$contactPhone = '+233 00 000 0000';
 // New HealthCare cross brand logo (green + blue interlocking ribbon) — embedded inline vector SVG
 // across the system header, sidebar headers and login/splash pages. The UI theme is derived from its
 // green gradient (#80C342 / #4CAF50 / #1B5E20) and blue gradient (#00AEEF / #0072BC / #0D47A1).
@@ -89,6 +83,8 @@ function hcBrandLogo($px = 45) {
         .side-nav a:hover::before{background:#0072BC}
         .side-nav a.active{background-color:#EAEAEA;border-left-color:#0D47A1;color:#0D47A1;font-weight:bold}
         .side-nav a.active::before{background:#0D47A1}
+        .side-nav a.dl-quick-link::before{display:none}
+        .side-nav a.dl-quick-link svg{flex-shrink:0}
         .sidebar-action{padding:12px 14px 4px}
         .btn-send{width:100%;background:linear-gradient(180deg,#F39C12,#E67E22);color:#fff;border:none;padding:10px 12px;border-radius:3px;font-weight:700;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:.3px;transition:filter .15s}
         .btn-send:hover{filter:brightness(1.08)}
@@ -115,6 +111,7 @@ function hcBrandLogo($px = 45) {
         .hms-system-footer-bar{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#0D47A1,#1565C0);border:1px solid #0B3E8F;border-radius:8px;padding:12px 16px;margin:0 14px 6px;box-shadow:0 2px 6px rgba(13,71,161,.22);color:#EAF2FC;font-size:13px;line-height:1.4}
         .hms-system-footer-bar strong{color:#FFD54F;font-weight:800}
         .main-content-card-wrapper .hms-system-footer-bar{margin:14px 0 0}
+        .main-content-card-wrapper .system-footer-strip{margin:14px 0 0}
         .page-slot{width:100%;display:block;flex:1}
         .main-content-card-wrapper{background:#FFFFFF;border:1px solid #C0C0C0;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:16px}
 
@@ -177,39 +174,168 @@ function hcBrandLogo($px = 45) {
             padding:0 4px;
         }
 
-        /* ================= CENTER DASHBOARD GRID : BOOTSTRAP-STYLE UTILITIES =================
-           The shell has no Bootstrap dependency, so the re-built dashboard grid declares the
+        /* ================= SYSTEM PORTAL : TWO-STATION DASHBOARD ================= */
+        /* ================= UNIFORM DASHBOARD GRID : BOOTSTRAP-STYLE UTILITIES =================
+           The shell has no Bootstrap dependency, so the refactored dashboard grid declares the
            minimal set of Bootstrap 5 helper classes it uses (row/col grid, flex, spacing). */
-        .row{display:flex;flex-wrap:wrap;box-sizing:border-box}
-        .row.g-3{--bs-gutter-x:1rem;--bs-gutter-y:1rem;margin-top:calc(var(--bs-gutter-y)*-1)}
-        .row.g-3 > [class*="col-"]{padding-right:calc(var(--bs-gutter-x)*.5);padding-left:calc(var(--bs-gutter-x)*.5);margin-top:var(--bs-gutter-y);box-sizing:border-box}
-        .col{flex:1 0 0%;width:100%;max-width:100%}
+        .container-fluid{width:100%;padding-right:calc(var(--bs-gutter-x,1rem)*.5);padding-left:calc(var(--bs-gutter-x,1rem)*.5);margin-right:auto;margin-left:auto}
+        .p-3{padding:1rem}
+        .row{--bs-gutter-x:1rem;--bs-gutter-y:1rem;display:flex;flex-wrap:wrap;margin-top:calc(var(--bs-gutter-y)*-1);margin-right:calc(var(--bs-gutter-x)*-.5);margin-left:calc(var(--bs-gutter-x)*-.5);box-sizing:border-box}
+        .row > *{box-sizing:border-box;flex-shrink:0;width:100%;max-width:100%;padding-right:calc(var(--bs-gutter-x)*.5);padding-left:calc(var(--bs-gutter-x)*.5);margin-top:var(--bs-gutter-y)}
         .col-md-6{flex:0 0 100%;width:100%;max-width:100%}
-        @media (min-width:768px){.col-md-6{flex:0 0 50%;width:50%;max-width:50%}}
-        .mb-4{margin-bottom:1.5rem}
+        @media (min-width:768px){.col-md-6{flex:0 0 50%;max-width:50%}}
+        .card{position:relative;display:flex;flex-direction:column;min-width:0;word-wrap:break-word;background-color:#fff;background-clip:border-box}
+        .border-0{border:0 !important}
+        .shadow-sm{box-shadow:0 0.125rem 0.25rem rgba(0,0,0,.075) !important}
+        .h-100{height:100%}
         .d-flex{display:flex}
         .align-items-center{align-items:center}
-        .flex-grow-1{flex-grow:1}
-        .text-center{text-align:center}
-        .text-uppercase{text-transform:uppercase}
-        .font-weight-bold{font-weight:700}
-        .text-white{color:#fff}
-        .border-0{border:0 !important}
-        .shadow-sm{box-shadow:0 0.125rem 0.25rem rgba(0,0,0,.075)}
-        .p-3{padding:1rem}
-        .px-3{padding-left:1rem;padding-right:1rem}
-        .py-2{padding-top:.5rem;padding-bottom:.5rem}
+        .justify-content-center{justify-content:center}
         .me-3{margin-right:1rem}
-        .gap-4{gap:1.5rem}
-        .h-100{height:100%}
+        .me-4{margin-right:1.5rem}
+        .text-center{text-align:center}
+        .flex-grow-1{flex-grow:1}
+        .font-weight-bold{font-weight:700}
+        .text-uppercase{text-transform:uppercase}
 
-        /* -------- Dashboard module card : large white rounded rectangle -------- */
-        .card.hms-dashboard-card{margin-bottom:0;transition:border-color .2s ease-in-out,box-shadow .2s ease-in-out,transform .2s ease-in-out}
-        .card.hms-dashboard-card:hover,
-        .card.hms-dashboard-card.dragging{
+        /* Uniform module card : white, 8px radius, subtle border, soft shadow */
+        .hms-module-card{transition:border-color .2s ease-in-out,box-shadow .2s ease-in-out,transform .2s ease-in-out}
+        .hms-module-card:hover,
+        .hms-module-card.dragging{
             box-shadow:0 8px 20px rgba(15,45,89,0.12);
             transform:translateY(-3px);
         }
+
+        .system-dashboard-container{
+            display:flex;
+            flex-direction:column;
+            gap:20px;
+            width:100%;
+        }
+
+        /* Station section header (old EHMS portal look : graded bar + uppercase title) */
+        .sys-station-header{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:14px;
+            width:100%;
+            padding:12px 18px;
+            border-radius:8px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.08);
+        }
+        .sys-station-header.station-doctor{
+            background:linear-gradient(135deg,#0D47A1,#0072BC);
+            border:1px solid #0B3E8F;
+        }
+        .sys-station-header.station-nurse{
+            background:linear-gradient(135deg,#1B5E20,#4CAF50);
+            border:1px solid #14501D;
+        }
+        .sys-station-title{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            color:#FFFFFF;
+            font-weight:800;
+            font-size:16px;
+            text-transform:uppercase;
+            letter-spacing:1.2px;
+            line-height:1.2;
+        }
+        .sys-station-title i{font-size:20px;color:#FFD54F}
+        .sys-station-sub{
+            color:rgba(255,255,255,.85);
+            font-size:11px;
+            font-weight:600;
+            text-transform:uppercase;
+            letter-spacing:.8px;
+            text-align:right;
+            line-height:1.3;
+        }
+
+        /* Station module grid : 2-column, same rhythm as the module grid */
+        .sys-station-grid{
+            display:grid;
+            grid-template-columns:repeat(2, 1fr);
+            gap:16px;
+            width:100%;
+            align-content:start;
+        }
+
+        /* Station module card : matching Administrator-view dimensions (old EHMS sys-card) */
+        .sys-card{
+            background-color:#FFFFFF;
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:6px;
+            display:flex;
+            align-items:center;
+            justify-content:flex-start;
+            padding:18px 24px;
+            min-height:95px;
+            cursor:pointer;
+            text-decoration:none !important;
+            box-shadow:0 2px 8px rgba(0,0,0,0.04);
+            transition:all 0.2s ease-in-out;
+        }
+        .sys-card:hover,
+        .sys-card.dragging{
+            background-color:#FFFFFF;
+            border-color:#0072BC;
+            box-shadow:0 8px 20px rgba(15,45,89,0.12);
+            transform:translateY(-3px);
+            cursor:pointer;
+        }
+
+        /* Left icon box : 52px rounded box with a Font Awesome icon */
+        .sys-card-icon{
+            width:52px;
+            min-width:52px;
+            height:52px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-shrink:0;
+            margin-right:12px;
+            border-radius:8px;
+            background:linear-gradient(135deg,#E3F2FD,#BBDEFB);
+            color:#0D47A1;
+            font-size:24px;
+        }
+        .sys-card-icon .fa-solid{font-size:24px}
+
+        /* Card text label : matching Administrator-view typography */
+        .sys-card-title{
+            flex:1;
+            color:#0D47A1;
+            font-weight:700;
+            font-size:14px;
+            text-transform:uppercase;
+            text-align:center;
+            letter-spacing:.5px;
+            line-height:1.3;
+            padding:0 4px;
+        }
+
+        /* System footer contact strip (old EHMS portal contact bar) */
+        .system-footer-strip{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:10px;
+            flex-wrap:wrap;
+            background:linear-gradient(135deg,#0D47A1,#1565C0);
+            border:1px solid #0B3E8F;
+            border-radius:8px;
+            padding:12px 16px;
+            margin:4px 0 6px;
+            box-shadow:0 2px 6px rgba(13,71,161,.22);
+            color:#EAF2FC;
+            font-size:13px;
+            line-height:1.4;
+            width:100%;
+        }
+        .system-footer-strip strong{color:#FFD54F;font-weight:800}
 
         /* ================= RIGHT SIDEBAR : PATIENT SEARCH ================= */
         .sidebar-right{background:#fff;border-left:1px solid #C0C0C0;display:flex;flex-direction:column;min-width:0}
@@ -349,6 +475,11 @@ function hcBrandLogo($px = 45) {
             .module-grid{grid-template-columns:1fr; padding:10px 12px}
             .module-card{min-height:82px; padding:14px 18px}
             .module-title{font-size:13px}
+            .sys-station-grid{grid-template-columns:1fr; padding:0}
+            .sys-card{min-height:82px; padding:14px 18px}
+            .sys-card-title{font-size:13px}
+            .sys-station-header{flex-direction:column; align-items:flex-start; gap:4px; padding:12px 14px}
+            .sys-station-sub{text-align:left}
         }
     </style>
 </head>
@@ -397,12 +528,22 @@ function hcBrandLogo($px = 45) {
         <nav aria-label="Quick Links" class="side-nav">
             <a href="#" class="nav-link active" data-page="dashboard">Control Panel</a>
             <a href="#" class="nav-link" data-page="appointment-calendar">Appointment Calendar</a>
+            <a href="#" class="nav-link" data-page="messages">Messages &amp; Alerts <span class="nav-msg-badge" id="msgs-nav-badge" style="display:none">0</span></a>
             <a href="#" class="nav-link" data-page="records">Patient Record Management</a>
             <a href="#" class="nav-link" data-page="admissions">Admissions</a>
             <a href="#" class="nav-link" data-page="prices">Drugs Dispense</a>
             <a href="#" class="nav-link" data-page="reports">View Alerts</a>
+            <a href="#" class="nav-link dl-quick-link" data-page="dhims-report" style="font-size: 12px; font-weight: 500;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" flex-shrink="0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <span>DHIMS Report</span>
+                <span style="background:#F59E0B;color:#7C2D12;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:auto;">QUICK</span>
+            </a>
             <a href="#" class="nav-link" data-page="lab-management">Lab Management</a>
+            <a href="#" class="nav-link" data-page="account-management">Account Management</a>
             <a href="#" class="nav-link" data-page="users">User Management</a>
+            <a href="#" class="nav-link" data-page="administrator">Administrator</a>
+            <a href="#" class="nav-link" data-page="wards">Departments</a>
+            <a href="#" class="nav-link" data-page="system-activities">System Activities</a>
         </nav>
 
         <div class="sidebar-action">
@@ -431,125 +572,247 @@ function hcBrandLogo($px = 45) {
         </div>
     </aside>
 
-    <!-- ============ CENTER WORKSPACE : DASHBOARD GRID (2-COLUMN CARD PANEL) ============ -->
+    <!-- ============ CENTER WORKSPACE : MODULE CARDS (2-COLUMN GRID) ============ -->
     <main class="main-content">
         <div class="dashboard-fill">
             <div class="central-dash" id="page-content">
-<!-- MAIN SYSTEM DASHBOARD CENTER GRID PANEL -->
-                <div class="col px-3 py-2">
+                <!-- SYSTEM DASHBOARD GRID CONTAINER -->
+                <div class="container-fluid p-3">
 
-                    <!-- 2-COLUMN DASHBOARD CARD GRID -->
-                    <div class="row g-3 mb-4">
+                    <!-- 14-MODULE 2-COLUMN UNIFORM GRID -->
+                    <div class="row g-3">
 
-                        <!-- 1. Appointment Calendar -->
+                        <!-- 1. APPOINTMENT CALENDAR -->
                         <div class="col-md-6">
-                            <div class="card border-0 shadow-sm p-3 h-100 hms-dashboard-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('appointment_calendar')">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('appointment_calendar')">
                                 <div class="d-flex align-items-center">
-                                    <div class="me-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0072BC" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(0, 114, 188, 0.08); border-radius: 6px;">
+                                        <!-- Calendar Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0072BC" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><text x="8" y="18" font-size="7" font-weight="bold" fill="#0072BC" stroke="none">15</text></svg>
                                     </div>
-                                    <div class="text-center flex-grow-1">
+                                    <div class="text-center flex-grow-1 me-4">
                                         <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">APPOINTMENT CALENDAR</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 2. Patient Records -->
+                        <!-- 2. PATIENT RECORDS -->
                         <div class="col-md-6">
-                            <div class="card border-0 shadow-sm p-3 h-100 hms-dashboard-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('patient_records')">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('patient_records')">
                                 <div class="d-flex align-items-center">
-                                    <div class="me-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0072BC" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(0, 114, 188, 0.08); border-radius: 6px;">
+                                        <!-- Patient Folder Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0072BC" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
                                     </div>
-                                    <div class="text-center flex-grow-1">
+                                    <div class="text-center flex-grow-1 me-4">
                                         <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">PATIENT RECORDS</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 3. Investigations -->
+                        <!-- 3. ADMINISTRATOR -->
                         <div class="col-md-6">
-                            <div class="card border-0 shadow-sm p-3 h-100 hms-dashboard-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('investigations')">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('administrator')">
                                 <div class="d-flex align-items-center">
-                                    <div class="me-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M10 2v7.51L4.53 17.92A2 2 0 0 0 6.24 21h11.52a2 2 0 0 0 1.71-3.08L14 9.51V2"></path><line x1="8.5" y1="2" x2="15.5" y2="2"></line></svg>
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(55, 65, 81, 0.08); border-radius: 6px;">
+                                        <!-- PC Admin Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
                                     </div>
-                                    <div class="text-center flex-grow-1">
+                                    <div class="text-center flex-grow-1 me-4">
+                                        <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">ADMINISTRATOR</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. ACCOUNTS MANAGEMENT -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('accounts_management')">
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(16, 185, 129, 0.08); border-radius: 6px;">
+                                        <!-- Accounts Chart Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line><polyline points="4 6 9 2 15 8 20 2"></polyline></svg>
+                                    </div>
+                                    <div class="text-center flex-grow-1 me-4">
+                                        <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">ACCOUNTS MANAGEMENT</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5. INVESTIGATIONS -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('investigations')">
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(217, 119, 6, 0.08); border-radius: 6px;">
+                                        <!-- Test Tubes Lab Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><path d="M10 2v7.51L4.53 17.92A2 2 0 0 0 6.24 21h11.52a2 2 0 0 0 1.71-3.08L14 9.51V2"></path><line x1="8.5" y1="2" x2="15.5" y2="2"></line></svg>
+                                    </div>
+                                    <div class="text-center flex-grow-1 me-4">
                                         <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">INVESTIGATIONS</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 4. Pharmacy Management -->
+                        <!-- 6. PHARMACY MANAGEMENT -->
                         <div class="col-md-6">
-                            <div class="card border-0 shadow-sm p-3 h-100 hms-dashboard-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('pharmacy_management')">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('pharmacy_management')">
                                 <div class="d-flex align-items-center">
-                                    <div class="me-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><path d="M10.5 20.4l-4.2-4.2a6 6 0 0 1 8.5-8.5l4.2 4.2a6 6 0 0 1-8.5 8.5z"></path><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(239, 68, 68, 0.08); border-radius: 6px;">
+                                        <!-- Pharmacy Bottle & Cross Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><rect x="6" y="7" width="12" height="14" rx="2"></rect><path d="M9 3h6v4H9z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
                                     </div>
-                                    <div class="text-center flex-grow-1">
+                                    <div class="text-center flex-grow-1 me-4">
                                         <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">PHARMACY MANAGEMENT</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 5. IPD Management -->
+                        <!-- 7. MIS -->
                         <div class="col-md-6">
-                            <div class="card border-0 shadow-sm p-3 h-100 hms-dashboard-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('ipd_management')">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('mis')">
                                 <div class="d-flex align-items-center">
-                                    <div class="me-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M2 4v16"></path><path d="M2 8h18a2 2 0 0 1 2 2v10"></path><path d="M2 17h20"></path><path d="M6 8v9"></path></svg>
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(0, 114, 188, 0.08); border-radius: 6px;">
+                                        <!-- MIS Bar Chart Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0072BC" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
                                     </div>
-                                    <div class="text-center flex-grow-1">
+                                    <div class="text-center flex-grow-1 me-4">
+                                        <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">MIS</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 8. DHIMS REPORT -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('dhims_report')">
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: #E0F2FE; border-radius: 6px;">
+                                        <!-- DHIMS Chart/Document Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                    </div>
+                                    <div class="text-center flex-grow-1 me-4">
+                                        <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">DHIMS REPORT</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 9. IPD MANAGEMENT -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('ipd_management')">
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(15, 45, 89, 0.08); border-radius: 6px;">
+                                        <!-- ID Card Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F2D59" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="2"></circle><line x1="15" y1="8" x2="17" y2="8"></line><line x1="15" y1="12" x2="17" y2="12"></line><path d="M6 16a3 3 0 0 1 6 0"></path></svg>
+                                    </div>
+                                    <div class="text-center flex-grow-1 me-4">
                                         <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">IPD MANAGEMENT</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 6. NHIA Claim -->
+                        <!-- 10. DEPARTMENTS -->
                         <div class="col-md-6">
-                            <div class="card border-0 shadow-sm p-3 h-100 hms-dashboard-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('nhia_claim')">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('departments')">
                                 <div class="d-flex align-items-center">
-                                    <div class="me-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(0, 114, 188, 0.08); border-radius: 6px;">
+                                        <!-- Document Clipboard Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0072BC" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><line x1="9" y1="12" x2="15" y2="12"></line><line x1="9" y1="16" x2="15" y2="16"></line></svg>
                                     </div>
-                                    <div class="text-center flex-grow-1">
+                                    <div class="text-center flex-grow-1 me-4">
+                                        <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">DEPARTMENTS</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 11. SYSTEM ACTIVITIES -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('system_activities')">
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(0, 114, 188, 0.08); border-radius: 6px;">
+                                        <!-- Checklist Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0072BC" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                                    </div>
+                                    <div class="text-center flex-grow-1 me-4">
+                                        <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">SYSTEM ACTIVITIES</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 12. NHIA CLAIM -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('nhia_claim')">
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(16, 185, 129, 0.08); border-radius: 6px;">
+                                        <!-- NHIA Shield/Home Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                                    </div>
+                                    <div class="text-center flex-grow-1 me-4">
                                         <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">NHIA CLAIM</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 7. Radiology -->
+                        <!-- 13. RADIOLOGY -->
                         <div class="col-md-6">
-                            <div class="card border-0 shadow-sm p-3 h-100 hms-dashboard-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('radiology')">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('radiology')">
                                 <div class="d-flex align-items-center">
-                                    <div class="me-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(59, 130, 246, 0.08); border-radius: 6px;">
+                                        <!-- Monitor / Screen Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
                                     </div>
-                                    <div class="text-center flex-grow-1">
+                                    <div class="text-center flex-grow-1 me-4">
                                         <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">RADIOLOGY</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                    </div>
-
-                    <!-- BOTTOM CONTACT BANNER (EXACT MATCH TO IMAGE 1) -->
-                    <div class="card border-0 text-white p-3 shadow-sm" style="background-color: #0B48A0; border-radius: 6px;">
-                        <div class="d-flex align-items-center gap-4" style="font-size: 12px;">
-                            <span><strong>Email:</strong> <?php echo htmlspecialchars($contactEmail); ?></span>
-                            <span>|</span>
-                            <span><strong>Phone:</strong> <?php echo htmlspecialchars($contactPhone); ?></span>
+                        <!-- 14. MESSAGES & ALERTS -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('messages_alerts')">
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(245, 158, 11, 0.08); border-radius: 6px;">
+                                        <!-- Message Bubble Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><circle cx="17" cy="7" r="2" fill="#EF4444" stroke="none"></circle></svg>
+                                    </div>
+                                    <div class="text-center flex-grow-1 me-4">
+                                        <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">MESSAGES &amp; ALERTS</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
+                        <!-- 15. INVENTORY MANAGEMENT -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('inventory_management')">
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(16, 185, 129, 0.08); border-radius: 6px;">
+                                        <!-- Inventory Box Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                    </div>
+                                    <div class="text-center flex-grow-1 me-4">
+                                        <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">INVENTORY MANAGEMENT</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- System Footer Strip (old EHMS portal contact bar) -->
+                <div class="system-footer-strip">
+                    Email: <strong>eddie.kay@gmail.com</strong> | Phone: <strong>0547 49 74 02</strong>
                 </div>
             </div>
         </div>
@@ -900,11 +1163,9 @@ window.fmtDateTime = fmtDateTime;
     var pageTitle=document.getElementById('page-title');
     var pageContent=document.getElementById('page-content');
     var initialGridHTML=pageContent ? pageContent.innerHTML : '';
-    // System Support Contact Banner — also appended to sub-module pages (bottom of workspace).
-    // The dashboard now draws its own contact banner in the center grid, so this is the shared
-    // support-bar template used for SPA-loaded module pages.
-    var supportBannerEl=document.querySelector('.hms-system-footer-bar');
-    var supportBannerHTML=supportBannerEl ? supportBannerEl.outerHTML : '<div class="hms-system-footer-bar">Email: <strong>'+<?php echo json_encode($contactEmail); ?>+'</strong> | Phone: <strong>'+<?php echo json_encode($contactPhone); ?>+'</strong></div>';
+    // System Support Contact Banner — also appended to sub-module pages (bottom of workspace)
+    var supportBannerEl=document.querySelector('.hms-system-footer-bar') || document.querySelector('.system-footer-strip');
+    var supportBannerHTML=supportBannerEl ? supportBannerEl.outerHTML : '';
     // SPA page-history stack used by the header BACK button: returns to the
     // interface that was open before the currently loaded page, else Dashboard.
     var pageStack=[];
@@ -955,6 +1216,30 @@ window.fmtDateTime = fmtDateTime;
         });
     }
     window.loadPage=loadPage; /* expose for navigateTo fallback — pages without a sidebar link */
+    /* Module-card router : maps uniform grid module ids to the SPA page keys and navigates.
+       Kept global so inline onclick="loadModuleTab(...)" hooks on the dashboard grid work. */
+    window.loadModuleTab=function(moduleId){
+        var map={
+            appointment_calendar:'appointment-calendar',
+            patient_records:'records',
+            administrator:'administrator',
+            accounts_management:'account-management',
+            investigations:'lab-management',
+            pharmacy_management:'prices',
+            mis:'reports',
+            dhims_report:'dhims-report',
+            ipd_management:'ipd-management',
+            departments:'departments',
+            system_activities:'system-activities',
+            nhia_claim:'sponsors',
+            radiology:'vitals',
+            messages_alerts:'messages',
+            inventory_management:'inventory_management'
+        };
+        var page=map[moduleId] || moduleId;
+        var target=document.querySelector('.side-nav .nav-link[data-page="'+page+'"]');
+        loadPage(page, target || null);
+    };
     navLinks.forEach(function(link){
         link.addEventListener('click',function(e){
             e.preventDefault();
@@ -963,16 +1248,16 @@ window.fmtDateTime = fmtDateTime;
     });
     // Grab/drag visual state (teal highlight, white background maintained)
     document.addEventListener('mousedown', function(e){
-        var c = e.target.closest('.module-card, .dashboard-card, .hms-dashboard-card');
+        var c = e.target.closest('.module-card, .sys-card, .dashboard-card');
         if (c) c.classList.add('dragging');
     });
     document.addEventListener('mouseup', function(e){
-        var c = e.target.closest('.module-card, .dashboard-card, .hms-dashboard-card');
+        var c = e.target.closest('.module-card, .sys-card, .dashboard-card');
         if (c) c.classList.remove('dragging');
     });
     // Module cards, lab cards & admin buttons drive the same SPA navigation
     document.addEventListener('click',function(e){
-        var card=e.target.closest('.module-card, .dashboard-card, .admin-btn');
+        var card=e.target.closest('.module-card, .sys-card, .dashboard-card, .admin-btn');
         if(card && card.getAttribute('data-page')){
             e.preventDefault();
             var pg=card.getAttribute('data-page');
@@ -1322,31 +1607,6 @@ function initGMTDashboardTimer() {
 
 document.addEventListener('DOMContentLoaded', initGMTDashboardTimer);
 function navigateTo(page){
-    var l=document.querySelector('.side-nav .nav-link[data-page="'+page+'"]');
-    if(l){ l.click(); return; }
-    if(typeof window.loadPage==='function') window.loadPage(page);
-}
-/* Dashboard center-grid cards use loadModuleTab(KEY) in their onclick handlers.
-   Maps each module key to its SPA page name and delegates to loadPage so the
-   sidebar highlight + module grid stay in sync (same flow as the quick links). */
-var MODULE_PAGE_MAP = {
-    'appointment_calendar':'appointment-calendar',
-    'patient_records':'records',
-    'administrator':'administrator',
-    'accounts_management':'account-management',
-    'investigations':'lab-management',
-    'pharmacy_management':'prices',
-    'mis':'reports',
-    'ipd_management':'ipd-management',
-    'departments':'departments',
-    'system_activities':'system-activities',
-    'nhia_claim':'sponsors',
-    'radiology':'vitals',
-    'messages_alerts':'messages',
-    'inventory_management':'inventory_management'
-};
-function loadModuleTab(moduleKey){
-    var page=MODULE_PAGE_MAP[moduleKey]||moduleKey;
     var l=document.querySelector('.side-nav .nav-link[data-page="'+page+'"]');
     if(l){ l.click(); return; }
     if(typeof window.loadPage==='function') window.loadPage(page);

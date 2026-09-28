@@ -1,6 +1,7 @@
 <div class="card">
     <div class="card-header">
         <h2>Reports</h2>
+        <button type="button" class="btn btn-primary" onclick="openDhimsReport()">⚡ DHIMS Report</button>
     </div>
     <div class="card-body">
         <div class="form-row">
@@ -64,6 +65,11 @@ async function initReports() {
 function setupEventListeners() {
     document.getElementById('generate-report-btn').addEventListener('click', generateReport);
     document.getElementById('export-report-btn').addEventListener('click', exportReport);
+}
+
+function openDhimsReport() {
+    if (window.loadPage) window.loadPage('dhims-report');
+    else if (window.navigateTo) window.navigateTo('dhims-report');
 }
 
 async function generateReport() {
