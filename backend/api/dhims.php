@@ -14,6 +14,7 @@ requireRole(['admin', 'account']);
 
 $action = $_GET['action'] ?? '';
 $month  = $_GET['month'] ?? date('Y-m');
+$deptId = isset($_GET['department_id']) && $_GET['department_id'] !== '' ? (int)$_GET['department_id'] : null;
 
 if ($action !== 'monthly') {
     jsonResponse(['error' => 'Invalid action'], 400);
@@ -23,6 +24,18 @@ if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
 }
 
 $db = Database::getInstance();
+
+/* Optional department / clinic filter (validated against the departments table). */
+$deptClause = '';
+$visitParams = [$month];
+if ($deptId !== null) {
+    $dept = $db->fetchOne("SELECT id, name FROM departments WHERE id = ?", [$deptId]);
+    if (!$dept) {
+        jsonResponse(['error' => 'Invalid department_id'], 400);
+    }
+    $deptClause = ' AND department_id = ' . (int)$deptId;
+    $visitParams[] = $deptId;
+}
 
 /* ---- Patient registrations in the month ---- */
 $reg = $db->fetchOne(

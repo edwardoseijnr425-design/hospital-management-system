@@ -1227,7 +1227,7 @@ window.fmtDateTime = fmtDateTime;
             investigations:'lab-management',
             pharmacy_management:'prices',
             mis:'reports',
-            dhims_report:'dhims-report',
+            dhims_report:'reports',
             ipd_management:'ipd-management',
             departments:'departments',
             system_activities:'system-activities',
