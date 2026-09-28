@@ -1,16 +1,62 @@
 <?php
-// Laboratory & Investigations Dashboard (mockup-style 2-column layout).
-// Server-side prologue: resolve the logged-in staff name, role, and today's date
-// for the login-status card. The shell (dashboard.php) already authenticated.
+// Laboratory & Investigations Dashboard (full-width EHMS module page).
+// Server-side prologue: logged-in staff name/role, and the laboratory
+// investigation catalogue (category -> test + price) used by the Entries Form.
 require_once __DIR__ . '/../../backend/config/config.php';
 $__labStaff = getCurrentUserName() ?: 'STAFF';
 $__labRole  = getCurrentUserRole() ?: 'STAFF';
+
+// ---- Laboratory investigation catalogue (single source of truth) -------------
+// Edit prices here; the "Lab to be Done" dropdown and the auto-generated
+// price field are both rendered from this list.
+$__labCategories = [
+    'hematology'   => 'Hematology',
+    'parasitology' => 'Parasitology & Serology',
+    'biochemistry' => 'Biochemistry',
+    'microbiology' => 'Microbiology',
+];
+$__labCatalog = [
+    'hematology' => [
+        ['fbc',         'Full Blood Count (FBC)',                    50.00],
+        ['hb',          'Hemoglobin (Hb) Level',                      20.00],
+        ['blood_group', 'Blood Grouping & Rh Factor',                 30.00],
+        ['sickling',    'Sickling Test / Hb Electrophoresis',         25.00],
+        ['esr',         'Erythrocyte Sedimentation Rate (ESR)',       30.00],
+    ],
+    'parasitology' => [
+        ['malaria_rdt', 'Malaria RDT',                                15.00],
+        ['malaria_mps', 'Malaria Microscopy (MPS)',                   25.00],
+        ['widal',       'Widal Test (Typhoid)',                       30.00],
+        ['hbsag',       'Hepatitis B Screening (HBsAg)',              35.00],
+        ['hiv',         'HIV Screening Test',                         20.00],
+        ['vdrl',        'Syphilis (VDRL/RPR)',                        20.00],
+    ],
+    'biochemistry' => [
+        ['fbs',   'Fasting Blood Sugar (FBS)',                       15.00],
+        ['rbs',   'Random Blood Sugar (RBS)',                        15.00],
+        ['lft',   'Liver Function Tests (LFTs)',                    120.00],
+        ['kft',   'Kidney Function Tests (KFTs)',                   130.00],
+        ['lipid', 'Lipid Profile',                                   110.00],
+    ],
+    'microbiology' => [
+        ['urine_re', 'Urine Routine Examination',                     20.00],
+        ['urine_cs', 'Urine Culture & Sensitivity',                   80.00],
+        ['stool_re', 'Stool Routine Examination',                     20.00],
+        ['hvs_cs',   'High Vaginal Swab (HVS) C&S',                  90.00],
+    ],
+];
+$__labPrice = function ($code) use ($__labCatalog) {
+    foreach ($__labCatalog as $items) {
+        foreach ($items as $it) { if ($it[0] === $code) return $it[2]; }
+    }
+    return 0.0;
+};
 ?>
 <style>
-/* ================= LAB & INVESTIGATIONS : 2-COLUMN MOCKUP LAYOUT =================
+/* ================= LAB & INVESTIGATIONS : FULL-WIDTH MODULE =================
    Scoped under #lab-page. No Bootstrap — every utility defined here.
-   Font Awesome icons are available because the shell already loads
-   frontend/assets/fontawesome/css/all.min.css. No inline footer: the shell
+   Font Awesome is available (the shell loads
+   frontend/assets/fontawesome/css/all.min.css). No inline footer: the shell
    auto-appends the system support banner to every module page. */
 #lab-page{background:#dce7f2;color:#333;font-size:13px;min-height:100vh;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding-bottom:30px}
 #lab-page *,#lab-page *::before,#lab-page *::after{box-sizing:border-box}
@@ -18,84 +64,82 @@ $__labRole  = getCurrentUserRole() ?: 'STAFF';
 /* ---- TOP BAR (HMS - HEALTHCARE MANAGEMENT SYSTEM branding) ---- */
 #lab-page .lab-topbar{background-color:#0b5fa5;color:#fff;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 5px rgba(0,0,0,0.15);flex-wrap:wrap;gap:8px}
 #lab-page .lab-topbar .title-group{display:flex;align-items:center;gap:10px}
-#lab-page .lab-topbar .title-group svg{width:24px;height:24px;fill:#ffffff}
+#lab-page .lab-topbar .title-group svg{width:22px;height:22px;fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #lab-page .lab-topbar-title{font-size:16px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase}
-#lab-page .lab-topbar-right{display:flex;align-items:center;gap:15px;flex-wrap:wrap;justify-content:flex-end}
+#lab-page .lab-topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 #lab-page .lab-topbar-right > span{font-size:11px}
 #lab-page .lab-nav-btn{background-color:#0088cc;color:#fff;border:none;padding:5px 12px;font-size:11px;font-weight:bold;border-radius:3px;cursor:pointer;text-decoration:none;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
 #lab-page .lab-nav-btn:hover{background-color:#006699}
 
-/* ---- PAGE HEADER + ACTIONS ---- */
-#lab-page .lab-wrap{max-width:1200px;margin:0 auto;padding:16px}
-#lab-page .lab-header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-#lab-page .lab-header-title{font-size:17px;font-weight:800;color:#0F2D59;text-transform:uppercase;letter-spacing:.6px;display:flex;align-items:center;gap:8px}
-#lab-page .lab-header-title i{color:#0b5fa5}
-#lab-page .lab-header-actions{display:flex;gap:8px;flex-wrap:wrap}
-#lab-page .lab-h-btn{border:none;border-radius:3px;cursor:pointer;font-weight:bold;font-size:11px;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-family:inherit;transition:filter .15s}
-#lab-page .lab-h-btn i{font-size:12px}
-#lab-page .lab-h-btn.secondary{background-color:#7f8c8d;color:#fff}
-#lab-page .lab-h-btn.secondary:hover{background-color:#636e72}
-#lab-page .lab-h-btn.primary{background-color:#0072BC;color:#fff}
-#lab-page .lab-h-btn.primary:hover{filter:brightness(1.08)}
-
-/* ---- 2-COLUMN GRID ---- */
-#lab-page .lab-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;align-items:start}
-#lab-page .lab-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+/* ---- MODULE HEADER + ACTIONS ---- */
+#lab-page .lab-wrap{max-width:1240px;margin:0 auto;padding:12px 16px 16px}
+#lab-page .lab-modhead{background:linear-gradient(135deg,#0D47A1,#0072BC);color:#fff;padding:9px 16px;border-radius:6px 6px 0 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 2px 6px rgba(13,71,161,.22)}
+#lab-page .lab-modhead .left{display:flex;align-items:center;gap:10px}
+#lab-page .lab-modhead .left svg{width:22px;height:22px;fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#lab-page .lab-modhead h2{margin:0;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+#lab-page .lab-modhead .actions{display:flex;gap:8px;flex-wrap:wrap}
+#lab-page .lab-h-btn{border:none;border-radius:3px;cursor:pointer;font-weight:bold;font-size:11px;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:6px;padding:6px 14px;font-family:inherit;transition:background .15s,filter .15s}
+#lab-page .lab-h-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#lab-page .lab-h-btn.secondary{background-color:#5a6b7c;color:#fff}
+#lab-page .lab-h-btn.secondary:hover{background-color:#48596a}
+#lab-page .lab-h-btn.light{background-color:#fff;color:#0D47A1}
+#lab-page .lab-h-btn.light:hover{filter:brightness(.96)}
 
 /* ---- PANELS ---- */
-#lab-page .lab-panel{background:#fff;border:1px solid #b2c8de;border-radius:4px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,0.06)}
+#lab-page .lab-panel{background:#fff;border:1px solid #b2c8de;border-top:none;border-radius:0 0 6px 6px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,.06)}
+#lab-page .lab-panel + .lab-panel{margin-top:14px}
 #lab-page .lab-panel-head{background-color:#0b5fa5;color:#fff;font-weight:bold;font-size:12px;padding:9px 14px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-#lab-page .lab-panel-head i{color:#FFD54F}
-#lab-page .lab-panel-head .lab-head-link{color:#FFD166;font-size:10px;text-transform:uppercase;cursor:pointer;text-decoration:underline;font-weight:bold}
-#lab-page .lab-panel-head .lab-head-link:hover{color:#fff}
-#lab-page .lab-live-sync{display:inline-block;background:#27ae60;color:#fff;font-size:9px;font-weight:bold;letter-spacing:.4px;padding:2px 8px;border-radius:999px;text-transform:uppercase}
+#lab-page .lab-panel-head.dark{background-color:#1f2933}
+#lab-page .lab-panel-head .head-left{display:flex;align-items:center;gap:8px}
+#lab-page .lab-panel-head svg{width:17px;height:17px;fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#lab-page .lab-panel-head .head-link{color:#FFD166;font-size:10px;text-transform:uppercase;cursor:pointer;text-decoration:underline;font-weight:bold;background:none;border:none;font-family:inherit}
+#lab-page .lab-panel-head .head-link:hover{color:#fff}
+#lab-page .lab-live-sync{display:inline-block;background:#27ae60;color:#fff;font-size:9px;font-weight:bold;letter-spacing:.4px;padding:3px 9px;border-radius:999px;text-transform:uppercase}
 
 /* ---- ENTRIES FORM ---- */
 #lab-page .lab-form{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;padding:16px 18px;background-color:#f8fafc}
 #lab-page .lab-field{display:flex;flex-direction:column;gap:5px}
-#lab-page .lab-field-full{grid-column:span 2}
+#lab-page .lab-field-wide{grid-column:span 1}
 #lab-page .lab-field label{font-weight:700;color:#222;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+#lab-page .lab-field label .req{color:#e74c3c;font-weight:bold}
 #lab-page .lab-field select,#lab-page .lab-field input{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;background-color:#fff;color:#222;font-family:inherit}
 #lab-page .lab-field select:focus,#lab-page .lab-field input:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
 #lab-page .lab-field input[readonly]{background-color:#eef3f8;color:#555;cursor:not-allowed}
-#lab-page .lab-form-actions{grid-column:span 2;display:flex;justify-content:flex-end;gap:10px;margin-top:4px}
-#lab-page .lab-btn-submit{background-color:#0b5fa5;color:#fff;border:none;padding:9px 22px;font-weight:bold;font-size:12px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:7px}
+#lab-page .lab-form-actions{grid-column:span 2;display:flex;justify-content:flex-end;margin-top:2px}
+#lab-page .lab-btn-submit{background-color:#0b5fa5;color:#fff;border:none;padding:9px 24px;font-weight:bold;font-size:12px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:8px}
 #lab-page .lab-btn-submit:hover{background-color:#004080}
-#lab-page .lab-btn-submit:disabled{opacity:.6;cursor:not-allowed}
+#lab-page .lab-btn-submit svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---- VIEW TOOLBAR (search + MIS views) ---- */
+#lab-page .lab-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid #e1e8f0;background-color:#f8fafc}
+#lab-page .lab-toolbar .search{display:flex;align-items:center;gap:8px;flex:1 1 240px;min-width:200px}
+#lab-page .lab-toolbar .search svg{width:16px;height:16px;fill:none;stroke:#0b5fa5;stroke-width:2;flex-shrink:0}
+#lab-page .lab-toolbar .search input{flex:1;padding:6px 9px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;font-family:inherit;background:#fff}
+#lab-page .lab-toolbar .search input:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
+#lab-page .lab-chip{border:1px solid #b2c8de;background:#fff;color:#0b5fa5;border-radius:3px;padding:5px 11px;font-weight:bold;font-size:10px;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+#lab-page .lab-chip:hover{background:#e2edf7}
+#lab-page .lab-chip.active{background:#d2e3f3;border-color:#0b5fa5;color:#0b3e8f}
+#lab-page .lab-chip i{font-size:11px}
 
 /* ---- TABLE ---- */
-#lab-page .lab-table-wrap{background-color:#fff;max-height:420px;overflow-y:auto}
+#lab-page .lab-table-wrap{background-color:#fff;max-height:460px;overflow-y:auto}
 #lab-page .lab-table{width:100%;border-collapse:collapse;font-size:11px}
-#lab-page .lab-table th{background-color:#e6eef5;color:#222;font-weight:bold;text-align:left;padding:8px;border-bottom:2px solid #b2c8de;position:sticky;top:0;z-index:1;white-space:nowrap}
+#lab-page .lab-table th{background-color:#e6eef5;color:#222;font-weight:bold;text-align:left;padding:8px;border-bottom:2px solid #b2c8de;position:sticky;top:0;z-index:1;white-space:nowrap;text-transform:uppercase;font-size:10.5px;letter-spacing:.3px}
 #lab-page .lab-table td{padding:7px 8px;border-bottom:1px solid #e1e8f0;vertical-align:middle}
 #lab-page .lab-table tbody tr:hover{background-color:#eef4fb}
-#lab-page .lab-empty{text-align:center;padding:14px;color:#8a94a6}
-#lab-page .lab-badge{padding:2px 6px;border-radius:2px;font-weight:bold;font-size:10px}
-#lab-page .lab-status-sent{color:#27ae60;background:rgba(39,174,96,.12)}
-#lab-page .lab-status-abs{color:#e67e22;background:rgba(230,126,34,.12)}
-#lab-page .lab-status-not{color:#e74c3c;background:rgba(231,76,60,.12)}
-#lab-page .lab-status-info{color:#0b5fa5;background:rgba(11,95,165,.12)}
-#lab-page .lab-btn-outline{background-color:#fff;color:#0b5fa5;border:1px solid #b2c8de;padding:4px 10px;font-weight:bold;font-size:10px;border-radius:3px;cursor:pointer;font-family:inherit}
+#lab-page .lab-table .first-col{padding-left:14px}
+#lab-page .lab-table .act-col{text-align:center;white-space:nowrap}
+#lab-page .lab-empty{text-align:center;padding:16px;color:#8a94a6}
+#lab-page .lab-badge{display:inline-block;padding:2px 8px;border-radius:3px;font-weight:bold;font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+#lab-page .lab-status-ready{color:#1E7A34;background:#E9F9EF}
+#lab-page .lab-status-sent{color:#0D47A1;background:#E8F4FD}
+#lab-page .lab-status-abs{color:#B9770E;background:#FEF5E0}
+#lab-page .lab-status-not{color:#B23B3B;background:#FDEBEC}
+#lab-page .lab-btn-outline{background-color:#fff;color:#0b5fa5;border:1px solid #b2c8de;padding:4px 11px;font-weight:bold;font-size:10px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
 #lab-page .lab-btn-outline:hover{background-color:#e2edf7}
-#lab-page .lab-btn-success{background-color:#27ae60;color:#fff;border:none;padding:4px 10px;font-weight:bold;font-size:10px;border-radius:3px;cursor:pointer;font-family:inherit}
+#lab-page .lab-btn-success{background-color:#27ae60;color:#fff;border:none;padding:4px 11px;font-weight:bold;font-size:10px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
 #lab-page .lab-btn-success:hover{background-color:#1e8c4d}
-
-/* ---- SEARCH ---- */
-#lab-page .lab-search{padding:12px 14px;background-color:#f8fafc;display:flex;gap:8px}
-#lab-page .lab-search input{flex:1;padding:7px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;font-family:inherit;background-color:#fff}
-#lab-page .lab-search input:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
-#lab-page .lab-search svg{width:16px;height:16px;align-self:center;fill:#0b5fa5}
-
-/* ---- QUICK ACCESS FOR MIS REPORTS ---- */
-#lab-page .lab-mis{display:flex;flex-direction:column;gap:8px;padding:12px 14px;background:#fff}
-#lab-page .lab-mis-btn{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #b2c8de;border-radius:3px;background-color:#f4f8fb;text-decoration:none;color:#222;font-weight:bold;font-size:11px;transition:background .2s;cursor:pointer;width:100%;text-align:left;font-family:inherit}
-#lab-page .lab-mis-btn:hover{background-color:#e2edf7}
-#lab-page .lab-mis-btn.active{background-color:#d2e3f3;border-color:#0b5fa5}
-#lab-page .lab-mis-btn i{font-size:18px;width:24px;text-align:center}
-#lab-page .lab-ico-dispatched{color:#34495e}
-#lab-page .lab-ico-dhims{color:#f39c12}
-#lab-page .lab-ico-ready{color:#27ae60}
-#lab-page .lab-ico-notready{color:#e74c3c}
+#lab-page .lab-btn-success svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
 
 /* ---- RESULT ENTRY MODAL (scoped) ---- */
 #lab-page .modal{display:none;position:fixed;inset:0;z-index:2000;background:rgba(15,45,89,.55);align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
@@ -119,10 +163,8 @@ $__labRole  = getCurrentUserRole() ?: 'STAFF';
 #lab-page .btn-secondary{background:#F1F5F9;color:#34495E;border:1px solid #C0C0C0}
 #lab-page .btn-secondary:hover{background:#E2E8F0}
 
-@media (max-width:900px){
-  #lab-page .lab-grid{grid-template-columns:1fr}
+@media (max-width:760px){
   #lab-page .lab-form{grid-template-columns:1fr}
-  #lab-page .lab-field-full{grid-column:span 1}
   #lab-page .lab-form-actions{grid-column:span 1}
   #lab-page .lab-topbar .lab-tag-hide{display:none}
 }
@@ -134,7 +176,7 @@ $__labRole  = getCurrentUserRole() ?: 'STAFF';
   <!-- TOP BAR -->
   <div class="lab-topbar">
     <div class="title-group">
-      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 3h2v7h-2z"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M10 2v7.31M14 2v7.31M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0M5.5 15.5h13"/></svg>
       <div class="lab-topbar-title">Laboratory</div>
     </div>
     <div class="lab-topbar-right">
@@ -147,112 +189,110 @@ $__labRole  = getCurrentUserRole() ?: 'STAFF';
 
   <div class="lab-wrap">
 
-    <!-- PAGE TITLE & HEADER ACTIONS -->
-    <div class="lab-header">
-      <div class="lab-header-title"><i class="fa fa-flask"></i> Lab &amp; Investigations Dashboard</div>
-      <div class="lab-header-actions">
-        <button type="button" class="lab-h-btn secondary" onclick="labGoBack()"><i class="fa fa-undo"></i> Cancel</button>
-        <button type="button" class="lab-h-btn primary" onclick="labRefresh()"><i class="fa fa-sync"></i> Refresh Data</button>
+    <!-- TOP MODULE HEADER -->
+    <div class="lab-modhead">
+      <div class="left">
+        <svg viewBox="0 0 24 24"><path d="M10 2v7.31M14 2v7.31M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0M5.5 15.5h13"/></svg>
+        <h2>Lab &amp; Investigations Dashboard</h2>
+      </div>
+      <div class="actions">
+        <button type="button" class="lab-h-btn secondary" onclick="labGoBack()">
+          <svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+          Cancel
+        </button>
+        <button type="button" class="lab-h-btn light" onclick="labRefresh()">
+          <svg viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh Data
+        </button>
       </div>
     </div>
 
-    <div class="lab-grid">
-
-      <!-- ======================= LEFT COLUMN ======================= -->
-      <div class="lab-col">
-
-        <!-- ENTRIES FORM - REQUEST LAB TEST -->
-        <div class="lab-panel">
-          <div class="lab-panel-head"><span><i class="fa fa-edit"></i> Entries Form - Request Lab Test</span></div>
-          <form class="lab-form" id="labEntryForm">
-            <div class="lab-field">
-              <label for="entryPatient">Patient ID or Name *</label>
-              <select id="entryPatient" required>
-                <option value="">-- Select Patient / Visit --</option>
-              </select>
-            </div>
-
-            <div class="lab-field">
-              <label for="labType">Lab Type</label>
-              <select id="labType" onchange="updateLabPrice()">
-                <option value="">Select Lab Type --</option>
-                <option value="haematology">Haematology</option>
-                <option value="biochemistry">Biochemistry</option>
-                <option value="microbiology">Microbiology</option>
-                <option value="parasitology">Parasitology</option>
-              </select>
-            </div>
-
-            <div class="lab-field lab-field-full">
-              <label for="labToDone">Lab to be Done *</label>
-              <input type="text" id="labToDone" placeholder="e.g. Full Blood Count (FBC), Malaria RDT" required>
-            </div>
-
-            <div class="lab-field lab-field-full">
-              <label for="price">Price (GH₵)</label>
-              <input type="text" id="price" placeholder="Auto-generated" readonly>
-            </div>
-
-            <div class="lab-form-actions">
-              <button type="submit" class="lab-btn-submit"><i class="fa fa-paper-plane"></i> Submit Request</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- ALL LABS REQUESTED BY THE DOCTOR / MIS VIEWS -->
-        <div class="lab-panel">
-          <div class="lab-panel-head">
-            <span><i class="fa fa-list"></i> <span id="labMainTitle">ALL LABS REQUESTED BY THE DOCTOR</span></span>
-            <span style="display:flex;align-items:center;gap:8px;">
-              <span class="lab-live-sync">Live Sync</span>
-              <a class="lab-head-link" id="labViewAllLink" style="display:none;" onclick="setLabView('requested')">View All Requests</a>
-            </span>
-          </div>
-          <div class="lab-table-wrap">
-            <div id="labMainView"><div class="lab-empty">Loading...</div></div>
-          </div>
-        </div>
-
+    <!-- ENTRIES FORM - REQUEST LAB TEST -->
+    <div class="lab-panel">
+      <div class="lab-panel-head">
+        <span class="head-left">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Entries Form - Request Lab Test
+        </span>
       </div>
-
-      <!-- ======================= RIGHT COLUMN ======================= -->
-      <div class="lab-col">
-
-        <!-- SEARCH -->
-        <div class="lab-panel">
-          <div class="lab-panel-head"><span><i class="fa fa-search"></i> Search</span></div>
-          <div class="lab-search">
-            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-            <input type="text" id="labGlobalSearch" placeholder="By System Name / ID..." oninput="renderLabMain()">
-          </div>
+      <form class="lab-form" id="labEntryForm">
+        <div class="lab-field">
+          <label for="entryPatient">Patient ID or Name <span class="req">*</span></label>
+          <select id="entryPatient" required>
+            <option value="">-- Select Visit --</option>
+          </select>
         </div>
 
-        <!-- QUICK ACCESS FOR MIS REPORTS -->
-        <div class="lab-panel">
-          <div class="lab-panel-head"><span><i class="fa fa-file-alt"></i> Quick Access for MIS Reports</span></div>
-          <div class="lab-mis">
-            <div class="lab-mis-btn" id="misDispatched" onclick="setLabView('dispatched')">
-              <i class="fa fa-envelope-open lab-ico-dispatched"></i>
-              <span>All Labs Dispatched (<span id="labDispCount">0</span>)</span>
-            </div>
-            <div class="lab-mis-btn" onclick="labNav('mis')">
-              <i class="fa fa-chart-line lab-ico-dhims"></i>
-              <span>DHIMS Report</span>
-            </div>
-            <div class="lab-mis-btn" id="misReady" onclick="setLabView('ready')">
-              <i class="fa fa-check-circle lab-ico-ready"></i>
-              <span>All Ready Labs (<span id="labReadyCount">0</span>)</span>
-            </div>
-            <div class="lab-mis-btn" id="misNotready" onclick="setLabView('notready')">
-              <i class="fa fa-times-circle lab-ico-notready"></i>
-              <span>Not Ready Labs (<span id="labNotReadyCount">0</span>)</span>
-            </div>
-          </div>
+        <div class="lab-field">
+          <label for="labType">Lab Type <span class="req">*</span></label>
+          <select id="labType" required onchange="updateLabTests()">
+            <option value="">Select Lab Type</option>
+            <?php foreach ($__labCategories as $__key => $__label): ?>
+              <option value="<?php echo htmlspecialchars($__key, ENT_QUOTES); ?>"><?php echo htmlspecialchars($__label, ENT_QUOTES); ?></option>
+            <?php endforeach; ?>
+          </select>
         </div>
 
-      </div>
+        <div class="lab-field">
+          <label for="labToDone">Lab to be Done (Parameters) <span class="req">*</span></label>
+          <select id="labToDone" required onchange="updateLabPrice()">
+            <option value="">-- Select Lab Parameter --</option>
+            <?php foreach ($__labCatalog as $__cat => $__items): ?>
+              <optgroup label="<?php echo htmlspecialchars($__labCategories[$__cat], ENT_QUOTES); ?>" data-category="<?php echo htmlspecialchars($__cat, ENT_QUOTES); ?>">
+                <?php foreach ($__items as $__it): ?>
+                  <option value="<?php echo htmlspecialchars($__it[1], ENT_QUOTES); ?>"
+                          data-code="<?php echo htmlspecialchars($__it[0], ENT_QUOTES); ?>"
+                          data-price="<?php echo number_format($__it[2], 2, '.', ''); ?>"><?php echo htmlspecialchars($__it[1], ENT_QUOTES); ?></option>
+                <?php endforeach; ?>
+              </optgroup>
+            <?php endforeach; ?>
+          </select>
+        </div>
 
+        <div class="lab-field">
+          <label for="price">Price (GHS)</label>
+          <input type="text" id="price" placeholder="GHS 0.00" readonly>
+        </div>
+
+        <div class="lab-form-actions">
+          <button type="submit" class="lab-btn-submit">
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Submit Request
+          </button>
+        </div>
+      </form>
     </div>
+
+    <!-- REQUESTED LABS TABLE -->
+    <div class="lab-panel">
+      <div class="lab-panel-head dark">
+        <span class="head-left">
+          <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <span id="labMainTitle">ALL LABS REQUESTED BY THE DOCTOR</span>
+        </span>
+        <span style="display:flex;align-items:center;gap:10px;">
+          <a class="head-link" id="labViewAllLink" style="display:none;" onclick="setLabView('requested')">View All Requests</a>
+          <span class="lab-live-sync">Live Sync</span>
+        </span>
+      </div>
+
+      <!-- Search + MIS view filters -->
+      <div class="lab-toolbar">
+        <div class="search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" id="labGlobalSearch" placeholder="By Patient / Test / Req. ID..." oninput="renderLabMain()">
+        </div>
+        <button type="button" class="lab-chip" id="misDispatched" onclick="setLabView('dispatched')"><i class="fa fa-envelope-open"></i> Dispatched (<span id="labDispCount">0</span>)</button>
+        <button type="button" class="lab-chip" id="misReady" onclick="setLabView('ready')"><i class="fa fa-check-circle"></i> Ready (<span id="labReadyCount">0</span>)</button>
+        <button type="button" class="lab-chip" id="misNotready" onclick="setLabView('notready')"><i class="fa fa-times-circle"></i> Not Ready (<span id="labNotReadyCount">0</span>)</button>
+        <button type="button" class="lab-chip" onclick="labNav('mis')"><i class="fa fa-chart-line"></i> DHIMS Report</button>
+      </div>
+
+      <div class="lab-table-wrap">
+        <div id="labMainView"><div class="lab-empty">Loading...</div></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -306,12 +346,10 @@ var labData = [];
 var labResultsMap = {};
 var visitsCache = [];
 var DISPATCH_KEY = 'hms:lab-dispatched';
-var LAB_PRICES = { haematology: 'GHS 150.00', biochemistry: 'GHS 220.00', microbiology: 'GHS 180.00', parasitology: 'GHS 90.00' };
 var LAB_VIEW = 'requested';
 
 async function initLabManagement() {
     setupLabEvents();
-    loadUnreadCount();
     await Promise.all([loadVisits(), loadLabRequests()]);
 }
 
@@ -346,34 +384,13 @@ function labGoPassword() {
     else if (window.loadPage) window.loadPage('change-password');
 }
 
-function labLogout() {
-    fetch('/hms/backend/api/auth.php?action=logout', { method: 'POST' })
-        .then(function () { window.location.href = '/hms/frontend/index.php'; })
-        .catch(function () { window.location.href = '/hms/frontend/index.php'; });
-}
-
 /* ================= REFRESH DATA ================= */
 function labRefresh() {
-    loadUnreadCount();
     Promise.all([loadVisits(), loadLabRequests()]).then(function () {
         showAlert('Lab data refreshed.', 'success');
     }).catch(function () {
         showAlert('Refresh failed — please try again.', 'error');
     });
-}
-
-async function loadUnreadCount() {
-    try {
-        var r = await fetch('/hms/backend/api/messages.php?action=unread_count');
-        var d = await r.json();
-        if (d.success) {
-            var badge = document.getElementById('labUnreadBadge');
-            if (badge) {
-                badge.textContent = d.unread;
-                badge.style.display = d.unread > 0 ? 'inline' : 'none';
-            }
-        }
-    } catch (e) { console.error('Unread count error:', e); }
 }
 
 /* ================= ENTRIES FORM (Lab Request) ================= */
@@ -393,9 +410,39 @@ async function loadVisits() {
         }).join('');
 }
 
+/* Filter the "Lab to be Done" options to the selected Lab Type (optgroups) */
+function updateLabTests() {
+    var sel = document.getElementById('labToDone');
+    var cat = document.getElementById('labType').value;
+    if (!sel) return;
+    Array.prototype.forEach.call(sel.querySelectorAll('optgroup'), function (grp) {
+        var show = !cat || grp.getAttribute('data-category') === cat;
+        grp.hidden = !show;
+        grp.disabled = !show;
+        Array.prototype.forEach.call(grp.querySelectorAll('option'), function (opt) {
+            opt.hidden = !show;
+            opt.disabled = !show;
+        });
+    });
+    if (cat) {
+        sel.querySelector('option[value=""]').textContent = '-- Select Investigation --';
+    } else {
+        sel.querySelector('option[value=""]').textContent = '-- Select Lab Parameter --';
+    }
+    sel.value = '';
+    document.getElementById('price').value = '';
+}
+
+/* Auto-generate the price from the selected investigation's data-price */
 function updateLabPrice() {
-    var type = document.getElementById('labType').value;
-    document.getElementById('price').value = LAB_PRICES[type] || '';
+    var sel = document.getElementById('labToDone');
+    var opt = sel && sel.options[sel.selectedIndex];
+    var priceField = document.getElementById('price');
+    if (!opt || !opt.value || !opt.getAttribute('data-price')) {
+        priceField.value = '';
+        return;
+    }
+    priceField.value = 'GHS ' + opt.getAttribute('data-price');
 }
 
 async function handleLabEntrySubmit(e) {
@@ -404,12 +451,18 @@ async function handleLabEntrySubmit(e) {
     var testType = document.getElementById('labToDone').value.trim();
     var labType = document.getElementById('labType').value;
     if (!visitId) { showAlert('Select the patient / visit first.', 'error'); return; }
-    if (!testType) { showAlert('Enter the lab test to be done.', 'error'); return; }
+    if (!labType) { showAlert('Select the lab type.', 'error'); return; }
+    if (!testType) { showAlert('Select the lab investigation / parameter.', 'error'); return; }
+
+    var sel = document.getElementById('labToDone');
+    var opt = sel.options[sel.selectedIndex];
+    var price = opt.getAttribute('data-price') || '0.00';
+    var code = opt.getAttribute('data-code') || '';
 
     var data = {
         visit_id: visitId,
         test_type: testType,
-        test_description: labType ? 'Category: ' + labType.charAt(0).toUpperCase() + labType.slice(1) : '',
+        test_description: 'Category: ' + labType + (code ? ' (' + code + ')' : '') + ' | Price: GHS ' + price,
         urgency: 'routine'
     };
     try {
@@ -420,7 +473,7 @@ async function handleLabEntrySubmit(e) {
         });
         var d = await r.json();
         if (d.success) {
-            showAlert('Lab request submitted.', 'success');
+            showAlert('Lab request submitted for ' + testType + ' — GHS ' + price + '.', 'success');
             document.getElementById('labEntryForm').reset();
             document.getElementById('price').value = '';
             setLabView('requested');
@@ -474,21 +527,10 @@ function renderLabCounts() {
 }
 
 function labStatusBadge(status) {
-    if (status === 'completed') return '<span class="lab-badge lab-status-sent">Ready</span>';
-    if (status === 'in_progress') return '<span class="lab-badge lab-status-sent">Sent</span>';
+    if (status === 'completed') return '<span class="lab-badge lab-status-ready">Ready</span>';
+    if (status === 'in_progress') return '<span class="lab-badge lab-status-sent">In Progress</span>';
     if (status === 'cancelled') return '<span class="lab-badge lab-status-abs">ABS</span>';
-    return '<span class="lab-badge lab-status-not">Not Ready</span>';
-}
-
-function labFilteredRows() {
-    var q = (document.getElementById('labGlobalSearch').value || '').trim().toLowerCase();
-    if (!q) return labData;
-    return labData.filter(function (r) {
-        return String(r.patient_name || '').toLowerCase().indexOf(q) >= 0
-            || String(r.hospital_number || '').toLowerCase().indexOf(q) >= 0
-            || String(r.test_type || '').toLowerCase().indexOf(q) >= 0
-            || String(r.id || '').indexOf(q) >= 0;
-    });
+    return '<span class="lab-badge lab-status-not">Not Ready</span>;
 }
 
 function setLabView(view) {
@@ -522,50 +564,55 @@ function renderLabMain() {
                 || String(r.id || '').indexOf(q) >= 0;
         });
     };
+    var actionCell = function (r) {
+        if (r.status === 'pending' || r.status === 'in_progress') {
+            return '<button class="lab-btn-outline" onclick="openEntryFor(' + r.id + ')">Process</button>';
+        }
+        if (r.status === 'completed') {
+            return '<button class="lab-btn-success" onclick="dispatchReport(' + r.id + ')">'
+                + '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Dispatch</button>';
+        }
+        return '<span style="color:#8a94a6;">—</span>';
+    };
 
     if (LAB_VIEW === 'requested') {
         var rows = filter(labData);
-        holder.innerHTML = '<table class="lab-table"><thead><tr>' +
-            '<th>Req. ID</th><th>Patient Name</th><th>Lab Test</th><th>Doctor</th><th>Request Date</th><th>Status</th>' +
-            '</tr></thead><tbody>' + (rows.length
+        holder.innerHTML = '<table class="lab-table"><thead><tr>'
+            + '<th class="first-col">Req ID</th><th>Patient Name</th><th>Lab Test</th><th>Doctor</th><th>Request Date</th><th>Status</th><th class="act-col">Action</th>'
+            + '</tr></thead><tbody>' + (rows.length
                 ? rows.map(function (r) {
-                    var action = '';
-                    if (r.status === 'pending' || r.status === 'in_progress') {
-                        action = '<button class="lab-btn-outline" style="margin-left:4px;" onclick="openEntryFor(' + r.id + ')">Process</button>';
-                    } else if (r.status === 'completed') {
-                        action = '<button class="lab-btn-success" style="margin-left:4px;" onclick="dispatchReport(' + r.id + ')">Dispatch</button>';
-                    }
-                    return '<tr>' +
-                        '<td class="fw-bold">#LAB-' + escHtml(r.id) + '</td>' +
-                        '<td class="fw-bold">' + escHtml(r.patient_name || '--') + '</td>' +
-                        '<td>' + escHtml(r.test_type || '--') + '</td>' +
-                        '<td>' + escHtml(r.doctor_name || '--') + '</td>' +
-                        '<td>' + fmtLabTime(r.requested_at) + '</td>' +
-                        '<td>' + labStatusBadge(r.status) + action + '</td>' +
-                    '</tr>';
+                    return '<tr>'
+                        + '<td class="first-col" style="font-weight:700;">LAB ' + escHtml(r.id) + '</td>'
+                        + '<td style="font-weight:700;">' + escHtml(r.patient_name || '--') + '</td>'
+                        + '<td>' + escHtml(r.test_type || '--') + '</td>'
+                        + '<td>' + escHtml(r.doctor_name || '--') + '</td>'
+                        + '<td>' + fmtLabTime(r.requested_at) + '</td>'
+                        + '<td>' + labStatusBadge(r.status) + '</td>'
+                        + '<td class="act-col">' + actionCell(r) + '</td>'
+                        + '</tr>';
                 }).join('')
-                : '<tr><td colspan="6" class="lab-empty">' + (q ? 'No requests match "' + escHtml(q) + '".' : 'No lab requests yet — use the Entries Form above to add one.') + '</td></tr>') +
-            '</tbody></table>';
+                : '<tr><td colspan="7" class="lab-empty">' + (q ? 'No requests match "' + escHtml(q) + '".' : 'No lab requests yet — use the Entries Form above to add one.') + '</td></tr>')
+            + '</tbody></table>';
         return;
     }
 
     if (LAB_VIEW === 'notready') {
         var nrows = filter(labData.filter(function (r) { return r.status === 'pending' || r.status === 'in_progress'; }));
-        holder.innerHTML = '<table class="lab-table"><thead><tr>' +
-            '<th>Req. ID</th><th>Patient</th><th>Lab Test</th><th>Request Date</th><th>Status</th><th>Action</th>' +
-            '</tr></thead><tbody>' + (nrows.length
+        holder.innerHTML = '<table class="lab-table"><thead><tr>'
+            + '<th class="first-col">Req ID</th><th>Patient Name</th><th>Lab Test</th><th>Request Date</th><th>Status</th><th class="act-col">Action</th>'
+            + '</tr></thead><tbody>' + (nrows.length
                 ? nrows.map(function (r) {
-                    return '<tr>' +
-                        '<td class="fw-bold">#LAB-' + escHtml(r.id) + '</td>' +
-                        '<td class="fw-bold">' + escHtml(r.patient_name || '--') + '</td>' +
-                        '<td>' + escHtml(r.test_type || '--') + '</td>' +
-                        '<td>' + fmtLabTime(r.requested_at) + '</td>' +
-                        '<td>' + labStatusBadge(r.status) + '</td>' +
-                        '<td><button class="lab-btn-outline" onclick="openEntryFor(' + r.id + ')">Enter Results</button></td>' +
-                    '</tr>';
+                    return '<tr>'
+                        + '<td class="first-col" style="font-weight:700;">LAB ' + escHtml(r.id) + '</td>'
+                        + '<td style="font-weight:700;">' + escHtml(r.patient_name || '--') + '</td>'
+                        + '<td>' + escHtml(r.test_type || '--') + '</td>'
+                        + '<td>' + fmtLabTime(r.requested_at) + '</td>'
+                        + '<td>' + labStatusBadge(r.status) + '</td>'
+                        + '<td class="act-col"><button class="lab-btn-outline" onclick="openEntryFor(' + r.id + ')">Enter Results</button></td>'
+                        + '</tr>';
                 }).join('')
-                : '<tr><td colspan="6" class="lab-empty">No in-progress / not-ready labs.</td></tr>') +
-            '</tbody></table>';
+                : '<tr><td colspan="6" class="lab-empty">No in-progress / not-ready labs.</td></tr>')
+            + '</tbody></table>';
         return;
     }
 
@@ -574,24 +621,24 @@ function renderLabMain() {
         var rrows = filter(labData.filter(function (r) {
             return r.status === 'completed' && !dispatched.some(function (d) { return d.id === String(r.id); });
         }));
-        holder.innerHTML = '<table class="lab-table"><thead><tr>' +
-            '<th>Req. ID</th><th>Patient</th><th>Lab Test</th><th>Result</th><th>Verified / Completed</th><th>Action</th>' +
-            '</tr></thead><tbody>' + (rrows.length
+        holder.innerHTML = '<table class="lab-table"><thead><tr>'
+            + '<th class="first-col">Req ID</th><th>Patient Name</th><th>Lab Test</th><th>Result</th><th>Verified / Completed</th><th class="act-col">Action</th>'
+            + '</tr></thead><tbody>' + (rrows.length
                 ? rrows.map(function (r) {
                     var labRes = labResultsMap[String(r.id)] || null;
                     var resultText = labRes ? String(labRes.results || '--') : String(r.result_status || '--');
                     var doneAt = labRes && labRes.completed_at ? fmtLabTime(labRes.completed_at) : fmtLabTime(r.requested_at);
-                    return '<tr>' +
-                        '<td class="fw-bold">#LAB-' + escHtml(r.id) + '</td>' +
-                        '<td class="fw-bold">' + escHtml(r.patient_name || '--') + '</td>' +
-                        '<td>' + escHtml(r.test_type || '--') + '</td>' +
-                        '<td style="max-width:240px;white-space:pre-wrap;">' + escHtml(resultText) + '</td>' +
-                        '<td>' + (labRes && labRes.verified_name ? escHtml(labRes.verified_name) + '<br>' : '') + doneAt + '</td>' +
-                        '<td><button class="lab-btn-success" onclick="dispatchReport(' + r.id + ')">Dispatch Report</button></td>' +
-                    '</tr>';
+                    return '<tr>'
+                        + '<td class="first-col" style="font-weight:700;">LAB ' + escHtml(r.id) + '</td>'
+                        + '<td style="font-weight:700;">' + escHtml(r.patient_name || '--') + '</td>'
+                        + '<td>' + escHtml(r.test_type || '--') + '</td>'
+                        + '<td style="max-width:240px;white-space:pre-wrap;">' + escHtml(resultText) + '</td>'
+                        + '<td>' + (labRes && labRes.verified_name ? escHtml(labRes.verified_name) + '<br>' : '') + doneAt + '</td>'
+                        + '<td class="act-col"><button class="lab-btn-success" onclick="dispatchReport(' + r.id + ')">Dispatch Report</button></td>'
+                        + '</tr>';
                 }).join('')
-                : '<tr><td colspan="6" class="lab-empty">No ready & verified labs.</td></tr>') +
-            '</tbody></table>';
+                : '<tr><td colspan="6" class="lab-empty">No ready & verified labs.</td></tr>')
+            + '</tbody></table>';
         return;
     }
 
@@ -599,18 +646,18 @@ function renderLabMain() {
     var dlist = readDispatched();
     var drows = dlist.map(function (d) {
         var r = labData.find(function (x) { return String(x.id) === d.id; }) || null;
-        return '<tr>' +
-            '<td class="fw-bold">#DSP-' + escHtml(d.id) + '</td>' +
-            '<td class="fw-bold">' + escHtml(r ? r.patient_name : '--') + '</td>' +
-            '<td>' + escHtml(r ? r.test_type : '--') + '</td>' +
-            '<td>' + (d.at ? fmtLabTime(d.at) : '--') + '</td>' +
-            '<td><button class="lab-btn-outline" onclick="printReport(' + (r ? r.id : 0) + ')">Print PDF</button></td>' +
-        '</tr>';
+        return '<tr>'
+            + '<td class="first-col" style="font-weight:700;">DSP ' + escHtml(d.id) + '</td>'
+            + '<td style="font-weight:700;">' + escHtml(r ? r.patient_name : '--') + '</td>'
+            + '<td>' + escHtml(r ? r.test_type : '--') + '</td>'
+            + '<td>' + (d.at ? fmtLabTime(d.at) : '--') + '</td>'
+            + '<td class="act-col"><button class="lab-btn-outline" onclick="printReport(' + (r ? r.id : 0) + ')">Print PDF</button></td>'
+            + '</tr>';
     }).join('');
-    holder.innerHTML = '<table class="lab-table"><thead><tr>' +
-        '<th>Dispatch ID</th><th>Patient</th><th>Lab Test</th><th>Dispatch Date</th><th>Report</th>' +
-        '</tr></thead><tbody>' + (drows || '<tr><td colspan="5" class="lab-empty">No dispatched reports yet — dispatch a ready lab above.</td></tr>') +
-        '</tbody></table>';
+    holder.innerHTML = '<table class="lab-table"><thead><tr>'
+        + '<th class="first-col">Dispatch ID</th><th>Patient Name</th><th>Lab Test</th><th>Dispatch Date</th><th class="act-col">Report</th>'
+        + '</tr></thead><tbody>' + (drows || '<tr><td colspan="5" class="lab-empty">No dispatched reports yet — dispatch a ready lab above.</td></tr>')
+        + '</tbody></table>';
 }
 
 /* ================= RESULT ENTRY ================= */
@@ -620,7 +667,7 @@ function populateEntryRequisition() {
     var keep = sel.value;
     var rows = labData.filter(function (r) { return r.status === 'pending' || r.status === 'in_progress'; });
     sel.innerHTML = rows.length
-        ? rows.map(function (r) { return '<option value="' + r.id + '">#LAB-' + r.id + ' — ' + escHtml(r.patient_name) + ' (' + escHtml(r.test_type) + ')</option>'; }).join('')
+        ? rows.map(function (r) { return '<option value="' + r.id + '">LAB ' + r.id + ' — ' + escHtml(r.patient_name) + ' (' + escHtml(r.test_type) + ')</option>'; }).join('')
         : '<option value="">-- Awaiting requisitions --</option>';
     if (keep && rows.some(function (r) { return String(r.id) === String(keep); })) sel.value = keep;
 }
@@ -696,7 +743,7 @@ function dispatchReport(requestId) {
         list.push({ id: String(requestId), at: new Date().toISOString() });
         try { localStorage.setItem(DISPATCH_KEY, JSON.stringify(list)); } catch (e) {}
     }
-    showAlert('Report marked as dispatched (browser dispatch log).', 'success');
+    showAlert('Report marked as dispatched.', 'success');
     renderLabCounts();
     if (LAB_VIEW === 'ready') setLabView('dispatched');
     loadLabRequests();
@@ -704,19 +751,7 @@ function dispatchReport(requestId) {
 
 function printReport(requestId) {
     var r = labData.find(function (x) { return String(x.id) === String(requestId); });
-    var lines = [
-        'LABORATORY REPORT',
-        '=================',
-        'Request   : #LAB-' + (r ? r.id : ''),
-        'Patient   : ' + (r ? r.patient_name : ''),
-        'Hospital  : ' + (r ? r.hospital_number : ''),
-        'Test      : ' + (r ? r.test_type : ''),
-        'Status    : DISPATCHED',
-        '',
-        'Use your browser print dialog (Ctrl+P) to produce this report as a PDF.'
-    ];
-    showAlert('Report #LAB-' + (r ? r.id : '') + ' queued for printing — use Ctrl+P to export the PDF.', 'info');
-    console.log(lines.join('\n'));
+    showAlert('Report LAB ' + (r ? r.id : '') + ' queued for printing — use Ctrl+P to export the PDF.', 'info');
 }
 
 /* ================= HELPERS ================= */
