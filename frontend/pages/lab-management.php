@@ -1,451 +1,295 @@
 <?php
-// Laboratory Management / Investigations view.
-// Small server-side prologue: resolve the logged-in staff name so the lab entry
-// form can pre-fill the technician field. The shell (dashboard.php) already
-// authenticated the session; we only read the name here.
+// Laboratory & Ward Dashboard (EHMS-style 3-column layout).
+// Server-side prologue: resolve the logged-in staff name, role, and today's date
+// for the login-status card. The shell (dashboard.php) already authenticated.
 require_once __DIR__ . '/../../backend/config/config.php';
-$__labStaff = getCurrentUserName() ?: 'Staff';
+$__labStaff = getCurrentUserName() ?: 'STAFF';
+$__labRole  = getCurrentUserRole() ?: 'STAFF';
 ?>
 <style>
-/* ================= LABORATORY MANAGEMENT : LOCAL BOOTSTRAP-STYLE UTILITIES =================
-   Scoped under #lab-page because the shell (dashboard.php) has no Bootstrap
-   dependency. Tabs are driven by vanilla JS (switchToLabTab), not bootstrap.Tab. */
-#lab-page .container-fluid{width:100%;padding-right:calc(1rem*.5);padding-left:calc(1rem*.5);margin-right:auto;margin-left:auto;box-sizing:border-box}
-#lab-page .p-1{padding:.25rem !important}
-#lab-page .p-2{padding:.5rem !important}
-#lab-page .p-3{padding:1rem !important}
-#lab-page .p-4{padding:1.5rem !important}
-#lab-page .px-2{padding-left:.5rem !important;padding-right:.5rem !important}
-#lab-page .px-3{padding-left:1rem !important;padding-right:1rem !important}
-#lab-page .px-4{padding-left:1.5rem !important;padding-right:1.5rem !important}
-#lab-page .py-1{padding-top:.25rem !important;padding-bottom:.25rem !important}
-#lab-page .py-0{padding-top:0 !important;padding-bottom:0 !important}
-#lab-page .py-2{padding-top:.5rem !important;padding-bottom:.5rem !important}
-#lab-page .m-0{margin:0 !important}
-#lab-page .mb-1{margin-bottom:.25rem !important}
-#lab-page .mb-2{margin-bottom:.5rem !important}
-#lab-page .mb-3{margin-bottom:1rem !important}
-#lab-page .mb-0{margin-bottom:0 !important}
-#lab-page .mb-4{margin-bottom:1.5rem !important}
-#lab-page .me-1{margin-right:.25rem !important}
-#lab-page .me-3{margin-right:1rem !important}
-#lab-page .ms-1{margin-left:.25rem !important}
-#lab-page .mt-3{margin-top:1rem !important}
-#lab-page .mt-4{margin-top:1.5rem !important}
-#lab-page .d-flex{display:flex}
-#lab-page .d-block{display:block}
-#lab-page .flex-wrap{flex-wrap:wrap}
-#lab-page .align-items-center{align-items:center}
-#lab-page .align-items-end{align-items:flex-end}
-#lab-page .justify-content-between{justify-content:space-between}
-#lab-page .justify-content-end{justify-content:flex-end}
-#lab-page .justify-content-center{justify-content:center}
-#lab-page .gap-2{gap:.5rem}
-#lab-page .gap-3{gap:1rem}
-#lab-page .gap-4{gap:1.5rem}
-#lab-page .text-center{text-align:center}
-#lab-page .text-uppercase{text-transform:uppercase}
-#lab-page .font-weight-bold{font-weight:700}
-#lab-page .fw-bold{font-weight:700}
-#lab-page .h-100{height:100%}
-#lab-page .text-muted{color:#64748B !important}
-#lab-page .text-dark{color:#0F172A !important}
-#lab-page .text-white{color:#fff !important}
-#lab-page .text-primary{color:#0072BC !important}
-#lab-page .text-success{color:#16A34A !important}
-#lab-page .text-warning{color:#B45309 !important}
-#lab-page .text-danger{color:#DC2626 !important}
-#lab-page .bg-white{background-color:#fff !important}
-#lab-page .bg-light{background-color:#F1F5F9 !important}
-#lab-page .bg-primary{background-color:#0072BC !important}
-#lab-page .bg-secondary{background-color:#64748B !important}
-#lab-page .bg-success{background-color:#16A34A !important}
-#lab-page .bg-danger{background-color:#DC2626 !important}
-#lab-page .bg-warning{background-color:#F59E0B !important}
-#lab-page .bg-info{background-color:#0EA5E9 !important}
-#lab-page .card{position:relative;display:flex;flex-direction:column;min-width:0;word-wrap:break-word;background-color:#fff;background-clip:border-box;border:1px solid #E2E8F0;border-radius:8px}
-#lab-page .border{border:1px solid #E2E8F0 !important}
-#lab-page .border-top{border-top:1px solid #E2E8F0 !important}
-#lab-page .border-bottom{border-bottom:1px solid #E2E8F0 !important}
-#lab-page .border-bottom-0{border-bottom:0 !important}
-#lab-page .border-0{border:0 !important}
-#lab-page .rounded{border-radius:.375rem !important}
-#lab-page .rounded-circle{border-radius:50% !important}
-#lab-page .shadow-sm{box-shadow:0 .125rem .25rem rgba(15,45,89,.08) !important}
-#lab-page .badge{display:inline-block;padding:.35em .6em;font-size:.73em;font-weight:700;line-height:1;text-align:center;white-space:nowrap;vertical-align:baseline;border-radius:.375rem}
-#lab-page .badge-secondary{background-color:#64748B;color:#fff}
-#lab-page .badge-primary{background-color:#0072BC;color:#fff}
-#lab-page .badge-success{background-color:#16A34A;color:#fff}
-#lab-page .badge-warning{background-color:#F59E0B;color:#fff}
-#lab-page .badge-danger{background-color:#DC2626;color:#fff}
-#lab-page .badge-info{background-color:#0EA5E9;color:#fff}
-#lab-page .table{width:100%;margin-bottom:0;color:#334155;border-collapse:collapse;font-size:12.5px}
-#lab-page .table-bordered{border:1px solid #E2E8F0}
-#lab-page .table-bordered > thead > tr > th,
-#lab-page .table-bordered > tbody > tr > td{border:1px solid #E2E8F0;padding:8px 10px;vertical-align:middle}
-#lab-page .table-striped > tbody > tr:nth-of-type(odd){background-color:rgba(15,45,89,.03)}
-#lab-page .table-hover > tbody > tr:hover{background-color:#EFF6FF}
-#lab-page .table thead th{background-color:#F1F5F9;color:#475569;letter-spacing:.3px;white-space:nowrap}
-#lab-page .table-responsive{overflow-x:auto}
-#lab-page .align-middle{vertical-align:middle}
-#lab-page .form-label{display:inline-block;margin-bottom:.35rem;font-family:inherit}
-#lab-page .form-select,#lab-page .form-control{display:block;width:100%;padding:.375rem .6rem;font-size:12px;line-height:1.5;color:#334155;background-color:#fff;border:1px solid #CBD5E1;border-radius:4px;box-sizing:border-box;font-family:inherit}
-#lab-page .form-select-sm,#lab-page .form-control-sm{padding:.25rem .5rem;font-size:12px}
-#lab-page .btn-outline-primary{background-color:#fff;color:#0072BC;border:1px solid #0072BC}
-#lab-page .btn-outline-primary:hover{background-color:#0072BC;color:#fff}
-#lab-page .btn-outline-secondary{background-color:#fff;color:#475569;border:1px solid #CBD5E1}
-#lab-page .btn-outline-secondary:hover{background-color:#E2E8F0;color:#0F172A}
-#lab-page .row{display:flex;flex-wrap:wrap;margin-right:calc(1rem * -.5);margin-left:calc(1rem * -.5);box-sizing:border-box}
-#lab-page .row > [class*="col-"]{padding-right:calc(1rem*.5);padding-left:calc(1rem*.5);box-sizing:border-box}
-#lab-page .col-md-3{flex:0 0 100%;max-width:100%}
-#lab-page .col-md-4{flex:0 0 100%;max-width:100%}
-#lab-page .col-md-6{flex:0 0 100%;max-width:100%}
-@media (min-width:768px){
-  #lab-page .col-md-3{flex:0 0 25%;max-width:25%}
-  #lab-page .col-md-4{flex:0 0 33.3333%;max-width:33.3333%}
-  #lab-page .col-md-6{flex:0 0 50%;max-width:50%}
+/* ================= LAB & WARD DASHBOARD : CLASSIC EHMS 3-COLUMN LAYOUT =================
+   Scoped under #lab-page. The shell (dashboard.php) has no Bootstrap dependency,
+   so every utility below is defined locally. Font Awesome icons are available
+   because the shell already loads frontend/assets/fontawesome/css/all.min.css. */
+#lab-page{background:#dce7f2;color:#333;font-size:13px;min-height:100vh;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
+#lab-page *,#lab-page *::before,#lab-page *::after{box-sizing:border-box}
+#lab-page .lab-topbar{background-color:#0b5fa5;color:#fff;padding:6px 15px;display:flex;justify-content:space-between;align-items:center;font-weight:bold}
+#lab-page .lab-topbar-title{font-size:15px;letter-spacing:.5px}
+#lab-page .lab-topbar-right{display:flex;align-items:center;gap:15px;flex-wrap:wrap;justify-content:flex-end}
+#lab-page .lab-topbar-right > span{font-size:11px}
+#lab-page .lab-nav-btn{background-color:#0088cc;color:#fff;border:none;padding:4px 10px;font-size:11px;font-weight:bold;border-radius:2px;cursor:pointer;text-decoration:none;font-family:inherit}
+#lab-page .lab-nav-btn:hover{background-color:#006699}
+#lab-page .lab-main{display:grid;grid-template-columns:220px 1fr 240px;gap:12px;padding:10px;max-width:100%}
+#lab-page .lab-sidebar,.lab-content .lab-panel{display:flex;flex-direction:column}
+#lab-page .lab-sidebar{display:flex;flex-direction:column}
+#lab-page .lab-content{display:flex;flex-direction:column;gap:12px;min-width:0}
+#lab-page .lab-panel{background:#fff;border:1px solid #b2c8de;border-radius:3px;overflow:hidden;margin-bottom:10px}
+#lab-page .lab-content .lab-panel{margin-bottom:0}
+#lab-page .lab-panel-head{background-color:#0b5fa5;color:#fff;font-weight:bold;font-size:11px;padding:6px 10px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+#lab-page .lab-panel-head .lab-head-link{color:#FFD166;font-size:10px;text-transform:uppercase;cursor:pointer;text-decoration:underline;font-weight:bold}
+#lab-page .lab-panel-head .lab-head-link:hover{color:#fff}
+#lab-page .lab-ql{list-style:none;background-color:#eaf1f8;margin:0;padding:0}
+#lab-page .lab-ql li{border-bottom:1px solid #d0deec}
+#lab-page .lab-ql li:last-child{border-bottom:none}
+#lab-page .lab-ql a{display:flex;align-items:center;gap:6px;padding:6px 10px;color:#333;text-decoration:none;font-size:11px;cursor:pointer}
+#lab-page .lab-ql a i{font-size:10px;color:#0b5fa5;width:12px;text-align:center}
+#lab-page .lab-ql a:hover{background-color:#d2e3f3;color:#005599}
+#lab-page .lab-ql-badge{color:red;font-weight:bold;margin-left:auto}
+#lab-page .lab-btn-orange{background-color:#f39c12;color:#fff;border:none;width:100%;padding:8px;font-weight:bold;font-size:11px;cursor:pointer;text-transform:uppercase;border-radius:2px;margin-bottom:10px;font-family:inherit}
+#lab-page .lab-btn-orange:hover{background-color:#d68910}
+#lab-page .lab-status-card{background-color:#0b5fa5;color:#fff;padding:8px;border-radius:3px;font-size:10px}
+#lab-page .lab-status-card p{margin-bottom:4px}
+#lab-page .lab-logout-btn{background-color:#0088cc;color:#fff;border:none;width:100%;padding:4px;margin-top:6px;cursor:pointer;font-weight:bold;text-transform:uppercase;font-family:inherit;font-size:10px}
+#lab-page .lab-logout-btn:hover{background-color:#006699}
+#lab-page .lab-form-grid{display:grid;grid-template-columns:150px 1fr;gap:8px 12px;padding:12px;align-items:center;background-color:#f8fafc}
+#lab-page .lab-form-grid label{font-weight:bold;color:#222;font-size:12px}
+#lab-page .lab-form-grid input,#lab-page .lab-form-grid select,#lab-page .lab-form-grid textarea{width:100%;padding:6px 8px;border:1px solid #b2c8de;border-radius:2px;font-size:12px;background-color:#fff;font-family:inherit}
+#lab-page .lab-form-grid textarea{resize:vertical;min-height:60px}
+#lab-page .lab-form-grid input[readonly]{background-color:#eef3f8;color:#555}
+#lab-page .lab-form-actions{grid-column:span 2;display:flex;justify-content:flex-end;gap:10px;margin-top:5px}
+#lab-page .lab-btn-submit{background-color:#0b5fa5;color:#fff;border:none;padding:6px 16px;font-weight:bold;font-size:11px;border-radius:2px;cursor:pointer;font-family:inherit;text-transform:uppercase}
+#lab-page .lab-btn-submit:hover{background-color:#004080}
+#lab-page .lab-btn-submit:disabled{opacity:.6;cursor:not-allowed}
+#lab-page .lab-btn-outline{background-color:#fff;color:#0b5fa5;border:1px solid #b2c8de;padding:3px 10px;font-weight:bold;font-size:10px;border-radius:2px;cursor:pointer;font-family:inherit}
+#lab-page .lab-btn-outline:hover{background-color:#e2edf7}
+#lab-page .lab-btn-success{background-color:#27ae60;color:#fff;border:none;padding:3px 10px;font-weight:bold;font-size:10px;border-radius:2px;cursor:pointer;font-family:inherit}
+#lab-page .lab-btn-success:hover{background-color:#1e8c4d}
+#lab-page .lab-table-wrap{background-color:#fff;max-height:320px;overflow-y:auto}
+#lab-page .lab-table{width:100%;border-collapse:collapse;font-size:11px}
+#lab-page .lab-table th{background-color:#e6eef5;color:#222;font-weight:bold;text-align:left;padding:8px;border-bottom:2px solid #b2c8de;position:sticky;top:0;z-index:1;white-space:nowrap}
+#lab-page .lab-table td{padding:7px 8px;border-bottom:1px solid #e1e8f0;vertical-align:middle}
+#lab-page .lab-table tr:nth-child(even){background-color:#f9fbfd}
+#lab-page .lab-table tr:hover{background-color:#eef4fb}
+#lab-page .lab-badge{padding:2px 6px;border-radius:2px;font-weight:bold;font-size:10px}
+#lab-page .lab-status-sent{color:#27ae60;background:rgba(39,174,96,.12)}
+#lab-page .lab-status-abs{color:#e67e22;background:rgba(230,126,34,.12)}
+#lab-page .lab-status-not{color:#e74c3c;background:rgba(231,76,60,.12)}
+#lab-page .lab-status-info{color:#0b5fa5;background:rgba(11,95,165,.12)}
+#lab-page .lab-empty{text-align:center;padding:14px;color:#8a94a6}
+#lab-page .lab-footer{background-color:#0b5fa5;color:#fff;padding:6px 10px;font-size:11px;text-align:center;border-radius:3px}
+#lab-page .lab-mis{display:flex;flex-direction:column;gap:8px;padding:10px;background:#fff}
+#lab-page .lab-mis-btn{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #b2c8de;border-radius:3px;background-color:#f4f8fb;text-decoration:none;color:#222;font-weight:bold;font-size:11px;transition:background .2s;cursor:pointer}
+#lab-page .lab-mis-btn:hover{background-color:#e2edf7}
+#lab-page .lab-mis-btn.active{background-color:#d2e3f3;border-color:#0b5fa5}
+#lab-page .lab-mis-btn i{font-size:18px;width:24px;text-align:center}
+#lab-page .lab-ico-dispatched{color:#34495e}
+#lab-page .lab-ico-dhims{color:#f39c12}
+#lab-page .lab-ico-ready{color:#27ae60}
+#lab-page .lab-ico-notready{color:#e74c3c}
+@media (max-width:1100px){
+  #lab-page .lab-main{grid-template-columns:1fr}
+  #lab-page .lab-sidebar{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+  #lab-page .lab-sidebar > .lab-panel{margin-bottom:10px}
+  #lab-page .lab-sidebar > .lab-btn-orange{align-self:end}
 }
-@media (min-width:992px){
-  #lab-page .col-lg-4{flex:0 0 33.3333%;max-width:33.3333%}
-}
-#lab-page .g-3{margin:0}
-#lab-page .nav-tabs{display:flex;flex-wrap:wrap;gap:2px;list-style:none;padding:0;margin:0 0 16px;border-bottom:2px solid #E2E8F0}
-#lab-page .nav-item{list-style:none}
-#lab-page .nav-link{display:inline-block;padding:9px 15px;font-size:12px;font-weight:600;text-transform:uppercase;text-decoration:none;color:#475569;background:transparent;border:1px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-family:inherit}
-#lab-page .nav-link:hover{color:#0072BC}
-#lab-page .nav-link.active{color:#0072BC;background:#fff;border-color:#E2E8F0;border-bottom:2px solid #0072BC;position:relative;top:1px}
-#lab-page .tab-pane{display:none}
-#lab-page .tab-pane.show{display:block}
-#lab-page .lab-portal-card{transition:box-shadow .15s ease,transform .15s ease}
-#lab-page .lab-portal-card:hover{box-shadow:0 .5rem 1.25rem rgba(15,45,89,.14) !important;transform:translateY(-2px)}
 </style>
 
-<div class="container-fluid p-3" id="lab-page" style="background-color: #F8FAFC; min-height: 100vh;">
+<!-- LAB & WARD DASHBOARD -->
+<div id="lab-page">
 
-  <!-- TOP TITLE HEADER -->
-  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 p-3 bg-white shadow-sm rounded border">
-    <div class="d-flex align-items-center gap-2">
-      <div class="p-2 rounded" style="background: rgba(217, 119, 6, 0.1);">
-        <!-- Lab Tubes Icon -->
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><path d="M10 2v7.51L4.53 17.92A2 2 0 0 0 6.24 21h11.52a2 2 0 0 0 1.71-3.08L14 9.51V2"></path><line x1="8.5" y1="2" x2="15.5" y2="2"></line></svg>
-      </div>
-      <div>
-        <h5 class="m-0 font-weight-bold text-uppercase" style="color: #0F2D59;">LABORATORY MANAGEMENT</h5>
-        <small class="text-muted">Manage lab requests, test entries, sample tracking, and dispatched reports</small>
-      </div>
-    </div>
-
-    <!-- STATS COUNTERS -->
-    <div class="d-flex gap-3 text-center">
-      <div class="px-3 py-1 rounded bg-light border">
-        <span class="d-block text-muted" style="font-size: 10px; font-weight: 700;">REQUESTED</span>
-        <span class="fw-bold text-primary" style="font-size: 14px;" id="statLabRequested">0</span>
-      </div>
-      <div class="px-3 py-1 rounded bg-light border">
-        <span class="d-block text-muted" style="font-size: 10px; font-weight: 700;">NOT READY</span>
-        <span class="fw-bold text-warning" style="font-size: 14px;" id="statLabNotReady">0</span>
-      </div>
-      <div class="px-3 py-1 rounded bg-light border">
-        <span class="d-block text-muted" style="font-size: 10px; font-weight: 700;">READY</span>
-        <span class="fw-bold text-success" style="font-size: 14px;" id="statLabReady">0</span>
-      </div>
+  <!-- TOP BAR -->
+  <div class="lab-topbar">
+    <div class="lab-topbar-title">EHMS LAB &amp; WARD DASHBOARD</div>
+    <div class="lab-topbar-right">
+      <span>HMS - HEALTHCARE MANAGEMENT SYSTEM</span>
+      <span class="lab-nav-btn" onclick="labGoHome()">HOME</span>
+      <span class="lab-nav-btn" onclick="labGoBack()">&lt; BACK</span>
+      <span class="lab-nav-btn" onclick="labGoPassword()">PASSWORD</span>
     </div>
   </div>
 
-  <!-- MODULE NAV TABS (vanilla JS tabs — no Bootstrap dependency) -->
-  <ul class="nav nav-tabs" id="labTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button class="nav-link active text-uppercase px-3 py-2" id="grid-tab" data-target="tab-grid" type="button" role="tab" onclick="switchToLabTab(this.id)">Overview Grid</button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link text-uppercase px-3 py-2" id="requested-tab" data-target="tab-requested" type="button" role="tab" onclick="switchToLabTab(this.id)">Requested Labs <span class="badge badge-primary ms-1" id="reqTabBadge">0</span></button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link text-uppercase px-3 py-2" id="entry-tab" data-target="tab-entry" type="button" role="tab" onclick="switchToLabTab(this.id)">Staff Entry Form</button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link text-uppercase px-3 py-2" id="pending-tab" data-target="tab-pending" type="button" role="tab" onclick="switchToLabTab(this.id)">Not Ready (<span id="pendingTabBadge">0</span>)</button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link text-uppercase px-3 py-2" id="ready-tab" data-target="tab-ready" type="button" role="tab" onclick="switchToLabTab(this.id)">Ready Labs (<span id="readyTabBadge">0</span>)</button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link text-uppercase px-3 py-2" id="dispatched-tab" data-target="tab-dispatched" type="button" role="tab" onclick="switchToLabTab(this.id)">Dispatched Labs</button>
-    </li>
-  </ul>
+  <!-- MAIN 3-COLUMN GRID -->
+  <div class="lab-main">
 
-  <!-- TAB CONTENT PANELS -->
-  <div class="tab-content" id="labTabsContent">
+    <!-- ======================= LEFT SIDEBAR ======================= -->
+    <div class="lab-sidebar">
+      <div class="lab-panel">
+        <div class="lab-panel-head">Quick Links</div>
+        <ul class="lab-ql">
+          <li><a onclick="labNav('home')"><i class="fa-solid fa-square"></i> Control Panel</a></li>
+          <li><a onclick="labNav('appointment_calendar')"><i class="fa-solid fa-square"></i> Appointment Calendar</a></li>
+          <li><a onclick="labNav('messages_alerts')"><i class="fa-solid fa-square"></i> Messages &amp; Alerts <span class="lab-ql-badge" id="labUnreadBadge" style="display:none;">0</span></a></li>
+          <li><a onclick="labNav('patient_records')"><i class="fa-solid fa-square"></i> Patient Record Management</a></li>
+          <li><a onclick="labNav('radiology')"><i class="fa-solid fa-square"></i> IPD / Ward Details</a></li>
+          <li><a onclick="labNav('ipd_management')"><i class="fa-solid fa-square"></i> Admissions</a></li>
+          <li><a onclick="labNav('pharmacy_management')"><i class="fa-solid fa-square"></i> Drugs Dispense</a></li>
+          <li><a onclick="labNav('investigations')"><i class="fa-solid fa-square"></i> Lab Management</a></li>
+          <li><a onclick="labNav('accounts_management')"><i class="fa-solid fa-square"></i> Account Management</a></li>
+        </ul>
+      </div>
 
-    <!-- TAB 0: MAIN DASHBOARD GRID -->
-    <div class="tab-pane show" id="tab-grid" role="tabpanel">
-      <div class="row g-3">
+      <span class="lab-btn-orange" onclick="labNav('messages_alerts')">SEND MESSAGE</span>
 
-        <!-- CARD 1: SAMPLE MANAGEMENT -->
-        <div class="col-md-6 col-lg-4">
-          <div class="card border-0 shadow-sm p-3 h-100 lab-portal-card" style="border-radius: 8px; cursor: pointer;" onclick="switchToLabTab('entry-tab')">
-            <div class="d-flex align-items-center">
-              <div class="p-3 me-3 rounded" style="background: rgba(217, 119, 6, 0.1);">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><path d="M10 2v7.51L4.53 17.92A2 2 0 0 0 6.24 21h11.52a2 2 0 0 0 1.71-3.08L14 9.51V2"></path><line x1="8.5" y1="2" x2="15.5" y2="2"></line></svg>
-              </div>
-              <div>
-                <h6 class="fw-bold mb-1" style="color: #0F2D59;">SAMPLE MANAGEMENT</h6>
-                <small class="text-muted">Specimen collection, barcodes, &amp; log tracking</small>
-              </div>
-            </div>
-          </div>
+      <div class="lab-panel">
+        <div class="lab-panel-head">Days Alerts</div>
+        <div style="padding:10px; text-align:center;">
+          <h2 style="font-size:20px; margin-bottom:5px; color:#333;">0</h2>
+          <span style="font-size:10px; color:#666;">NO ALERTS TODAY</span>
         </div>
+      </div>
 
-        <!-- CARD 2: PENDING / NOT READY TESTS -->
-        <div class="col-md-6 col-lg-4">
-          <div class="card border-0 shadow-sm p-3 h-100 lab-portal-card" style="border-radius: 8px; cursor: pointer;" onclick="switchToLabTab('pending-tab')">
-            <div class="d-flex align-items-center">
-              <div class="p-3 me-3 rounded" style="background: rgba(239, 68, 68, 0.1);">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              </div>
-              <div>
-                <h6 class="fw-bold mb-1" style="color: #0F2D59;">PENDING / NOT READY</h6>
-                <small class="text-muted">Work in progress &amp; processing queue</small>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- CARD 3: LAB VERIFICATION -->
-        <div class="col-md-6 col-lg-4">
-          <div class="card border-0 shadow-sm p-3 h-100 lab-portal-card" style="border-radius: 8px; cursor: pointer;" onclick="switchToLabTab('ready-tab')">
-            <div class="d-flex align-items-center">
-              <div class="p-3 me-3 rounded" style="background: rgba(16, 185, 129, 0.1);">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-              </div>
-              <div>
-                <h6 class="fw-bold mb-1" style="color: #0F2D59;">LAB VERIFICATION &amp; READY</h6>
-                <small class="text-muted">Review, approve, and finalize test outcomes</small>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- CARD 4: REPORT DISPATCHED -->
-        <div class="col-md-6 col-lg-4">
-          <div class="card border-0 shadow-sm p-3 h-100 lab-portal-card" style="border-radius: 8px; cursor: pointer;" onclick="switchToLabTab('dispatched-tab')">
-            <div class="d-flex align-items-center">
-              <div class="p-3 me-3 rounded" style="background: rgba(0, 114, 188, 0.1);">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0072BC" stroke-width="2"><path d="M22 2L11 13"></path><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-              </div>
-              <div>
-                <h6 class="fw-bold mb-1" style="color: #0F2D59;">REPORT DISPATCHED</h6>
-                <small class="text-muted">Sent to ward/doctor &amp; patient printed logs</small>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- CARD 5: DOCTOR REQUESTS -->
-        <div class="col-md-6 col-lg-4">
-          <div class="card border-0 shadow-sm p-3 h-100 lab-portal-card" style="border-radius: 8px; cursor: pointer;" onclick="switchToLabTab('requested-tab')">
-            <div class="d-flex align-items-center">
-              <div class="p-3 me-3 rounded" style="background: rgba(15, 45, 89, 0.1);">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0F2D59" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-              </div>
-              <div>
-                <h6 class="fw-bold mb-1" style="color: #0F2D59;">DOCTOR REQUESTS</h6>
-                <small class="text-muted">Incoming lab requisitions from OPD/IPD</small>
-              </div>
-            </div>
-          </div>
-        </div>
-
+      <div class="lab-status-card">
+        <p><strong>LOGIN STATUS</strong></p>
+        <p>Logged In: <?php echo htmlspecialchars($__labStaff, ENT_QUOTES); ?></p>
+        <p>User Type: <?php echo htmlspecialchars(strtoupper($__labRole), ENT_QUOTES); ?></p>
+        <p>Date: <?php echo date('l, d-M-Y'); ?></p>
+        <p>Clinic Name: HMS - HEALTHCARE MANAGEMENT SYSTEM</p>
+        <button type="button" class="lab-logout-btn" onclick="labLogout()">LOGOUT</button>
       </div>
     </div>
 
-    <!-- TAB 1: ALL LABS REQUESTED BY DOCTOR -->
-    <div class="tab-pane" id="tab-requested" role="tabpanel">
-      <div class="card border-0 shadow-sm p-3 bg-white rounded">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-          <h6 class="fw-bold mb-0" style="color: #0F2D59;">DOCTOR REQUISITIONS QUEUE</h6>
-          <div class="d-flex gap-2 align-items-center">
-            <input type="text" id="labRequisitionSearch" class="form-control form-control-sm" style="width: 250px;" placeholder="Search by patient or hospital no...">
-            <button type="button" class="btn btn-sm btn-primary" id="new-lab-request-btn" style="background-color:#0072BC;">+ New Request</button>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table class="table table-hover align-middle" style="font-size: 13px;">
-            <thead class="text-uppercase" style="font-size: 11px;">
-              <tr>
-                <th>REQ ID</th>
-                <th>DATE/TIME</th>
-                <th>PATIENT NAME</th>
-                <th>HOSPITAL NO</th>
-                <th>TEST REQUESTED</th>
-                <th>REQUESTING DOCTOR</th>
-                <th>URGENCY</th>
-                <th>STATUS</th>
-                <th>ACTION</th>
-              </tr>
-            </thead>
-            <tbody id="reqTableBody">
-              <tr><td colspan="9" style="text-align:center;padding:14px;color:#94A3B8;">Loading requisitions...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <!-- ======================= CENTER CONTENT ======================= -->
+    <div class="lab-content">
 
-    <!-- TAB 2: LAB RESULT ENTRY FORM FOR STAFF -->
-    <div class="tab-pane" id="tab-entry" role="tabpanel">
-      <div class="card border-0 shadow-sm p-4 bg-white rounded">
-        <h6 class="fw-bold mb-3" style="color: #0F2D59;">STAFF LAB RESULT ENTRY FORM</h6>
-        <form id="labResultEntryForm">
-          <div class="row mb-3">
-            <div class="col-md-4 mb-2">
-              <label class="form-label font-weight-bold" style="font-size: 12px;">Select Patient / Requisition</label>
-              <select class="form-select form-select-sm" id="entryRequisition">
-                <option value="">-- Awaiting requisitions --</option>
-              </select>
-            </div>
-            <div class="col-md-4 mb-2">
-              <label class="form-label font-weight-bold" style="font-size: 12px;">Specimen Type</label>
-              <input type="text" class="form-control form-control-sm" id="entrySpecimen" placeholder="e.g. Venous Blood (EDTA Tube)">
-            </div>
-            <div class="col-md-4 mb-2">
-              <label class="form-label font-weight-bold" style="font-size: 12px;">Lab Technician / Staff</label>
-              <input type="text" class="form-control form-control-sm" id="entryTechnician" value="<?php echo htmlspecialchars($__labStaff, ENT_QUOTES); ?>" readonly>
-            </div>
-          </div>
+      <!-- WARD DETAILS & DISCHARGE MANAGEMENT -->
+      <div class="lab-panel">
+        <div class="lab-panel-head">Ward Details &amp; Discharge Management</div>
+        <form class="lab-form-grid" id="dischargeForm">
+          <label for="dischPatient">Patient ID / Name</label>
+          <select id="dischPatient" required>
+            <option value="">-- Select Admitted Patient --</option>
+          </select>
 
-          <h6 class="fw-bold text-muted mb-2" style="font-size: 12px;">RESULT VALUES &amp; INTERPRETATION</h6>
-          <div class="row mb-3">
-            <div class="col-md-6 mb-2">
-              <label class="form-label font-weight-bold" style="font-size: 12px;">Test Results *</label>
-              <textarea class="form-control form-control-sm" id="entryResults" rows="4" placeholder="e.g. Hb: 12.5 g/dL, WBC: 11.2 x10^3/µL, MP: Positive (+), Platelets: 240 x10^3/µL..."></textarea>
-            </div>
-            <div class="col-md-6 mb-2">
-              <label class="form-label font-weight-bold" style="font-size: 12px;">Normal / Reference Range</label>
-              <textarea class="form-control form-control-sm" id="entryNormalRange" rows="2" placeholder="e.g. Hb 12.0–16.0 g/dL, WBC 4.0–10.0 x10^3/µL"></textarea>
-              <label class="form-label font-weight-bold mt-3" style="font-size: 12px;">Pathologist / Technician Remarks</label>
-              <textarea class="form-control form-control-sm" id="entryInterpretation" rows="2" placeholder="Clinical notes or observations..."></textarea>
-            </div>
-          </div>
+          <label for="dischBed">Ward &amp; Bed No.</label>
+          <input type="text" id="dischBed" placeholder="Ward / Bed auto-filled" readonly>
 
-          <div class="d-flex justify-content-end gap-2">
-            <button type="submit" class="btn btn-sm btn-secondary px-3" data-save="draft">Save Draft</button>
-            <button type="submit" class="btn btn-sm btn-success px-4" data-save="final" style="background-color: #10B981;">Mark as Ready &amp; Save</button>
+          <label for="dischType">Discharge Type</label>
+          <select id="dischType">
+            <option value="Routine Discharge">Routine Discharge</option>
+            <option value="Discharge Against Medical Advice (DAMA)">Discharge Against Medical Advice (DAMA)</option>
+            <option value="Transferred to Another Facility">Transferred to Another Facility</option>
+            <option value="Deceased">Deceased</option>
+          </select>
+
+          <label for="dischDate">Discharge Date</label>
+          <input type="date" id="dischDate">
+
+          <label for="dischNotes">Discharge Notes / Summary</label>
+          <textarea id="dischNotes" placeholder="Enter diagnosis summary, treatment given, discharge medications, and follow-up plan..."></textarea>
+
+          <div class="lab-form-actions">
+            <button type="button" class="lab-btn-submit" id="processDischargeBtn" onclick="processDischarge()">Process Discharge</button>
           </div>
         </form>
       </div>
-    </div>
 
-    <!-- TAB 3: NOT READY LABS -->
-    <div class="tab-pane" id="tab-pending" role="tabpanel">
-      <div class="card border-0 shadow-sm p-3 bg-white rounded">
-        <h6 class="fw-bold mb-3" style="color: #B45309;">IN-PROGRESS / NOT READY LABS</h6>
-        <div class="table-responsive">
-          <table class="table table-striped align-middle" style="font-size: 13px;">
-            <thead class="text-uppercase" style="font-size: 11px;">
-              <tr>
-                <th>REQ ID</th>
-                <th>PATIENT</th>
-                <th>TESTS</th>
-                <th>REQUESTED AT</th>
-                <th>STATUS</th>
-                <th>ACTION</th>
-              </tr>
-            </thead>
-            <tbody id="pendingTableBody">
-              <tr><td colspan="6" style="text-align:center;padding:14px;color:#94A3B8;">Loading...</td></tr>
-            </tbody>
-          </table>
+      <!-- ENTRIES FORM -->
+      <div class="lab-panel">
+        <div class="lab-panel-head">Entries Form</div>
+        <form class="lab-form-grid" id="labEntryForm">
+          <label for="entryPatient">Patient ID or Name</label>
+          <select id="entryPatient" required>
+            <option value="">-- Select Visit --</option>
+          </select>
+
+          <label for="labType">Lab Type</label>
+          <select id="labType" onchange="updateLabPrice()">
+            <option value="">Select Lab Type --</option>
+            <option value="haematology">Haematology</option>
+            <option value="biochemistry">Biochemistry</option>
+            <option value="microbiology">Microbiology</option>
+            <option value="parasitology">Parasitology</option>
+          </select>
+
+          <label for="labToDone">Lab to be Done</label>
+          <input type="text" id="labToDone" placeholder="e.g. Full Blood Count (FBC)">
+
+          <label for="price">Price</label>
+          <input type="text" id="price" placeholder="Price Auto-generated" readonly>
+
+          <div class="lab-form-actions">
+            <button type="submit" class="lab-btn-submit">Submit Request</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ALL LABS REQUESTED BY THE DOCTOR / MIS VIEWS -->
+      <div class="lab-panel">
+        <div class="lab-panel-head">
+          <span id="labMainTitle">ALL LABS REQUESTED BY THE DOCTOR</span>
+          <a class="lab-head-link" id="labViewAllLink" style="display:none;" onclick="setLabView('requested')">View All Requests</a>
+        </div>
+        <div class="lab-table-wrap">
+          <div id="labMainView"><div class="lab-empty">Loading...</div></div>
         </div>
       </div>
+
+      <div class="lab-footer">HMS - LAB &amp; WARD DASHBOARD &middot; live data from the hospital management system</div>
     </div>
 
-    <!-- TAB 4: READY LABS -->
-    <div class="tab-pane" id="tab-ready" role="tabpanel">
-      <div class="card border-0 shadow-sm p-3 bg-white rounded">
-        <h6 class="fw-bold mb-3" style="color: #16A34A;">READY &amp; VERIFIED LABS</h6>
-        <div class="table-responsive">
-          <table class="table table-hover align-middle" style="font-size: 13px;">
-            <thead class="text-uppercase" style="font-size: 11px;">
-              <tr>
-                <th>REQ ID</th>
-                <th>PATIENT</th>
-                <th>TEST</th>
-                <th>RESULT</th>
-                <th>VERIFIED / COMPLETED</th>
-                <th>ACTION</th>
-              </tr>
-            </thead>
-            <tbody id="readyTableBody">
-              <tr><td colspan="6" style="text-align:center;padding:14px;color:#94A3B8;">Loading...</td></tr>
-            </tbody>
-          </table>
+    <!-- ======================= RIGHT SIDEBAR ======================= -->
+    <div class="lab-sidebar">
+      <div class="lab-panel">
+        <div class="lab-panel-head">Search</div>
+        <div style="padding:8px;">
+          <input type="text" id="labGlobalSearch" placeholder="By System Name / ID..." style="width:100%; padding:4px; border:1px solid #b2c8de;" oninput="renderLabMain()">
         </div>
       </div>
-    </div>
 
-    <!-- TAB 5: DISPATCHED LABS -->
-    <div class="tab-pane" id="tab-dispatched" role="tabpanel">
-      <div class="card border-0 shadow-sm p-3 bg-white rounded">
-        <h6 class="fw-bold mb-1" style="color: #0072BC;">DISPATCHED REPORTS HISTORY</h6>
-        <p class="text-muted m-0 mb-2" style="font-size: 11px;">Note: the current backend has no "dispatched" lab status yet, so this dispatch log is tracked in this browser only (per workstation).</p>
-        <div class="table-responsive">
-          <table class="table table-bordered align-middle" style="font-size: 13px;">
-            <thead class="text-uppercase" style="font-size: 11px;">
-              <tr>
-                <th>DISPATCH ID</th>
-                <th>PATIENT</th>
-                <th>TEST</th>
-                <th>DISPATCH DATE</th>
-                <th>REPORT</th>
-              </tr>
-            </thead>
-            <tbody id="dispatchedTableBody">
-              <tr><td colspan="5" style="text-align:center;padding:14px;color:#94A3B8;">No dispatched reports yet.</td></tr>
-            </tbody>
-          </table>
+      <div class="lab-panel">
+        <div class="lab-panel-head">Quick Access for MIS Reports</div>
+        <div class="lab-mis">
+          <a class="lab-mis-btn" id="misDispatched" onclick="setLabView('dispatched')">
+            <i class="fa-solid fa-envelope lab-ico-dispatched"></i>
+            <span>All Labs Dispatched (<span id="labDispCount">0</span>)</span>
+          </a>
+          <a class="lab-mis-btn" onclick="labNav('mis')">
+            <i class="fa-solid fa-clipboard-list lab-ico-dhims"></i>
+            <span>DHIMS Report</span>
+          </a>
+          <a class="lab-mis-btn" id="misReady" onclick="setLabView('ready')">
+            <i class="fa-solid fa-check lab-ico-ready"></i>
+            <span>All Ready Labs (<span id="labReadyCount">0</span>)</span>
+          </a>
+          <a class="lab-mis-btn" id="misNotready" onclick="setLabView('notready')">
+            <i class="fa-solid fa-xmark lab-ico-notready"></i>
+            <span>Not Ready Labs (<span id="labNotReadyCount">0</span>)</span>
+          </a>
         </div>
       </div>
     </div>
 
   </div>
-
 </div>
 
-<!-- New Lab Request Modal -->
-<div class="modal" id="lab-request-modal">
-    <div class="modal-content" style="max-width:560px;">
+<!-- Lab Result Entry Modal -->
+<div class="modal" id="lab-result-modal">
+    <div class="modal-content" style="max-width:640px;">
         <div class="modal-header">
-            <h3>New Lab Request</h3>
-            <button class="modal-close" id="close-lab-request-modal">&times;</button>
+            <h3>Lab Result Entry</h3>
+            <button class="modal-close" id="close-lab-result-modal">&times;</button>
         </div>
         <div class="modal-body">
-            <form id="lab-request-form">
+            <form id="labResultEntryForm">
                 <div class="form-group">
-                    <label for="lab-visit">Visit *</label>
-                    <select id="lab-visit" required>
-                        <option value="">Select Visit</option>
+                    <label for="entryRequisition">Requisition *</label>
+                    <select id="entryRequisition">
+                        <option value="">-- Awaiting requisitions --</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="lab-test-type">Test Type *</label>
-                    <input type="text" id="lab-test-type" placeholder="e.g. Full Blood Count, Malaria RDT, Urine Analysis" required>
+                    <label for="entrySpecimen">Specimen Type</label>
+                    <input type="text" id="entrySpecimen" placeholder="e.g. Venous Blood (EDTA Tube)">
                 </div>
                 <div class="form-group">
-                    <label for="lab-test-description">Description / Clinical Notes</label>
-                    <textarea id="lab-test-description" rows="2"></textarea>
+                    <label for="entryTechnician">Lab Technician / Staff</label>
+                    <input type="text" id="entryTechnician" value="<?php echo htmlspecialchars($__labStaff, ENT_QUOTES); ?>" readonly>
                 </div>
                 <div class="form-group">
-                    <label for="lab-urgency">Urgency</label>
-                    <select id="lab-urgency">
-                        <option value="routine">Routine</option>
-                        <option value="urgent">Urgent</option>
-                        <option value="emergency">Emergency</option>
-                    </select>
+                    <label for="entryResults">Test Results *</label>
+                    <textarea id="entryResults" rows="3" placeholder="e.g. Hb: 12.5 g/dL, WBC: 11.2 x10^3/µL, MP: Positive (+), Platelets: 240 x10^3/µL..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="entryNormalRange">Normal / Reference Range</label>
+                    <textarea id="entryNormalRange" rows="2" placeholder="e.g. Hb 12.0-16.0 g/dL, WBC 4.0-10.0 x10^3/µL"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="entryInterpretation">Pathologist / Technician Remarks</label>
+                    <textarea id="entryInterpretation" rows="2" placeholder="Clinical notes or observations..."></textarea>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Submit Request</button>
-                    <button type="button" class="btn btn-secondary" id="cancel-lab-request">Cancel</button>
+                    <button type="submit" class="btn btn-secondary" data-save="draft">Save Draft</button>
+                    <button type="submit" class="btn btn-primary" data-save="final" id="entryMarkReadyBtn">Mark as Ready &amp; Save</button>
                 </div>
             </form>
         </div>
@@ -455,210 +299,386 @@ $__labStaff = getCurrentUserName() ?: 'Staff';
 <script>
 var CURRENT_LAB_STAFF = <?php echo json_encode($__labStaff); ?>;
 var labData = [];
-var visitsCache = [];
-var DISPATCH_KEY = 'hms:lab-dispatched';
 var labResultsMap = {};
+var visitsCache = [];
+var admittedCache = [];
+var DISPATCH_KEY = 'hms:lab-dispatched';
+var LAB_PRICES = { haematology: 'GHS 150.00', biochemistry: 'GHS 220.00', microbiology: 'GHS 180.00', parasitology: 'GHS 90.00' };
+var LAB_VIEW = 'requested';
 
 async function initLabManagement() {
-    setupEventListeners();
-    await Promise.all([loadVisits(), loadLabRequests()]);
+    setupLabEvents();
+    loadUnreadCount();
+    setDischargeDateToday();
+    await Promise.all([loadVisits(), loadAdmitted(), loadLabRequests()]);
 }
 
-function setupEventListeners() {
-    var newBtn = document.getElementById('new-lab-request-btn');
-    if (newBtn) newBtn.addEventListener('click', function () {
-        document.getElementById('lab-request-form').reset();
-        document.getElementById('lab-request-modal').classList.add('show');
-    });
-    var closeReq = document.getElementById('close-lab-request-modal');
-    if (closeReq) closeReq.addEventListener('click', function () { document.getElementById('lab-request-modal').classList.remove('show'); });
-    var cancelReq = document.getElementById('cancel-lab-request');
-    if (cancelReq) cancelReq.addEventListener('click', function () { document.getElementById('lab-request-modal').classList.remove('show'); });
-    var reqForm = document.getElementById('lab-request-form');
-    if (reqForm) reqForm.addEventListener('submit', handleLabRequestSubmit);
-    var entryForm = document.getElementById('labResultEntryForm');
-    if (entryForm) entryForm.addEventListener('submit', handleEntrySubmit);
-    var search = document.getElementById('labRequisitionSearch');
-    if (search) search.addEventListener('input', debounce(applySearch, 250));
+function setupLabEvents() {
+    var entryForm = document.getElementById('labEntryForm');
+    if (entryForm) entryForm.addEventListener('submit', handleLabEntrySubmit);
+    var closeRes = document.getElementById('close-lab-result-modal');
+    if (closeRes) closeRes.addEventListener('click', closeResultModal);
+    var entryForm2 = document.getElementById('labResultEntryForm');
+    if (entryForm2) entryForm2.addEventListener('submit', handleEntrySubmit);
+    var dischPatient = document.getElementById('dischPatient');
+    if (dischPatient) dischPatient.addEventListener('change', onDischargePatientChange);
 }
 
+/* ================= TOP BAR / NAV ================= */
+function labNav(key) {
+    if (key === 'home') {
+        if (window.navigateTo) { window.navigateTo('dashboard'); return; }
+        if (window.loadPage) { window.loadPage('dashboard'); return; }
+    }
+    if (key === 'mis' && window.loadModuleTab) { window.loadModuleTab('mis'); return; }
+    if (window.loadModuleTab) window.loadModuleTab(key);
+}
+
+function labGoHome() { labNav('home'); }
+
+function labGoBack() {
+    if (window.history && window.history.length > 1) window.history.back();
+    else labNav('home');
+}
+
+function labGoPassword() {
+    if (window.loadModuleTab) window.loadModuleTab('administrator');
+}
+
+function labLogout() {
+    fetch('/hms/backend/api/auth.php?action=logout', { method: 'POST' })
+        .then(function () { window.location.href = '/hms/frontend/index.php'; })
+        .catch(function () { window.location.href = '/hms/frontend/index.php'; });
+}
+
+async function loadUnreadCount() {
+    try {
+        var r = await fetch('/hms/backend/api/messages.php?action=unread_count');
+        var d = await r.json();
+        if (d.success) {
+            var badge = document.getElementById('labUnreadBadge');
+            if (badge) {
+                badge.textContent = d.unread;
+                badge.style.display = d.unread > 0 ? 'inline' : 'none';
+            }
+        }
+    } catch (e) { console.error('Unread count error:', e); }
+}
+
+/* ================= WARD DISCHARGE ================= */
+async function loadAdmitted() {
+    try {
+        var r = await fetch('/hms/backend/api/admissions.php?action=list&status=ADMITTED');
+        var d = await r.json();
+        admittedCache = (d.success && d.admissions) ? d.admissions : [];
+    } catch (e) {
+        console.error('Admissions load error:', e);
+        admittedCache = [];
+    }
+    var sel = document.getElementById('dischPatient');
+    sel.innerHTML = '<option value="">-- Select Admitted Patient --</option>'
+        + admittedCache.map(function (a) {
+            return '<option value="' + a.id + '">' + escHtml(a.patient_name + ' (' + a.hospital_number + ')') + '</option>';
+        }).join('');
+}
+
+function onDischargePatientChange() {
+    var id = document.getElementById('dischPatient').value;
+    var a = admittedCache.find(function (x) { return String(x.id) === String(id); });
+    document.getElementById('dischBed').value = a ? (a.ward_name + ' / Bed ' + a.bed_number + (a.bed_type ? ' (' + a.bed_type + ')' : '')) : '';
+}
+
+function setDischargeDateToday() {
+    var el = document.getElementById('dischDate');
+    if (el) el.value = new Date().toISOString().slice(0, 10);
+}
+
+function resetDischargeForm() {
+    document.getElementById('dischPatient').value = '';
+    document.getElementById('dischBed').value = '';
+    document.getElementById('dischNotes').value = '';
+    document.getElementById('dischType').value = 'Routine Discharge';
+    setDischargeDateToday();
+}
+
+async function processDischarge() {
+    var admissionId = document.getElementById('dischPatient').value;
+    if (!admissionId) { showAlert('Select an admitted patient to discharge.', 'error'); return; }
+    var type = document.getElementById('dischType').value;
+    var notes = document.getElementById('dischNotes').value.trim();
+    var dateVal = document.getElementById('dischDate').value;
+    var fullNotes = 'Discharge type: ' + type + (notes ? ' | ' + notes : '');
+    if (!window.confirm('Discharge this patient and release their bed? This action updates the admission record.')) return;
+
+    var btn = document.getElementById('processDischargeBtn');
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+    try {
+        var r = await fetch('/hms/backend/api/admissions.php?action=discharge&id=' + admissionId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ discharge_notes: fullNotes, discharged_at: dateVal ? dateVal + ' 00:00:00' : '' })
+        });
+        var d = await r.json();
+        if (d.success) {
+            showAlert(d.message || 'Patient discharged successfully.', 'success');
+            resetDischargeForm();
+            await loadAdmitted();
+        } else {
+            showAlert(d.error || 'Discharge failed', 'error');
+        }
+    } catch (e) {
+        console.error('Discharge error:', e);
+        showAlert('Network error. Please try again.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Process Discharge';
+    }
+}
+
+/* ================= ENTRIES FORM (Lab Request) ================= */
 async function loadVisits() {
     try {
-        const response = await fetch('/hms/backend/api/visits.php');
-        const data = await response.json();
-        if (data.success) {
-            visitsCache = data.visits || [];
-            const sel = document.getElementById('lab-visit');
-            sel.innerHTML = '<option value="">Select Visit</option>';
-            visitsCache.forEach(function (v) {
-                const opt = document.createElement('option');
-                opt.value = v.id;
-                opt.textContent = v.visit_number + ' — ' + v.patient_name + ' (' + v.hospital_number + ')';
-                sel.appendChild(opt);
-            });
-        }
-    } catch (error) { console.error('Visits load error:', error); }
+        var r = await fetch('/hms/backend/api/visits.php');
+        var d = await r.json();
+        if (d.success) visitsCache = d.visits || [];
+    } catch (e) {
+        console.error('Visits load error:', e);
+        visitsCache = [];
+    }
+    var sel = document.getElementById('entryPatient');
+    sel.innerHTML = '<option value="">-- Select Visit --</option>'
+        + visitsCache.map(function (v) {
+            return '<option value="' + v.id + '">' + escHtml(v.visit_number + ' — ' + v.patient_name + ' (' + v.hospital_number + ')') + '</option>';
+        }).join('');
 }
 
+function updateLabPrice() {
+    var type = document.getElementById('labType').value;
+    document.getElementById('price').value = LAB_PRICES[type] || '';
+}
+
+async function handleLabEntrySubmit(e) {
+    e.preventDefault();
+    var visitId = document.getElementById('entryPatient').value;
+    var testType = document.getElementById('labToDone').value.trim();
+    var labType = document.getElementById('labType').value;
+    if (!visitId) { showAlert('Select the patient / visit first.', 'error'); return; }
+    if (!testType) { showAlert('Enter the lab test to be done.', 'error'); return; }
+
+    var data = {
+        visit_id: visitId,
+        test_type: testType,
+        test_description: labType ? 'Category: ' + labType.charAt(0).toUpperCase() + labType.slice(1) : '',
+        urgency: 'routine'
+    };
+    try {
+        var r = await fetch('/hms/backend/api/lab.php?action=request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        var d = await r.json();
+        if (d.success) {
+            showAlert('Lab request submitted.', 'success');
+            document.getElementById('labEntryForm').reset();
+            document.getElementById('price').value = '';
+            setLabView('requested');
+            await loadLabRequests();
+        } else {
+            showAlert(d.error || 'Request failed', 'error');
+        }
+    } catch (e) {
+        console.error('Lab request error:', e);
+        showAlert('Network error. Please try again.', 'error');
+    }
+}
+
+/* ================= LAB DATA / VIEWS ================= */
 async function loadLabRequests() {
     try {
-        const response = await fetch('/hms/backend/api/lab.php?action=requests');
-        const data = await response.json();
-        if (data.success) {
-            labData = data.requests || [];
-        } else {
-            throw new Error(data.error || 'Failed to load lab requests');
-        }
-    } catch (error) {
-        console.error('Lab load error:', error);
+        var r = await fetch('/hms/backend/api/lab.php?action=requests');
+        var d = await r.json();
+        labData = (d.success && d.requests) ? d.requests : [];
+    } catch (e) {
+        console.error('Lab load error:', e);
         labData = [];
     }
     await loadLabResults();
-    renderAll();
+    renderLabCounts();
+    renderLabMain();
+    populateEntryRequisition();
 }
 
 async function loadLabResults() {
     labResultsMap = {};
     try {
-        const response = await fetch('/hms/backend/api/lab.php?action=results');
-        const data = await response.json();
-        if (data.success) {
-            (data.results || []).forEach(function (res) {
+        var r = await fetch('/hms/backend/api/lab.php?action=results');
+        var d = await r.json();
+        if (d.success) {
+            (d.results || []).forEach(function (res) {
                 if (res.lab_request_id !== null && res.lab_request_id !== undefined) {
                     labResultsMap[String(res.lab_request_id)] = res;
                 }
             });
         }
-    } catch (error) {
-        console.error('Lab results load error:', error);
-    }
+    } catch (e) { console.error('Lab results load error:', e); }
 }
 
-function renderAll() {
-    renderStats();
-    renderRequested();
-    renderPending();
-    renderReady();
-    renderDispatched();
-    populateEntryRequisition();
+function renderLabCounts() {
+    var notReady = labData.filter(function (r) { return r.status === 'pending' || r.status === 'in_progress'; }).length;
+    var ready = labData.filter(function (r) { return r.status === 'completed'; }).length;
+    document.getElementById('labNotReadyCount').textContent = notReady;
+    document.getElementById('labReadyCount').textContent = ready;
+    document.getElementById('labDispCount').textContent = readDispatched().length;
 }
 
-function renderStats() {
-    const notReady = labData.filter(function (r) { return r.status === 'pending' || r.status === 'in_progress'; }).length;
-    const ready = labData.filter(function (r) { return r.status === 'completed'; }).length;
-    document.getElementById('statLabRequested').textContent = labData.length;
-    document.getElementById('statLabNotReady').textContent = notReady;
-    document.getElementById('statLabReady').textContent = ready;
-    document.getElementById('reqTabBadge').textContent = labData.length;
-    document.getElementById('pendingTabBadge').textContent = notReady;
-    document.getElementById('readyTabBadge').textContent = ready;
+function labStatusBadge(status) {
+    if (status === 'completed') return '<span class="lab-badge lab-status-sent">Ready</span>';
+    if (status === 'in_progress') return '<span class="lab-badge lab-status-sent">Sent</span>';
+    if (status === 'cancelled') return '<span class="lab-badge lab-status-abs">ABS</span>';
+    return '<span class="lab-badge lab-status-not">Not Ready</span>';
 }
 
-function fmtLabTime(v) {
-    return window.fmtDateTime ? window.fmtDateTime(v) : (v || '--');
-}
-
-function renderRequested() {
-    const tbody = document.getElementById('reqTableBody');
-    if (!labData.length) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:14px;color:#94A3B8;">No lab requests yet — use "+ New Request" to add one.</td></tr>';
-        return;
-    }
-    const q = (document.getElementById('labRequisitionSearch').value || '').trim().toLowerCase();
-    const rows = q
-        ? labData.filter(function (r) { return String(r.patient_name || '').toLowerCase().indexOf(q) >= 0 || String(r.hospital_number || '').toLowerCase().indexOf(q) >= 0; })
-        : labData;
-    if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:14px;color:#94A3B8;">No requisitions match "' + escHtml(q) + '".</td></tr>';
-        return;
-    }
-    tbody.innerHTML = rows.map(function (r) {
-        const urgencyBadge = r.urgency === 'emergency' ? 'badge-danger' : r.urgency === 'urgent' ? 'badge-warning' : 'badge-secondary';
-        const statusBadge = r.status === 'completed' ? 'badge-success' : r.status === 'cancelled' ? 'badge-danger' : r.status === 'in_progress' ? 'badge-info' : 'badge-warning';
-        return '<tr>' +
-            '<td class="fw-bold text-primary">#LAB-' + (r.id || '') + '</td>' +
-            '<td>' + fmtLabTime(r.requested_at) + '</td>' +
-            '<td class="fw-bold">' + escHtml(r.patient_name || '--') + '</td>' +
-            '<td>' + escHtml(r.hospital_number || '--') + '</td>' +
-            '<td><span class="badge badge-secondary">' + escHtml(r.test_type || '--') + '</span></td>' +
-            '<td>' + escHtml(r.doctor_name || '--') + '</td>' +
-            '<td><span class="badge ' + urgencyBadge + '">' + escHtml((r.urgency || 'routine').toUpperCase()) + '</span></td>' +
-            '<td><span class="badge ' + statusBadge + '">' + escHtml(String(r.status || '').replace('_', ' ')) + '</span></td>' +
-            '<td>' +
-                (r.status === 'pending' || r.status === 'in_progress'
-                    ? '<button class="btn btn-sm btn-primary py-1 px-2" style="font-size:11px;background:#0072BC;" onclick="openEntryFor(' + r.id + ')">Process Sample</button>'
-                    : '<span class="badge badge-info">' + escHtml(r.result_status || 'result saved') + '</span>') +
-            '</td>' +
-        '</tr>';
-    }).join('');
-}
-
-function applySearch() { renderRequested(); }
-
-function renderPending() {
-    const tbody = document.getElementById('pendingTableBody');
-    const rows = labData.filter(function (r) { return r.status === 'pending' || r.status === 'in_progress'; });
-    if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:14px;color:#94A3B8;">No in-progress / not-ready labs.</td></tr>';
-        return;
-    }
-    tbody.innerHTML = rows.map(function (r) {
-        return '<tr>' +
-            '<td class="fw-bold">#LAB-' + (r.id || '') + '</td>' +
-            '<td class="fw-bold">' + escHtml(r.patient_name || '--') + '</td>' +
-            '<td>' + escHtml(r.test_type || '--') + '</td>' +
-            '<td>' + fmtLabTime(r.requested_at) + '</td>' +
-            '<td><span class="badge badge-warning">' + escHtml(String(r.status || 'pending').replace('_', ' ')) + '</span></td>' +
-            '<td><button class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:11px;" onclick="openEntryFor(' + r.id + ')">Enter Results</button></td>' +
-        '</tr>';
-    }).join('');
-}
-
-function renderReady() {
-    const tbody = document.getElementById('readyTableBody');
-    const dispatched = readDispatched();
-    const rows = labData.filter(function (r) {
-        return r.status === 'completed' && !dispatched.some(function (d) { return d.id === String(r.id); });
+function labFilteredRows() {
+    var q = (document.getElementById('labGlobalSearch').value || '').trim().toLowerCase();
+    if (!q) return labData;
+    return labData.filter(function (r) {
+        return String(r.patient_name || '').toLowerCase().indexOf(q) >= 0
+            || String(r.hospital_number || '').toLowerCase().indexOf(q) >= 0
+            || String(r.test_type || '').toLowerCase().indexOf(q) >= 0
+            || String(r.id || '').indexOf(q) >= 0;
     });
-    if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:14px;color:#94A3B8;">No ready & verified labs.</td></tr>';
-        return;
-    }
-    tbody.innerHTML = rows.map(function (r) {
-        const labRes = labResultsMap[String(r.id)] || null;
-        const resultText = labRes ? String(labRes.results || '--') : String(r.result_status || '--');
-        const doneAt = labRes && labRes.completed_at ? fmtLabTime(labRes.completed_at) : fmtLabTime(r.requested_at);
-        return '<tr>' +
-            '<td class="fw-bold text-success">#LAB-' + (r.id || '') + '</td>' +
-            '<td class="fw-bold">' + escHtml(r.patient_name || '--') + '</td>' +
-            '<td>' + escHtml(r.test_type || '--') + '</td>' +
-            '<td style="max-width:280px;white-space:pre-wrap;">' + escHtml(resultText) + '</td>' +
-            '<td>' + (labRes && labRes.verified_name ? escHtml(labRes.verified_name) + '<br>' : '') + doneAt + '</td>' +
-            '<td><button class="btn btn-sm btn-success py-1 px-3" style="font-size:11px;" onclick="dispatchReport(' + r.id + ')">Dispatch Report</button></td>' +
-        '</tr>';
-    }).join('');
 }
 
-function renderDispatched() {
-    const tbody = document.getElementById('dispatchedTableBody');
-    const list = readDispatched();
-    const rows = list.map(function (d) {
-        const r = labData.find(function (x) { return String(x.id) === d.id; }) || null;
+function setLabView(view) {
+    LAB_VIEW = view;
+    var valid = ['requested', 'ready', 'notready', 'dispatched'];
+    if (valid.indexOf(view) === -1) view = 'requested';
+    document.getElementById('misDispatched').classList.toggle('active', view === 'dispatched');
+    document.getElementById('misReady').classList.toggle('active', view === 'ready');
+    document.getElementById('misNotready').classList.toggle('active', view === 'notready');
+    var titles = {
+        requested: 'ALL LABS REQUESTED BY THE DOCTOR',
+        ready: 'READY & VERIFIED LABS',
+        notready: 'NOT READY / IN-PROGRESS LABS',
+        dispatched: 'DISPATCHED REPORTS HISTORY'
+    };
+    document.getElementById('labMainTitle').textContent = titles[view];
+    document.getElementById('labViewAllLink').style.display = view === 'requested' ? 'none' : 'inline';
+    renderLabMain();
+}
+
+function renderLabMain() {
+    var holder = document.getElementById('labMainView');
+    if (!holder) return;
+    var q = (document.getElementById('labGlobalSearch').value || '').trim().toLowerCase();
+    var filter = function (rows) {
+        if (!q) return rows;
+        return rows.filter(function (r) {
+            return String(r.patient_name || '').toLowerCase().indexOf(q) >= 0
+                || String(r.hospital_number || '').toLowerCase().indexOf(q) >= 0
+                || String(r.test_type || '').toLowerCase().indexOf(q) >= 0
+                || String(r.id || '').indexOf(q) >= 0;
+        });
+    };
+
+    if (LAB_VIEW === 'requested') {
+        var rows = filter(labData);
+        holder.innerHTML = '<table class="lab-table"><thead><tr>' +
+            '<th>Req. ID</th><th>Patient Name</th><th>Lab Test</th><th>Doctor</th><th>Request Date</th><th>Status</th>' +
+            '</tr></thead><tbody>' + (rows.length
+                ? rows.map(function (r) {
+                    var action = '';
+                    if (r.status === 'pending' || r.status === 'in_progress') {
+                        action = '<button class="lab-btn-outline" style="margin-left:4px;" onclick="openEntryFor(' + r.id + ')">Process</button>';
+                    } else if (r.status === 'completed') {
+                        action = '<button class="lab-btn-success" style="margin-left:4px;" onclick="dispatchReport(' + r.id + ')">Dispatch</button>';
+                    }
+                    return '<tr>' +
+                        '<td class="fw-bold">#LAB-' + escHtml(r.id) + '</td>' +
+                        '<td class="fw-bold">' + escHtml(r.patient_name || '--') + '</td>' +
+                        '<td>' + escHtml(r.test_type || '--') + '</td>' +
+                        '<td>' + escHtml(r.doctor_name || '--') + '</td>' +
+                        '<td>' + fmtLabTime(r.requested_at) + '</td>' +
+                        '<td>' + labStatusBadge(r.status) + action + '</td>' +
+                    '</tr>';
+                }).join('')
+                : '<tr><td colspan="6" class="lab-empty">' + (q ? 'No requests match "' + escHtml(q) + '".' : 'No lab requests yet — use the Entries Form above to add one.') + '</td></tr>') +
+            '</tbody></table>';
+        return;
+    }
+
+    if (LAB_VIEW === 'notready') {
+        var nrows = filter(labData.filter(function (r) { return r.status === 'pending' || r.status === 'in_progress'; }));
+        holder.innerHTML = '<table class="lab-table"><thead><tr>' +
+            '<th>Req. ID</th><th>Patient</th><th>Lab Test</th><th>Request Date</th><th>Status</th><th>Action</th>' +
+            '</tr></thead><tbody>' + (nrows.length
+                ? nrows.map(function (r) {
+                    return '<tr>' +
+                        '<td class="fw-bold">#LAB-' + escHtml(r.id) + '</td>' +
+                        '<td class="fw-bold">' + escHtml(r.patient_name || '--') + '</td>' +
+                        '<td>' + escHtml(r.test_type || '--') + '</td>' +
+                        '<td>' + fmtLabTime(r.requested_at) + '</td>' +
+                        '<td>' + labStatusBadge(r.status) + '</td>' +
+                        '<td><button class="lab-btn-outline" onclick="openEntryFor(' + r.id + ')">Enter Results</button></td>' +
+                    '</tr>';
+                }).join('')
+                : '<tr><td colspan="6" class="lab-empty">No in-progress / not-ready labs.</td></tr>') +
+            '</tbody></table>';
+        return;
+    }
+
+    if (LAB_VIEW === 'ready') {
+        var dispatched = readDispatched();
+        var rrows = filter(labData.filter(function (r) {
+            return r.status === 'completed' && !dispatched.some(function (d) { return d.id === String(r.id); });
+        }));
+        holder.innerHTML = '<table class="lab-table"><thead><tr>' +
+            '<th>Req. ID</th><th>Patient</th><th>Lab Test</th><th>Result</th><th>Verified / Completed</th><th>Action</th>' +
+            '</tr></thead><tbody>' + (rrows.length
+                ? rrows.map(function (r) {
+                    var labRes = labResultsMap[String(r.id)] || null;
+                    var resultText = labRes ? String(labRes.results || '--') : String(r.result_status || '--');
+                    var doneAt = labRes && labRes.completed_at ? fmtLabTime(labRes.completed_at) : fmtLabTime(r.requested_at);
+                    return '<tr>' +
+                        '<td class="fw-bold">#LAB-' + escHtml(r.id) + '</td>' +
+                        '<td class="fw-bold">' + escHtml(r.patient_name || '--') + '</td>' +
+                        '<td>' + escHtml(r.test_type || '--') + '</td>' +
+                        '<td style="max-width:240px;white-space:pre-wrap;">' + escHtml(resultText) + '</td>' +
+                        '<td>' + (labRes && labRes.verified_name ? escHtml(labRes.verified_name) + '<br>' : '') + doneAt + '</td>' +
+                        '<td><button class="lab-btn-success" onclick="dispatchReport(' + r.id + ')">Dispatch Report</button></td>' +
+                    '</tr>';
+                }).join('')
+                : '<tr><td colspan="6" class="lab-empty">No ready & verified labs.</td></tr>') +
+            '</tbody></table>';
+        return;
+    }
+
+    /* dispatched */
+    var dlist = readDispatched();
+    var drows = dlist.map(function (d) {
+        var r = labData.find(function (x) { return String(x.id) === d.id; }) || null;
         return '<tr>' +
             '<td class="fw-bold">#DSP-' + escHtml(d.id) + '</td>' +
             '<td class="fw-bold">' + escHtml(r ? r.patient_name : '--') + '</td>' +
             '<td>' + escHtml(r ? r.test_type : '--') + '</td>' +
             '<td>' + (d.at ? fmtLabTime(d.at) : '--') + '</td>' +
-            '<td><button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:11px;" onclick="printReport(' + (r ? r.id : 0) + ')">Print PDF</button></td>' +
+            '<td><button class="lab-btn-outline" onclick="printReport(' + (r ? r.id : 0) + ')">Print PDF</button></td>' +
         '</tr>';
     }).join('');
-    tbody.innerHTML = rows || '<tr><td colspan="5" style="text-align:center;padding:14px;color:#94A3B8;">No dispatched reports yet — dispatch a ready lab above.</td></tr>';
+    holder.innerHTML = '<table class="lab-table"><thead><tr>' +
+        '<th>Dispatch ID</th><th>Patient</th><th>Lab Test</th><th>Dispatch Date</th><th>Report</th>' +
+        '</tr></thead><tbody>' + (drows || '<tr><td colspan="5" class="lab-empty">No dispatched reports yet — dispatch a ready lab above.</td></tr>') +
+        '</tbody></table>';
 }
 
+/* ================= RESULT ENTRY ================= */
 function populateEntryRequisition() {
-    const sel = document.getElementById('entryRequisition');
-    const keep = sel.value;
-    const rows = labData.filter(function (r) { return r.status === 'pending' || r.status === 'in_progress'; });
+    var sel = document.getElementById('entryRequisition');
+    if (!sel) return;
+    var keep = sel.value;
+    var rows = labData.filter(function (r) { return r.status === 'pending' || r.status === 'in_progress'; });
     sel.innerHTML = rows.length
         ? rows.map(function (r) { return '<option value="' + r.id + '">#LAB-' + r.id + ' — ' + escHtml(r.patient_name) + ' (' + escHtml(r.test_type) + ')</option>'; }).join('')
         : '<option value="">-- Awaiting requisitions --</option>';
@@ -667,29 +687,34 @@ function populateEntryRequisition() {
 
 function openEntryFor(requestId) {
     populateEntryRequisition();
-    const sel = document.getElementById('entryRequisition');
+    var sel = document.getElementById('entryRequisition');
     if (sel.options.length && Array.from(sel.options).some(function (o) { return String(o.value) === String(requestId); })) {
         sel.value = String(requestId);
     }
-    switchToLabTab('entry-tab');
+    document.getElementById('labResultEntryForm').reset();
+    document.getElementById('lab-result-modal').classList.add('show');
+}
+
+function closeResultModal() {
+    document.getElementById('lab-result-modal').classList.remove('show');
 }
 
 async function handleEntrySubmit(e) {
     e.preventDefault();
-    const reqId = document.getElementById('entryRequisition').value;
+    var reqId = document.getElementById('entryRequisition').value;
     if (!reqId) {
         showAlert('Select a requisition first — there are no pending lab requests to record results for.', 'error');
         return;
     }
-    const saveAs = e.submitter && e.submitter.getAttribute ? (e.submitter.getAttribute('data-save') || 'final') : 'final';
-    let results = document.getElementById('entryResults').value.trim();
-    const spec = document.getElementById('entrySpecimen').value.trim();
+    var saveAs = e.submitter && e.submitter.getAttribute ? (e.submitter.getAttribute('data-save') || 'final') : 'final';
+    var results = document.getElementById('entryResults').value.trim();
+    var spec = document.getElementById('entrySpecimen').value.trim();
     if (spec) results = results ? 'Specimen: ' + spec + '\n' + results : 'Specimen: ' + spec;
     if (!results) {
         showAlert('Enter the result values before saving.', 'error');
         return;
     }
-    const data = {
+    var data = {
         lab_request_id: reqId,
         results: results,
         normal_range: document.getElementById('entryNormalRange').value.trim(),
@@ -697,78 +722,49 @@ async function handleEntrySubmit(e) {
         status: saveAs
     };
     try {
-        const response = await fetch('/hms/backend/api/lab.php?action=result', {
+        var r = await fetch('/hms/backend/api/lab.php?action=result', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-        const result = await response.json();
-        if (result.success) {
+        var d = await r.json();
+        if (d.success) {
             showAlert(saveAs === 'final' ? 'Result saved and marked as READY.' : 'Result saved as draft.', 'success');
-            document.getElementById('entryResults').value = '';
-            document.getElementById('entryInterpretation').value = '';
-            document.getElementById('entryNormalRange').value = '';
+            closeResultModal();
+            setLabView(saveAs === 'final' ? 'ready' : 'notready');
             await loadLabRequests();
         } else {
-            showAlert(result.error || 'Save failed', 'error');
+            showAlert(d.error || 'Save failed', 'error');
         }
-    } catch (error) {
-        console.error('Entry save error:', error);
+    } catch (e) {
+        console.error('Entry save error:', e);
         showAlert('Network error. Please try again.', 'error');
     }
 }
 
-async function handleLabRequestSubmit(e) {
-    e.preventDefault();
-    const data = {
-        visit_id: document.getElementById('lab-visit').value,
-        test_type: document.getElementById('lab-test-type').value.trim(),
-        test_description: document.getElementById('lab-test-description').value.trim(),
-        urgency: document.getElementById('lab-urgency').value
-    };
-    if (!data.visit_id || !data.test_type) {
-        showAlert('Visit and test type are required', 'error');
-        return;
-    }
-    try {
-        const response = await fetch('/hms/backend/api/lab.php?action=request', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        const result = await response.json();
-        if (result.success) {
-            showAlert('Lab request submitted', 'success');
-            document.getElementById('lab-request-modal').classList.remove('show');
-            document.getElementById('lab-request-form').reset();
-            await loadLabRequests();
-        } else {
-            showAlert(result.error || 'Request failed', 'error');
-        }
-    } catch (error) { console.error(error); showAlert('Network error', 'error'); }
-}
-
-/* ---- Dispatch (browser-local log; backend has no 'dispatched' status yet) ---- */
+/* ================= DISPATCH (browser-local log; backend has no 'dispatched' status yet) ================= */
 function readDispatched() {
     try {
-        const raw = localStorage.getItem(DISPATCH_KEY);
+        var raw = localStorage.getItem(DISPATCH_KEY);
         return raw ? JSON.parse(raw) : [];
     } catch (e) { return []; }
 }
 
 function dispatchReport(requestId) {
-    const list = readDispatched();
+    var list = readDispatched();
     if (!list.some(function (d) { return String(d.id) === String(requestId); })) {
         list.push({ id: String(requestId), at: new Date().toISOString() });
         try { localStorage.setItem(DISPATCH_KEY, JSON.stringify(list)); } catch (e) {}
     }
     showAlert('Report marked as dispatched (browser dispatch log).', 'success');
-    renderAll();
+    renderLabCounts();
+    if (LAB_VIEW === 'ready') setLabView('dispatched');
+    loadLabRequests();
 }
 
 function printReport(requestId) {
-    const r = labData.find(function (x) { return String(x.id) === String(requestId); });
-    const lines = [
+    var r = labData.find(function (x) { return String(x.id) === String(requestId); });
+    var lines = [
         'LABORATORY REPORT',
         '=================',
         'Request   : #LAB-' + (r ? r.id : ''),
@@ -783,28 +779,9 @@ function printReport(requestId) {
     console.log(lines.join('\n'));
 }
 
-/* ---- Vanilla tab switcher (replaces bootstrap.Tab) ---- */
-function switchToLabTab(triggerId) {
-    var btn = document.getElementById(triggerId);
-    var targetId = btn ? btn.getAttribute('data-target') : null;
-    if (!targetId) return;
-    document.querySelectorAll('#lab-page .nav-tabs .nav-link').forEach(function (b) {
-        b.classList.toggle('active', b === btn);
-    });
-    document.querySelectorAll('#lab-page .tab-pane').forEach(function (p) {
-        var show = p.id === targetId;
-        p.classList.toggle('show', show);
-    });
-}
-
-function debounce(fn, wait) {
-    var t;
-    return function () {
-        var args = arguments;
-        var ctx = this;
-        clearTimeout(t);
-        t = setTimeout(function () { fn.apply(ctx, args); }, wait);
-    };
+/* ================= HELPERS ================= */
+function fmtLabTime(v) {
+    return window.fmtDateTime ? window.fmtDateTime(v) : (v || '--');
 }
 
 function escHtml(s) {

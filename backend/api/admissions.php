@@ -188,9 +188,14 @@ function dischargePatient() {
     }
 
     try {
+        $dischargedAt = trim($data['discharged_at'] ?? '');
+        if ($dischargedAt === '') {
+            $dischargedAt = date('Y-m-d H:i:s');
+        }
+
         $db->update('admissions', [
             'status'         => 'Discharged',
-            'discharged_at'  => date('Y-m-d H:i:s'),
+            'discharged_at'  => $dischargedAt,
             'discharge_notes' => trim($data['discharge_notes'] ?? ''),
         ], 'id = ?', [$id]);
 
