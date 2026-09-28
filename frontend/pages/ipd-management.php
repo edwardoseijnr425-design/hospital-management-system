@@ -1,0 +1,287 @@
+<style>
+/* Container: Stretch full width of parent with relaxed padding */
+.ipd-dashboard-wrapper,
+.lab-dashboard-wrapper {
+  width: 100%;
+  padding: 24px;
+  background-color: #f0f4f8;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+/* 2-Column Grid: Expands to full available width */
+.ipd-grid-container,
+.lab-grid-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 24px; /* Generous gap between cards */
+  width: 100%;
+}
+
+/* Cards: Increased height, padding, and flex alignment */
+.ipd-card,
+.lab-card {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #d0dbe5;
+  border-radius: 6px;
+  height: 85px; /* Increased card height from 70px to 85px */
+  padding: 0 24px;
+  text-decoration: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ipd-card:hover,
+.lab-card:hover {
+  background-color: #f8fafc;
+  border-color: #0b3c5d;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+.ipd-card.active {
+  border-color: #0072BC;
+  box-shadow: 0 0 0 2px rgba(0, 114, 188, 0.22);
+}
+
+/* Icon Box: Scaled up to match larger card proportions */
+.ipd-card-icon,
+.lab-card-icon {
+  width: 58px; /* Increased from 48px */
+  height: 58px; /* Increased from 48px */
+  border: 1px solid #b2c4d4;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px; /* Scaled icon size */
+  color: #102a43;
+  background-color: #ffffff;
+  flex-shrink: 0;
+}
+
+/* Card Title: Larger typography for better visual balance */
+.ipd-card-title,
+.lab-card-title {
+  color: #0b3c5d; /* Dark blue matching main menu */
+  font-size: 15px; /* Increased font size */
+  font-weight: 700;
+  font-family: Arial, sans-serif;
+  line-height: 1.3;
+  text-transform: uppercase;
+  margin-left: 20px;
+  text-align: left;
+}
+.stat-mini{border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;background:#fff;}
+.stat-mini .stat-mini-label{font-size:10px;font-weight:800;letter-spacing:.4px;color:#64748B;text-transform:uppercase;}
+.stat-mini .stat-mini-value{font-size:20px;font-weight:800;color:#0F2D59;margin-top:2px;}
+</style>
+
+<!-- ============ IPD MANAGEMENT DASHBOARD ============ -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 style="margin:0;color:#0072BC;font-weight:800;">IPD MANAGEMENT DASHBOARD</h2>
+            <p style="margin:3px 0 0;font-size:12px;color:#4A7A9E;">Quick access to every in-patient module — click a tile to open that section, or click WARDS, ROOMS &amp; BED STATUS to view the bed status panel below.</p>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="ipd-dashboard-wrapper">
+            <div class="ipd-grid-container" id="ipd-grid">
+                <div style="grid-column:1/-1;text-align:center;color:#94A3B8;padding:18px 0;">Loading IPD modules...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ WARD / BED / STATUS (shown when the WARDS, ROOMS & BED STATUS tile is clicked) ============ -->
+<div class="card" id="bed-status-section" style="display:none;">
+    <div class="card-header">
+        <div>
+            <h2 style="margin:0;color:#0072BC;font-weight:800;"><i class="fa-solid fa-bed" style="margin-right:8px;"></i>WARD · BED · STATUS</h2>
+            <p style="margin:3px 0 0;font-size:12px;color:#64748B;">Bed occupancy across all wards — click “WARDS, ROOMS &amp; BED STATUS” above to toggle this panel.</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <select id="filter-ward-admission" style="min-width:170px;">
+                <option value="">All Wards</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" id="refresh-beds-btn">Refresh</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;">
+            <div class="stat-mini"><div class="stat-mini-label">Total Beds</div><div class="stat-mini-value" id="statBedsTotal">0</div></div>
+            <div class="stat-mini"><div class="stat-mini-label">Occupied</div><div class="stat-mini-value" id="statBedsOccupied" style="color:#E53E3E;">0</div></div>
+            <div class="stat-mini"><div class="stat-mini-label">Available</div><div class="stat-mini-value" id="statBedsAvailable" style="color:#2E7D32;">0</div></div>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ward</th>
+                        <th>Bed No.</th>
+                        <th>Room</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Current Patient</th>
+                    </tr>
+                </thead>
+                <tbody id="beds-table">
+                    <tr><td colspan="6" style="text-align:center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+let bedsData = [];
+
+const IPD_CARDS = [
+    { fa: 'fa-solid fa-bed', label: 'WARDS, ROOMS & BED STATUS', page: 'wards' },
+    { fa: 'fa-solid fa-clipboard-user', label: 'CURRENT PATIENT ACCESS', page: 'patients' },
+    { fa: 'fa-solid fa-address-card', label: 'ADMIT PATIENT', page: 'admissions' },
+    { fa: 'fa-solid fa-file-lines', label: 'DRAFT ADMISSIONS', page: 'records' },
+    { fa: 'fa-solid fa-user-nurse', label: 'NURSING STATION', page: 'vitals' },
+    { fa: 'fa-solid fa-user-doctor', label: 'DOCTOR STATION', page: 'consultations' },
+    { fa: 'fa-solid fa-cash-register', label: 'BILLING MANAGEMENT', page: 'account-management' },
+    { fa: 'fa-solid fa-chart-pie', label: 'REPORTS', page: 'reports' },
+    { fa: 'fa-solid fa-users', label: 'SHIFT PLAN', page: 'users' },
+    { fa: 'fa-solid fa-laptop-medical', label: 'MIS', page: 'system-activities' },
+    { fa: 'fa-solid fa-folder-open', label: 'REGISTERS', page: 'records' },
+    { fa: 'fa-solid fa-calendar-check', label: 'OPERATION THEATRE CALENDAR', page: 'appointment-calendar' }
+];
+
+async function initIpdManagement() {
+    setupEventListeners();
+    await Promise.all([loadWards(), loadBeds(''), loadIpdCards()]);
+}
+
+function loadIpdCards() {
+    const grid = document.getElementById('ipd-grid');
+    if (!grid) return;
+    if (!grid.classList.contains('ipd-grid-container')) grid.classList.add('ipd-grid-container');
+    grid.innerHTML = IPD_CARDS.map(c => `
+        <a href="#" class="ipd-card" data-page="${c.page}">
+            <div class="ipd-card-icon"><i class="${c.fa}"></i></div>
+            <div class="ipd-card-title">${c.label}</div>
+        </a>`).join('');
+    grid.querySelectorAll('.ipd-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (card.dataset.page === 'wards') {
+                toggleBedStatusSection();
+                return;
+            }
+            if (typeof window.loadPage === 'function') window.loadPage(card.dataset.page);
+        });
+    });
+}
+
+function toggleBedStatusSection() {
+    const section = document.getElementById('bed-status-section');
+    if (!section) return;
+    const isHidden = section.style.display === 'none' || !section.style.display;
+    section.style.display = isHidden ? 'block' : 'none';
+    const tile = document.querySelector('.ipd-card[data-page="wards"]');
+    if (tile) tile.classList.toggle('active', isHidden);
+    if (isHidden) {
+        loadBeds(document.getElementById('filter-ward-admission').value);
+        setTimeout(() => { section.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80);
+    }
+}
+
+async function loadWards() {
+    try {
+        const response = await fetch('/hms/backend/api/wards.php');
+        const data = await response.json();
+        if (data.success) {
+            const select = document.getElementById('filter-ward-admission');
+            select.innerHTML = '<option value="">All Wards</option>' +
+                data.wards.map(w => `<option value="${w.id}">${escHtml(w.ward_name)}</option>`).join('');
+        }
+    } catch (error) {
+        console.error('Wards load error:', error);
+    }
+}
+
+async function loadBeds(wardId = '') {
+    try {
+        const url = wardId
+            ? '/hms/backend/api/beds.php?ward_id=' + encodeURIComponent(wardId)
+            : '/hms/backend/api/beds.php';
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.success) {
+            bedsData = data.beds || [];
+            renderBedsTable();
+        }
+    } catch (error) {
+        console.error('Beds load error:', error);
+        const tbody = document.getElementById('beds-table');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Failed to load beds</td></tr>';
+    }
+}
+
+function renderBedsTable() {
+    const tbody = document.getElementById('beds-table');
+    if (!tbody) return;
+
+    const total = bedsData.length;
+    const occupied = bedsData.filter(b => String(b.status || '').toUpperCase() === 'OCCUPIED').length;
+    document.getElementById('statBedsTotal').textContent = total;
+    document.getElementById('statBedsOccupied').textContent = occupied;
+    document.getElementById('statBedsAvailable').textContent = total - occupied;
+
+    if (!bedsData.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No beds found</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = bedsData.map(bed => {
+        const statusNorm = String(bed.status || '').toUpperCase();
+        let statusTag = '';
+        if (statusNorm === 'OCCUPIED') statusTag = '<span class="badge" style="background:#DC3545;color:#fff;font-weight:700;">OCCUPIED</span>';
+        else if (statusNorm === 'RESERVED') statusTag = '<span class="badge" style="background:#F39C12;color:#fff;font-weight:700;">RESERVED</span>';
+        else if (statusNorm === 'MAINTENANCE') statusTag = '<span class="badge" style="background:#6C757D;color:#fff;font-weight:700;">MAINTENANCE</span>';
+        else statusTag = '<span class="badge" style="background:#28A745;color:#fff;font-weight:700;">AVAILABLE</span>';
+
+        const typeBadge = bed.room_type
+            ? `<span class="badge" style="background:#EEF2F7;color:#0F2D59;">${escHtml(bed.room_type)}</span>`
+            : '<span style="color:#94A3B8;">-</span>';
+
+        return `
+        <tr>
+            <td><strong style="color:#0F2D59;">${escHtml(bed.ward_name || '-')}</strong></td>
+            <td><strong style="color:#0072BC;">${escHtml(bed.bed_number || '-')}</strong></td>
+            <td>${escHtml(bed.room_number || '-')}</td>
+            <td>${typeBadge}</td>
+            <td>${statusTag}</td>
+            <td>${bed.patient_name ? escHtml(bed.patient_name) : '<span style="color:#94A3B8;">-</span>'}</td>
+        </tr>`;
+    }).join('');
+}
+
+function setupEventListeners() {
+    const wardSel = document.getElementById('filter-ward-admission');
+    if (wardSel) {
+        wardSel.addEventListener('change', function() {
+            loadBeds(this.value);
+        });
+    }
+    const refreshBtn = document.getElementById('refresh-beds-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            loadBeds(document.getElementById('filter-ward-admission').value);
+        });
+    }
+}
+
+function escHtml(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+</script>

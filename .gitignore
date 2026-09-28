@@ -1,0 +1,48 @@
+# XAMPP and Server Files
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Database
+*.sql
+!database/schema.sql
+
+# Uploads
+frontend/uploads/*
+!frontend/uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Composer (if added later)
+/vendor/
+composer.lock
+
+# Node (if added later)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
