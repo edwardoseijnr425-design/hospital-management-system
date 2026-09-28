@@ -147,20 +147,6 @@
       </div>
     </div>
 
-  <!-- CARD 9: DHIMS REPORT -->
-    <div class="col-md-6">
-      <div class="card border-0 shadow-sm p-3 h-100 bg-white rounded hms-module-card" style="border:1px solid #E2E8F0 !important;cursor:pointer;" onclick="admCCGo('dhims-report')">
-        <div class="d-flex align-items-center gap-3">
-          <div class="acc-icon-box" style="background-color:#E0F2FE;color:#0284C7;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-          </div>
-          <div class="flex-grow-1 text-center">
-            <span class="font-weight-bold text-uppercase d-block" style="color:#0F2D59;font-size:13px;letter-spacing:.5px;">DHIMS REPORT</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </div>
 </div>
 

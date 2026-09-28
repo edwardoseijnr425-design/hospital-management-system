@@ -83,8 +83,6 @@ function hcBrandLogo($px = 45) {
         .side-nav a:hover::before{background:#0072BC}
         .side-nav a.active{background-color:#EAEAEA;border-left-color:#0D47A1;color:#0D47A1;font-weight:bold}
         .side-nav a.active::before{background:#0D47A1}
-        .side-nav a.dl-quick-link::before{display:none}
-        .side-nav a.dl-quick-link svg{flex-shrink:0}
         .sidebar-action{padding:12px 14px 4px}
         .btn-send{width:100%;background:linear-gradient(180deg,#F39C12,#E67E22);color:#fff;border:none;padding:10px 12px;border-radius:3px;font-weight:700;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:.3px;transition:filter .15s}
         .btn-send:hover{filter:brightness(1.08)}
@@ -533,11 +531,6 @@ function hcBrandLogo($px = 45) {
             <a href="#" class="nav-link" data-page="admissions">Admissions</a>
             <a href="#" class="nav-link" data-page="prices">Drugs Dispense</a>
             <a href="#" class="nav-link" data-page="reports">View Alerts</a>
-            <a href="#" class="nav-link dl-quick-link" data-page="dhims-report" style="font-size: 12px; font-weight: 500;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" flex-shrink="0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                <span>DHIMS Report</span>
-                <span style="background:#F59E0B;color:#7C2D12;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:auto;">QUICK</span>
-            </a>
             <a href="#" class="nav-link" data-page="lab-management">Lab Management</a>
             <a href="#" class="nav-link" data-page="account-management">Account Management</a>
             <a href="#" class="nav-link" data-page="users">User Management</a>
@@ -687,22 +680,7 @@ function hcBrandLogo($px = 45) {
                             </div>
                         </div>
 
-                        <!-- 8. DHIMS REPORT -->
-                        <div class="col-md-6">
-                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('dhims_report')">
-                                <div class="d-flex align-items-center">
-                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: #E0F2FE; border-radius: 6px;">
-                                        <!-- DHIMS Chart/Document Icon -->
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                                    </div>
-                                    <div class="text-center flex-grow-1 me-4">
-                                        <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">DHIMS REPORT</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 9. IPD MANAGEMENT -->
+                        <!-- 8. IPD MANAGEMENT -->
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('ipd_management')">
                                 <div class="d-flex align-items-center">
@@ -717,7 +695,7 @@ function hcBrandLogo($px = 45) {
                             </div>
                         </div>
 
-                        <!-- 10. DEPARTMENTS -->
+                        <!-- 9. DEPARTMENTS -->
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('departments')">
                                 <div class="d-flex align-items-center">
@@ -732,7 +710,7 @@ function hcBrandLogo($px = 45) {
                             </div>
                         </div>
 
-                        <!-- 11. SYSTEM ACTIVITIES -->
+                        <!-- 10. SYSTEM ACTIVITIES -->
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('system_activities')">
                                 <div class="d-flex align-items-center">
@@ -747,7 +725,7 @@ function hcBrandLogo($px = 45) {
                             </div>
                         </div>
 
-                        <!-- 12. NHIA CLAIM -->
+                        <!-- 11. NHIA CLAIM -->
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('nhia_claim')">
                                 <div class="d-flex align-items-center">
@@ -762,7 +740,7 @@ function hcBrandLogo($px = 45) {
                             </div>
                         </div>
 
-                        <!-- 13. RADIOLOGY -->
+                        <!-- 12. RADIOLOGY -->
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('radiology')">
                                 <div class="d-flex align-items-center">
@@ -777,7 +755,7 @@ function hcBrandLogo($px = 45) {
                             </div>
                         </div>
 
-                        <!-- 14. MESSAGES & ALERTS -->
+                        <!-- 13. MESSAGES & ALERTS -->
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('messages_alerts')">
                                 <div class="d-flex align-items-center">
@@ -792,7 +770,7 @@ function hcBrandLogo($px = 45) {
                             </div>
                         </div>
 
-                        <!-- 15. INVENTORY MANAGEMENT -->
+                        <!-- 14. INVENTORY MANAGEMENT -->
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('inventory_management')">
                                 <div class="d-flex align-items-center">
@@ -1227,7 +1205,6 @@ window.fmtDateTime = fmtDateTime;
             investigations:'lab-management',
             pharmacy_management:'prices',
             mis:'reports',
-            dhims_report:'reports',
             ipd_management:'ipd-management',
             departments:'departments',
             system_activities:'system-activities',
