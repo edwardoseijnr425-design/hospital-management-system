@@ -135,9 +135,9 @@ require_once __DIR__ . '/../../backend/config/config.php';
           </div>
 
           <div class="form-group">
-            <label for="saDoctor">Attending Doctor / Medical Team <span class="required">*</span></label>
+            <label for="saDoctor">Medical Team <span class="required">*</span></label>
             <select id="saDoctor" class="form-control" required>
-              <option value="">-- Select Medical Team or Doctor --</option>
+              <option value="">-- Select Medical Team --</option>
             </select>
           </div>
 
@@ -332,7 +332,8 @@ function saSelectPatient(p) {
 function saHideResults() {
     var resultsBox = document.getElementById('saSearchResults');
     if (resultsBox) resultsBox.style.display = 'none';
-}/* ================= DEPARTMENTS + REAL DOCTORS ================= */
+}/* ================= MEDICAL TEAMS ================= */
+var saTeams = {};
 function saLoadReference() {
     var doctorSelect = document.getElementById('saDoctor');
     if (!doctorSelect) return;
@@ -340,52 +341,30 @@ function saLoadReference() {
     doctorSelect.innerHTML = '';
     if (placeholder) doctorSelect.appendChild(placeholder);
 
-    fetch('/hms/backend/api/users.php?action=departments')
+    fetch('/hms/backend/api/medicalteams.php?action=list')
         .then(function(r){ return r.json(); })
         .then(function(d){
-            var departments = (d && d.departments) || [];
-            if (!departments.length) return;
-            var optGroup = document.createElement('optgroup');
-            optGroup.label = '-- TEAM DOCTORS / DEPARTMENTS --';
-            departments.forEach(function(dep){
-                var opt = document.createElement('option');
-                opt.value = 'dept:' + dep.id;
-                opt.textContent = dep.name + ' Department';
-                optGroup.appendChild(opt);
-            });
-            doctorSelect.appendChild(optGroup);
-        })
-        .catch(function(){ /* ignore - teams unavailable */ });
-
-    fetch('/hms/backend/api/users.php?action=list&role=doctor')
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-            var doctors = (d && d.users) || [];
-            var optGroup = document.createElement('optgroup');
-            optGroup.label = '-- ALL INDIVIDUAL DOCTORS --';
-            if (doctors.length) {
-                doctors.forEach(function(doc){
-                    var opt = document.createElement('option');
-                    opt.value = 'doc:' + doc.id;
-                    opt.textContent = doc.full_name || ('Doctor #' + doc.id);
-                    optGroup.appendChild(opt);
-                });
-            } else {
+            var teams = (d && d.medical_teams) || [];
+            if (!teams.length) {
                 var noneOpt = document.createElement('option');
                 noneOpt.disabled = true;
-                noneOpt.textContent = 'No individual doctors registered yet';
-                optGroup.appendChild(noneOpt);
+                noneOpt.textContent = 'No medical teams registered yet';
+                doctorSelect.appendChild(noneOpt);
+                return;
             }
-            doctorSelect.appendChild(optGroup);
+            teams.forEach(function(team){
+                saTeams[team.id] = { name: team.name, department_id: team.department_id };
+                var opt = document.createElement('option');
+                opt.value = 'team:' + team.id;
+                opt.textContent = team.name;
+                doctorSelect.appendChild(opt);
+            });
         })
         .catch(function(){
-            var optGroup = document.createElement('optgroup');
-            optGroup.label = '-- ALL INDIVIDUAL DOCTORS --';
             var noneOpt = document.createElement('option');
             noneOpt.disabled = true;
-            noneOpt.textContent = 'No individual doctors registered yet';
-            optGroup.appendChild(noneOpt);
-            doctorSelect.appendChild(optGroup);
+            noneOpt.textContent = 'Medical teams could not be loaded';
+            doctorSelect.appendChild(noneOpt);
         });
 }
 
@@ -396,7 +375,7 @@ async function saSubmitAppointment(e) {
     e.preventDefault();
     var missing = [];
     if (!saVal('saPatientId')) missing.push('Patient');
-    if (!saVal('saDoctor')) missing.push('Attending Doctor / Medical Team');
+    if (!saVal('saDoctor')) missing.push('Medical Team');
     if (!saVal('saDate')) missing.push('Appointment Date');
     if (!saVal('saTime')) missing.push('Preferred Time Slot');
     if (missing.length) {
@@ -406,8 +385,11 @@ async function saSubmitAppointment(e) {
 
     var doctorValue = saVal('saDoctor');
     var departmentId = null, doctorId = null;
-    if (doctorValue.indexOf('dept:') === 0) { departmentId = parseInt(doctorValue.split(':')[1], 10); }
-    else if (doctorValue.indexOf('doc:') === 0) { doctorId = parseInt(doctorValue.split(':')[1], 10); }
+    if (doctorValue.indexOf('team:') === 0) {
+        var teamId = parseInt(doctorValue.split(':')[1], 10);
+        var team = saTeams[teamId];
+        if (team && team.department_id) { departmentId = parseInt(team.department_id, 10); }
+    }
 
     var data = {
         patient_id: parseInt(saVal('saPatientId'), 10),

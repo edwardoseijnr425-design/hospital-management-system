@@ -73,6 +73,16 @@ CREATE TABLE departments (
     FOREIGN KEY (head_of_department) REFERENCES users(id)
 );
 
+-- Medical Teams (clinical duty teams used for appointment assignment)
+CREATE TABLE medical_teams (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    department_id INT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (department_id) REFERENCES departments(id)
+);
+
 -- Consultation Services
 CREATE TABLE consultation_services (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -557,6 +567,15 @@ INSERT INTO departments (name, code, description) VALUES
 ('Lab', 'LAB', 'Laboratory tests and diagnostics'),
 ('Scan', 'SCAN', 'Ultrasound / scanning services'),
 ('X-Ray', 'XRAY', 'X-ray and imaging services');
+
+-- Default medical teams (duty/clinical teams; mapped to receiving departments)
+INSERT INTO medical_teams (name, department_id) VALUES
+('OPD Duty Medical Team A', NULL),
+('Surgical Duty Team', (SELECT id FROM departments WHERE name = 'Surgical')),
+('Pediatric Specialist Team', (SELECT id FROM departments WHERE name = 'Paediatrics')),
+('Obstetrics & Gynaecology Team', (SELECT id FROM departments WHERE name = 'Labour')),
+('Emergency Resuscitation Team', NULL),
+('Internal Medicine Team B', NULL);
 
 -- Insert default consultation services
 INSERT INTO consultation_services (name, code, department_id, description) VALUES
