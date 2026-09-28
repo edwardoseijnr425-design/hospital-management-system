@@ -1,5 +1,5 @@
 <?php
-// Laboratory Dashboard (EHMS-style 3-column layout).
+// Laboratory & Investigations Dashboard (mockup-style 2-column layout).
 // Server-side prologue: resolve the logged-in staff name, role, and today's date
 // for the login-status card. The shell (dashboard.php) already authenticated.
 require_once __DIR__ . '/../../backend/config/config.php';
@@ -7,68 +7,88 @@ $__labStaff = getCurrentUserName() ?: 'STAFF';
 $__labRole  = getCurrentUserRole() ?: 'STAFF';
 ?>
 <style>
-/* ================= LAB DASHBOARD : CLASSIC EHMS 3-COLUMN LAYOUT =================
-   Scoped under #lab-page. The shell (dashboard.php) has no Bootstrap dependency,
-   so every utility below is defined locally. Font Awesome icons are available
-   because the shell already loads frontend/assets/fontawesome/css/all.min.css. */
-#lab-page{background:#dce7f2;color:#333;font-size:13px;min-height:100vh;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
+/* ================= LAB & INVESTIGATIONS : 2-COLUMN MOCKUP LAYOUT =================
+   Scoped under #lab-page. No Bootstrap — every utility defined here.
+   Font Awesome icons are available because the shell already loads
+   frontend/assets/fontawesome/css/all.min.css. No inline footer: the shell
+   auto-appends the system support banner to every module page. */
+#lab-page{background:#dce7f2;color:#333;font-size:13px;min-height:100vh;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding-bottom:30px}
 #lab-page *,#lab-page *::before,#lab-page *::after{box-sizing:border-box}
-#lab-page .lab-topbar{background-color:#0b5fa5;color:#fff;padding:6px 15px;display:flex;justify-content:space-between;align-items:center;font-weight:bold}
-#lab-page .lab-topbar-title{font-size:15px;letter-spacing:.5px}
+
+/* ---- TOP BAR (HMS - HEALTHCARE MANAGEMENT SYSTEM branding) ---- */
+#lab-page .lab-topbar{background-color:#0b5fa5;color:#fff;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 5px rgba(0,0,0,0.15);flex-wrap:wrap;gap:8px}
+#lab-page .lab-topbar .title-group{display:flex;align-items:center;gap:10px}
+#lab-page .lab-topbar .title-group svg{width:24px;height:24px;fill:#ffffff}
+#lab-page .lab-topbar-title{font-size:16px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase}
 #lab-page .lab-topbar-right{display:flex;align-items:center;gap:15px;flex-wrap:wrap;justify-content:flex-end}
 #lab-page .lab-topbar-right > span{font-size:11px}
-#lab-page .lab-nav-btn{background-color:#0088cc;color:#fff;border:none;padding:4px 10px;font-size:11px;font-weight:bold;border-radius:2px;cursor:pointer;text-decoration:none;font-family:inherit}
+#lab-page .lab-nav-btn{background-color:#0088cc;color:#fff;border:none;padding:5px 12px;font-size:11px;font-weight:bold;border-radius:3px;cursor:pointer;text-decoration:none;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
 #lab-page .lab-nav-btn:hover{background-color:#006699}
-#lab-page .lab-main{display:grid;grid-template-columns:220px 1fr 240px;gap:12px;padding:10px;max-width:100%}
-#lab-page .lab-sidebar,.lab-content .lab-panel{display:flex;flex-direction:column}
-#lab-page .lab-sidebar{display:flex;flex-direction:column}
-#lab-page .lab-content{display:flex;flex-direction:column;gap:12px;min-width:0}
-#lab-page .lab-panel{background:#fff;border:1px solid #b2c8de;border-radius:3px;overflow:hidden;margin-bottom:10px}
-#lab-page .lab-content .lab-panel{margin-bottom:0}
-#lab-page .lab-panel-head{background-color:#0b5fa5;color:#fff;font-weight:bold;font-size:11px;padding:6px 10px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* ---- PAGE HEADER + ACTIONS ---- */
+#lab-page .lab-wrap{max-width:1200px;margin:0 auto;padding:16px}
+#lab-page .lab-header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+#lab-page .lab-header-title{font-size:17px;font-weight:800;color:#0F2D59;text-transform:uppercase;letter-spacing:.6px;display:flex;align-items:center;gap:8px}
+#lab-page .lab-header-title i{color:#0b5fa5}
+#lab-page .lab-header-actions{display:flex;gap:8px;flex-wrap:wrap}
+#lab-page .lab-h-btn{border:none;border-radius:3px;cursor:pointer;font-weight:bold;font-size:11px;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-family:inherit;transition:filter .15s}
+#lab-page .lab-h-btn i{font-size:12px}
+#lab-page .lab-h-btn.secondary{background-color:#7f8c8d;color:#fff}
+#lab-page .lab-h-btn.secondary:hover{background-color:#636e72}
+#lab-page .lab-h-btn.primary{background-color:#0072BC;color:#fff}
+#lab-page .lab-h-btn.primary:hover{filter:brightness(1.08)}
+
+/* ---- 2-COLUMN GRID ---- */
+#lab-page .lab-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;align-items:start}
+#lab-page .lab-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+
+/* ---- PANELS ---- */
+#lab-page .lab-panel{background:#fff;border:1px solid #b2c8de;border-radius:4px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,0.06)}
+#lab-page .lab-panel-head{background-color:#0b5fa5;color:#fff;font-weight:bold;font-size:12px;padding:9px 14px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+#lab-page .lab-panel-head i{color:#FFD54F}
 #lab-page .lab-panel-head .lab-head-link{color:#FFD166;font-size:10px;text-transform:uppercase;cursor:pointer;text-decoration:underline;font-weight:bold}
 #lab-page .lab-panel-head .lab-head-link:hover{color:#fff}
-#lab-page .lab-ql{list-style:none;background-color:#eaf1f8;margin:0;padding:0}
-#lab-page .lab-ql li{border-bottom:1px solid #d0deec}
-#lab-page .lab-ql li:last-child{border-bottom:none}
-#lab-page .lab-ql a{display:flex;align-items:center;gap:6px;padding:6px 10px;color:#333;text-decoration:none;font-size:11px;cursor:pointer}
-#lab-page .lab-ql a i{font-size:10px;color:#0b5fa5;width:12px;text-align:center}
-#lab-page .lab-ql a:hover{background-color:#d2e3f3;color:#005599}
-#lab-page .lab-ql-badge{color:red;font-weight:bold;margin-left:auto}
-#lab-page .lab-btn-orange{background-color:#f39c12;color:#fff;border:none;width:100%;padding:8px;font-weight:bold;font-size:11px;cursor:pointer;text-transform:uppercase;border-radius:2px;margin-bottom:10px;font-family:inherit}
-#lab-page .lab-btn-orange:hover{background-color:#d68910}
-#lab-page .lab-status-card{background-color:#0b5fa5;color:#fff;padding:8px;border-radius:3px;font-size:10px}
-#lab-page .lab-status-card p{margin-bottom:4px}
-#lab-page .lab-logout-btn{background-color:#0088cc;color:#fff;border:none;width:100%;padding:4px;margin-top:6px;cursor:pointer;font-weight:bold;text-transform:uppercase;font-family:inherit;font-size:10px}
-#lab-page .lab-logout-btn:hover{background-color:#006699}
-#lab-page .lab-form-grid{display:grid;grid-template-columns:150px 1fr;gap:8px 12px;padding:12px;align-items:center;background-color:#f8fafc}
-#lab-page .lab-form-grid label{font-weight:bold;color:#222;font-size:12px}
-#lab-page .lab-form-grid input,#lab-page .lab-form-grid select,#lab-page .lab-form-grid textarea{width:100%;padding:6px 8px;border:1px solid #b2c8de;border-radius:2px;font-size:12px;background-color:#fff;font-family:inherit}
-#lab-page .lab-form-grid textarea{resize:vertical;min-height:60px}
-#lab-page .lab-form-grid input[readonly]{background-color:#eef3f8;color:#555}
-#lab-page .lab-form-actions{grid-column:span 2;display:flex;justify-content:flex-end;gap:10px;margin-top:5px}
-#lab-page .lab-btn-submit{background-color:#0b5fa5;color:#fff;border:none;padding:6px 16px;font-weight:bold;font-size:11px;border-radius:2px;cursor:pointer;font-family:inherit;text-transform:uppercase}
+#lab-page .lab-live-sync{display:inline-block;background:#27ae60;color:#fff;font-size:9px;font-weight:bold;letter-spacing:.4px;padding:2px 8px;border-radius:999px;text-transform:uppercase}
+
+/* ---- ENTRIES FORM ---- */
+#lab-page .lab-form{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;padding:16px 18px;background-color:#f8fafc}
+#lab-page .lab-field{display:flex;flex-direction:column;gap:5px}
+#lab-page .lab-field-full{grid-column:span 2}
+#lab-page .lab-field label{font-weight:700;color:#222;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+#lab-page .lab-field select,#lab-page .lab-field input{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;background-color:#fff;color:#222;font-family:inherit}
+#lab-page .lab-field select:focus,#lab-page .lab-field input:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
+#lab-page .lab-field input[readonly]{background-color:#eef3f8;color:#555;cursor:not-allowed}
+#lab-page .lab-form-actions{grid-column:span 2;display:flex;justify-content:flex-end;gap:10px;margin-top:4px}
+#lab-page .lab-btn-submit{background-color:#0b5fa5;color:#fff;border:none;padding:9px 22px;font-weight:bold;font-size:12px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:7px}
 #lab-page .lab-btn-submit:hover{background-color:#004080}
 #lab-page .lab-btn-submit:disabled{opacity:.6;cursor:not-allowed}
-#lab-page .lab-btn-outline{background-color:#fff;color:#0b5fa5;border:1px solid #b2c8de;padding:3px 10px;font-weight:bold;font-size:10px;border-radius:2px;cursor:pointer;font-family:inherit}
-#lab-page .lab-btn-outline:hover{background-color:#e2edf7}
-#lab-page .lab-btn-success{background-color:#27ae60;color:#fff;border:none;padding:3px 10px;font-weight:bold;font-size:10px;border-radius:2px;cursor:pointer;font-family:inherit}
-#lab-page .lab-btn-success:hover{background-color:#1e8c4d}
-#lab-page .lab-table-wrap{background-color:#fff;max-height:320px;overflow-y:auto}
+
+/* ---- TABLE ---- */
+#lab-page .lab-table-wrap{background-color:#fff;max-height:420px;overflow-y:auto}
 #lab-page .lab-table{width:100%;border-collapse:collapse;font-size:11px}
 #lab-page .lab-table th{background-color:#e6eef5;color:#222;font-weight:bold;text-align:left;padding:8px;border-bottom:2px solid #b2c8de;position:sticky;top:0;z-index:1;white-space:nowrap}
 #lab-page .lab-table td{padding:7px 8px;border-bottom:1px solid #e1e8f0;vertical-align:middle}
-#lab-page .lab-table tr:nth-child(even){background-color:#f9fbfd}
-#lab-page .lab-table tr:hover{background-color:#eef4fb}
+#lab-page .lab-table tbody tr:hover{background-color:#eef4fb}
+#lab-page .lab-empty{text-align:center;padding:14px;color:#8a94a6}
 #lab-page .lab-badge{padding:2px 6px;border-radius:2px;font-weight:bold;font-size:10px}
 #lab-page .lab-status-sent{color:#27ae60;background:rgba(39,174,96,.12)}
 #lab-page .lab-status-abs{color:#e67e22;background:rgba(230,126,34,.12)}
 #lab-page .lab-status-not{color:#e74c3c;background:rgba(231,76,60,.12)}
 #lab-page .lab-status-info{color:#0b5fa5;background:rgba(11,95,165,.12)}
-#lab-page .lab-empty{text-align:center;padding:14px;color:#8a94a6}
-#lab-page .lab-footer{background-color:#0b5fa5;color:#fff;padding:6px 10px;font-size:11px;text-align:center;border-radius:3px}
-#lab-page .lab-mis{display:flex;flex-direction:column;gap:8px;padding:10px;background:#fff}
-#lab-page .lab-mis-btn{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #b2c8de;border-radius:3px;background-color:#f4f8fb;text-decoration:none;color:#222;font-weight:bold;font-size:11px;transition:background .2s;cursor:pointer}
+#lab-page .lab-btn-outline{background-color:#fff;color:#0b5fa5;border:1px solid #b2c8de;padding:4px 10px;font-weight:bold;font-size:10px;border-radius:3px;cursor:pointer;font-family:inherit}
+#lab-page .lab-btn-outline:hover{background-color:#e2edf7}
+#lab-page .lab-btn-success{background-color:#27ae60;color:#fff;border:none;padding:4px 10px;font-weight:bold;font-size:10px;border-radius:3px;cursor:pointer;font-family:inherit}
+#lab-page .lab-btn-success:hover{background-color:#1e8c4d}
+
+/* ---- SEARCH ---- */
+#lab-page .lab-search{padding:12px 14px;background-color:#f8fafc;display:flex;gap:8px}
+#lab-page .lab-search input{flex:1;padding:7px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;font-family:inherit;background-color:#fff}
+#lab-page .lab-search input:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
+#lab-page .lab-search svg{width:16px;height:16px;align-self:center;fill:#0b5fa5}
+
+/* ---- QUICK ACCESS FOR MIS REPORTS ---- */
+#lab-page .lab-mis{display:flex;flex-direction:column;gap:8px;padding:12px 14px;background:#fff}
+#lab-page .lab-mis-btn{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #b2c8de;border-radius:3px;background-color:#f4f8fb;text-decoration:none;color:#222;font-weight:bold;font-size:11px;transition:background .2s;cursor:pointer;width:100%;text-align:left;font-family:inherit}
 #lab-page .lab-mis-btn:hover{background-color:#e2edf7}
 #lab-page .lab-mis-btn.active{background-color:#d2e3f3;border-color:#0b5fa5}
 #lab-page .lab-mis-btn i{font-size:18px;width:24px;text-align:center}
@@ -76,147 +96,163 @@ $__labRole  = getCurrentUserRole() ?: 'STAFF';
 #lab-page .lab-ico-dhims{color:#f39c12}
 #lab-page .lab-ico-ready{color:#27ae60}
 #lab-page .lab-ico-notready{color:#e74c3c}
-@media (max-width:1100px){
-  #lab-page .lab-main{grid-template-columns:1fr}
-  #lab-page .lab-sidebar{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
-  #lab-page .lab-sidebar > .lab-panel{margin-bottom:10px}
-  #lab-page .lab-sidebar > .lab-btn-orange{align-self:end}
+
+/* ---- RESULT ENTRY MODAL (scoped) ---- */
+#lab-page .modal{display:none;position:fixed;inset:0;z-index:2000;background:rgba(15,45,89,.55);align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+#lab-page .modal.show{display:flex}
+#lab-page .modal-content{background:#fff;border-radius:8px;width:min(640px,100%);box-shadow:0 12px 34px rgba(0,0,0,.25);overflow:hidden}
+#lab-page .modal-header{background-color:#0b5fa5;color:#fff;padding:13px 18px;display:flex;justify-content:space-between;align-items:center}
+#lab-page .modal-header h3{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:.4px}
+#lab-page .modal-close{background:none;border:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:0 4px}
+#lab-page .modal-close:hover{color:#FFD54F}
+#lab-page .modal-body{padding:18px 20px;background:#F8FAFC}
+#lab-page .modal-body .form-group{margin-bottom:14px}
+#lab-page .modal-body label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#64748b;margin-bottom:5px}
+#lab-page .modal-body input,#lab-page .modal-body select,#lab-page .modal-body textarea{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;background-color:#fff;color:#222;font-family:inherit;box-sizing:border-box}
+#lab-page .modal-body input[readonly]{background-color:#eef3f8;color:#555}
+#lab-page .modal-body textarea{resize:vertical}
+#lab-page .modal-body input:focus,#lab-page .modal-body select:focus,#lab-page .modal-body textarea:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
+#lab-page .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #e1e8f0}
+#lab-page .btn{border:none;border-radius:3px;cursor:pointer;font-weight:bold;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:8px 18px;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+#lab-page .btn-primary{background-color:#0072BC;color:#fff}
+#lab-page .btn-primary:hover{filter:brightness(1.08)}
+#lab-page .btn-secondary{background:#F1F5F9;color:#34495E;border:1px solid #C0C0C0}
+#lab-page .btn-secondary:hover{background:#E2E8F0}
+
+@media (max-width:900px){
+  #lab-page .lab-grid{grid-template-columns:1fr}
+  #lab-page .lab-form{grid-template-columns:1fr}
+  #lab-page .lab-field-full{grid-column:span 1}
+  #lab-page .lab-form-actions{grid-column:span 1}
+  #lab-page .lab-topbar .lab-tag-hide{display:none}
 }
 </style>
 
-<!-- LAB DASHBOARD -->
+<!-- LAB & INVESTIGATIONS DASHBOARD -->
 <div id="lab-page">
 
   <!-- TOP BAR -->
   <div class="lab-topbar">
-    <div class="lab-topbar-title">EHMS LAB DASHBOARD</div>
+    <div class="title-group">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 3h2v7h-2z"/></svg>
+      <div class="lab-topbar-title">Laboratory</div>
+    </div>
     <div class="lab-topbar-right">
-      <span>HMS - HEALTHCARE MANAGEMENT SYSTEM</span>
+      <span class="lab-tag-hide">HMS - HEALTHCARE MANAGEMENT SYSTEM</span>
       <span class="lab-nav-btn" onclick="labGoHome()">HOME</span>
       <span class="lab-nav-btn" onclick="labGoBack()">&lt; BACK</span>
       <span class="lab-nav-btn" onclick="labGoPassword()">PASSWORD</span>
     </div>
   </div>
 
-  <!-- MAIN 3-COLUMN GRID -->
-  <div class="lab-main">
+  <div class="lab-wrap">
 
-    <!-- ======================= LEFT SIDEBAR ======================= -->
-    <div class="lab-sidebar">
-      <div class="lab-panel">
-        <div class="lab-panel-head">Quick Links</div>
-        <ul class="lab-ql">
-          <li><a onclick="labNav('home')"><i class="fa-solid fa-square"></i> Control Panel</a></li>
-          <li><a onclick="labNav('appointment_calendar')"><i class="fa-solid fa-square"></i> Appointment Calendar</a></li>
-          <li><a onclick="labNav('messages_alerts')"><i class="fa-solid fa-square"></i> Messages &amp; Alerts <span class="lab-ql-badge" id="labUnreadBadge" style="display:none;">0</span></a></li>
-          <li><a onclick="labNav('patient_records')"><i class="fa-solid fa-square"></i> Patient Record Management</a></li>
-          <li><a onclick="labNav('radiology')"><i class="fa-solid fa-square"></i> IPD / Ward Details</a></li>
-          <li><a onclick="labNav('ipd_management')"><i class="fa-solid fa-square"></i> Admissions</a></li>
-          <li><a onclick="labNav('pharmacy_management')"><i class="fa-solid fa-square"></i> Drugs Dispense</a></li>
-          <li><a onclick="labNav('investigations')"><i class="fa-solid fa-square"></i> Lab Management</a></li>
-          <li><a onclick="labNav('accounts_management')"><i class="fa-solid fa-square"></i> Account Management</a></li>
-        </ul>
-      </div>
-
-      <span class="lab-btn-orange" onclick="labNav('messages_alerts')">SEND MESSAGE</span>
-
-      <div class="lab-panel">
-        <div class="lab-panel-head">Days Alerts</div>
-        <div style="padding:10px; text-align:center;">
-          <h2 style="font-size:20px; margin-bottom:5px; color:#333;">0</h2>
-          <span style="font-size:10px; color:#666;">NO ALERTS TODAY</span>
-        </div>
-      </div>
-
-      <div class="lab-status-card">
-        <p><strong>LOGIN STATUS</strong></p>
-        <p>Logged In: <?php echo htmlspecialchars($__labStaff, ENT_QUOTES); ?></p>
-        <p>User Type: <?php echo htmlspecialchars(strtoupper($__labRole), ENT_QUOTES); ?></p>
-        <p>Date: <?php echo date('l, d-M-Y'); ?></p>
-        <p>Clinic Name: HMS - HEALTHCARE MANAGEMENT SYSTEM</p>
-        <button type="button" class="lab-logout-btn" onclick="labLogout()">LOGOUT</button>
+    <!-- PAGE TITLE & HEADER ACTIONS -->
+    <div class="lab-header">
+      <div class="lab-header-title"><i class="fa fa-flask"></i> Lab &amp; Investigations Dashboard</div>
+      <div class="lab-header-actions">
+        <button type="button" class="lab-h-btn secondary" onclick="labGoBack()"><i class="fa fa-undo"></i> Cancel</button>
+        <button type="button" class="lab-h-btn primary" onclick="labRefresh()"><i class="fa fa-sync"></i> Refresh Data</button>
       </div>
     </div>
 
-    <!-- ======================= CENTER CONTENT ======================= -->
-    <div class="lab-content">
+    <div class="lab-grid">
 
-      <!-- ENTRIES FORM -->
-      <div class="lab-panel">
-        <div class="lab-panel-head">Entries Form</div>
-        <form class="lab-form-grid" id="labEntryForm">
-          <label for="entryPatient">Patient ID or Name</label>
-          <select id="entryPatient" required>
-            <option value="">-- Select Visit --</option>
-          </select>
+      <!-- ======================= LEFT COLUMN ======================= -->
+      <div class="lab-col">
 
-          <label for="labType">Lab Type</label>
-          <select id="labType" onchange="updateLabPrice()">
-            <option value="">Select Lab Type --</option>
-            <option value="haematology">Haematology</option>
-            <option value="biochemistry">Biochemistry</option>
-            <option value="microbiology">Microbiology</option>
-            <option value="parasitology">Parasitology</option>
-          </select>
+        <!-- ENTRIES FORM - REQUEST LAB TEST -->
+        <div class="lab-panel">
+          <div class="lab-panel-head"><span><i class="fa fa-edit"></i> Entries Form - Request Lab Test</span></div>
+          <form class="lab-form" id="labEntryForm">
+            <div class="lab-field">
+              <label for="entryPatient">Patient ID or Name *</label>
+              <select id="entryPatient" required>
+                <option value="">-- Select Patient / Visit --</option>
+              </select>
+            </div>
 
-          <label for="labToDone">Lab to be Done</label>
-          <input type="text" id="labToDone" placeholder="e.g. Full Blood Count (FBC)">
+            <div class="lab-field">
+              <label for="labType">Lab Type</label>
+              <select id="labType" onchange="updateLabPrice()">
+                <option value="">Select Lab Type --</option>
+                <option value="haematology">Haematology</option>
+                <option value="biochemistry">Biochemistry</option>
+                <option value="microbiology">Microbiology</option>
+                <option value="parasitology">Parasitology</option>
+              </select>
+            </div>
 
-          <label for="price">Price</label>
-          <input type="text" id="price" placeholder="Price Auto-generated" readonly>
+            <div class="lab-field lab-field-full">
+              <label for="labToDone">Lab to be Done *</label>
+              <input type="text" id="labToDone" placeholder="e.g. Full Blood Count (FBC), Malaria RDT" required>
+            </div>
 
-          <div class="lab-form-actions">
-            <button type="submit" class="lab-btn-submit">Submit Request</button>
+            <div class="lab-field lab-field-full">
+              <label for="price">Price (GH₵)</label>
+              <input type="text" id="price" placeholder="Auto-generated" readonly>
+            </div>
+
+            <div class="lab-form-actions">
+              <button type="submit" class="lab-btn-submit"><i class="fa fa-paper-plane"></i> Submit Request</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- ALL LABS REQUESTED BY THE DOCTOR / MIS VIEWS -->
+        <div class="lab-panel">
+          <div class="lab-panel-head">
+            <span><i class="fa fa-list"></i> <span id="labMainTitle">ALL LABS REQUESTED BY THE DOCTOR</span></span>
+            <span style="display:flex;align-items:center;gap:8px;">
+              <span class="lab-live-sync">Live Sync</span>
+              <a class="lab-head-link" id="labViewAllLink" style="display:none;" onclick="setLabView('requested')">View All Requests</a>
+            </span>
           </div>
-        </form>
+          <div class="lab-table-wrap">
+            <div id="labMainView"><div class="lab-empty">Loading...</div></div>
+          </div>
+        </div>
+
       </div>
 
-      <!-- ALL LABS REQUESTED BY THE DOCTOR / MIS VIEWS -->
-      <div class="lab-panel">
-        <div class="lab-panel-head">
-          <span id="labMainTitle">ALL LABS REQUESTED BY THE DOCTOR</span>
-          <a class="lab-head-link" id="labViewAllLink" style="display:none;" onclick="setLabView('requested')">View All Requests</a>
+      <!-- ======================= RIGHT COLUMN ======================= -->
+      <div class="lab-col">
+
+        <!-- SEARCH -->
+        <div class="lab-panel">
+          <div class="lab-panel-head"><span><i class="fa fa-search"></i> Search</span></div>
+          <div class="lab-search">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="labGlobalSearch" placeholder="By System Name / ID..." oninput="renderLabMain()">
+          </div>
         </div>
-        <div class="lab-table-wrap">
-          <div id="labMainView"><div class="lab-empty">Loading...</div></div>
+
+        <!-- QUICK ACCESS FOR MIS REPORTS -->
+        <div class="lab-panel">
+          <div class="lab-panel-head"><span><i class="fa fa-file-alt"></i> Quick Access for MIS Reports</span></div>
+          <div class="lab-mis">
+            <div class="lab-mis-btn" id="misDispatched" onclick="setLabView('dispatched')">
+              <i class="fa fa-envelope-open lab-ico-dispatched"></i>
+              <span>All Labs Dispatched (<span id="labDispCount">0</span>)</span>
+            </div>
+            <div class="lab-mis-btn" onclick="labNav('mis')">
+              <i class="fa fa-chart-line lab-ico-dhims"></i>
+              <span>DHIMS Report</span>
+            </div>
+            <div class="lab-mis-btn" id="misReady" onclick="setLabView('ready')">
+              <i class="fa fa-check-circle lab-ico-ready"></i>
+              <span>All Ready Labs (<span id="labReadyCount">0</span>)</span>
+            </div>
+            <div class="lab-mis-btn" id="misNotready" onclick="setLabView('notready')">
+              <i class="fa fa-times-circle lab-ico-notready"></i>
+              <span>Not Ready Labs (<span id="labNotReadyCount">0</span>)</span>
+            </div>
+          </div>
         </div>
+
       </div>
 
-      <div class="lab-footer">HMS - LAB DASHBOARD &middot; live data from the hospital management system</div>
     </div>
-
-    <!-- ======================= RIGHT SIDEBAR ======================= -->
-    <div class="lab-sidebar">
-      <div class="lab-panel">
-        <div class="lab-panel-head">Search</div>
-        <div style="padding:8px;">
-          <input type="text" id="labGlobalSearch" placeholder="By System Name / ID..." style="width:100%; padding:4px; border:1px solid #b2c8de;" oninput="renderLabMain()">
-        </div>
-      </div>
-
-      <div class="lab-panel">
-        <div class="lab-panel-head">Quick Access for MIS Reports</div>
-        <div class="lab-mis">
-          <a class="lab-mis-btn" id="misDispatched" onclick="setLabView('dispatched')">
-            <i class="fa-solid fa-envelope lab-ico-dispatched"></i>
-            <span>All Labs Dispatched (<span id="labDispCount">0</span>)</span>
-          </a>
-          <a class="lab-mis-btn" onclick="labNav('mis')">
-            <i class="fa-solid fa-clipboard-list lab-ico-dhims"></i>
-            <span>DHIMS Report</span>
-          </a>
-          <a class="lab-mis-btn" id="misReady" onclick="setLabView('ready')">
-            <i class="fa-solid fa-check lab-ico-ready"></i>
-            <span>All Ready Labs (<span id="labReadyCount">0</span>)</span>
-          </a>
-          <a class="lab-mis-btn" id="misNotready" onclick="setLabView('notready')">
-            <i class="fa-solid fa-xmark lab-ico-notready"></i>
-            <span>Not Ready Labs (<span id="labNotReadyCount">0</span>)</span>
-          </a>
-        </div>
-      </div>
-    </div>
-
   </div>
 </div>
 
@@ -314,6 +350,16 @@ function labLogout() {
     fetch('/hms/backend/api/auth.php?action=logout', { method: 'POST' })
         .then(function () { window.location.href = '/hms/frontend/index.php'; })
         .catch(function () { window.location.href = '/hms/frontend/index.php'; });
+}
+
+/* ================= REFRESH DATA ================= */
+function labRefresh() {
+    loadUnreadCount();
+    Promise.all([loadVisits(), loadLabRequests()]).then(function () {
+        showAlert('Lab data refreshed.', 'success');
+    }).catch(function () {
+        showAlert('Refresh failed — please try again.', 'error');
+    });
 }
 
 async function loadUnreadCount() {
