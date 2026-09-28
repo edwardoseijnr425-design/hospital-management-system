@@ -87,8 +87,9 @@ function createAppointment() {
     $status = in_array($data['status'] ?? '', ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'], true)
         ? $data['status'] : 'scheduled';
 
+    $validConsultation = ['OPD', 'ENT', 'EYE', 'EMERGENCY', 'GENERAL', 'SPECIALIST', 'FOLLOWUP', 'PEDIATRIC', 'DENTAL'];
     $consultationType = strtoupper(trim($data['consultation_type'] ?? 'OPD'));
-    if (!in_array($consultationType, ['OPD', 'ENT', 'EYE', 'EMERGENCY'], true)) {
+    if (!in_array($consultationType, $validConsultation, true)) {
         $consultationType = 'OPD';
     }
     $visitType = ucfirst(strtolower(trim($data['visit_type'] ?? 'New')));
@@ -144,7 +145,8 @@ function updateAppointment() {
     }
     if (array_key_exists('consultation_type', $toUpdate)) {
         $toUpdate['consultation_type'] = strtoupper(trim($toUpdate['consultation_type']));
-        if (!in_array($toUpdate['consultation_type'], ['OPD', 'ENT', 'EYE', 'EMERGENCY'], true)) {
+        $validConsultation = ['OPD', 'ENT', 'EYE', 'EMERGENCY', 'GENERAL', 'SPECIALIST', 'FOLLOWUP', 'PEDIATRIC', 'DENTAL'];
+        if (!in_array($toUpdate['consultation_type'], $validConsultation, true)) {
             jsonResponse(['error' => 'Invalid consultation type'], 400);
         }
     }

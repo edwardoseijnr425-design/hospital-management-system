@@ -286,11 +286,7 @@ async function deleteAppointment(id) {
 }
 
 function setupEventListeners() {
-    document.getElementById('new-appointment-btn').addEventListener('click', () => {
-        document.getElementById('appointment-form').reset();
-        document.getElementById('appointment-id').value = '';
-        document.getElementById('appointment-modal').classList.add('show');
-    });
+    document.getElementById('new-appointment-btn').addEventListener('click', () => navigateTo('schedule-appointment'));
     document.getElementById('close-appointment-modal').addEventListener('click', () =>
         document.getElementById('appointment-modal').classList.remove('show'));
     document.getElementById('cancel-appointment').addEventListener('click', () =>

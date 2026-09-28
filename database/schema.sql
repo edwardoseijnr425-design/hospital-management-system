@@ -479,7 +479,7 @@ CREATE TABLE appointments (
     department_id INT,
     doctor_id INT,
     reason TEXT,
-    consultation_type ENUM('OPD', 'ENT', 'EYE', 'EMERGENCY') DEFAULT 'OPD',
+    consultation_type ENUM('OPD', 'ENT', 'EYE', 'EMERGENCY', 'GENERAL', 'SPECIALIST', 'FOLLOWUP', 'PEDIATRIC', 'DENTAL') DEFAULT 'OPD',
     visit_type ENUM('New', 'Review') DEFAULT 'New',
     status ENUM('scheduled', 'confirmed', 'completed', 'cancelled', 'no_show') DEFAULT 'scheduled',
     created_by INT NOT NULL,
