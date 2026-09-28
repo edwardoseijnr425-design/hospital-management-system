@@ -30,7 +30,7 @@ function getVitals() {
     
     $sql = "SELECT vs.*, v.visit_number, v.patient_id, p.hospital_number,
                    CONCAT(p.first_name, ' ', p.last_name) as patient_name,
-                   CONCAT(u.first_name, ' ', u.last_name) as nurse_name
+                   u.full_name as nurse_name
             FROM vital_signs vs
             JOIN patient_visits v ON vs.visit_id = v.id
             JOIN patient_registrations p ON v.patient_id = p.id
