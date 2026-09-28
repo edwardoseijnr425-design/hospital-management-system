@@ -1,6 +1,15 @@
 <?php
 require_once __DIR__ . '/../backend/config/config.php';
 requireLogin();
+// Support contact details for the dashboard banner + system footer strip.
+// Generic placeholders by default; override locally via the gitignored file
+// backend/config/local-contact.php (may define $contactEmail / $contactPhone).
+// Personal contact details are NEVER committed to this public repository.
+$contactEmail = 'support@example.com';
+$contactPhone = '+233 00 000 0000';
+$__localContactConfig = __DIR__ . '/../backend/config/local-contact.php';
+if (is_file($__localContactConfig)) { include $__localContactConfig; }
+unset($__localContactConfig);
 $userName = htmlspecialchars(getCurrentUserName() ?: 'EDWARD OSEI POKU');
 $userRole = htmlspecialchars(getCurrentUserRole() ?: 'ADMIN');
 $displayName = strtoupper($userName);
@@ -794,7 +803,7 @@ function hcBrandLogo($px = 45) {
                 <!-- System Footer Strip (old EHMS portal contact bar) — the shell captures
                      this banner and auto-appends it to dashboard + every module page -->
                 <div class="support-footer-bar system-footer-strip">
-                    HMS Support: Email: <span class="highlight-text">support@example.com</span> | Phone: <span class="highlight-text">+233 00 000 0000</span>
+                    HMS Support: Email: <span class="highlight-text"><?php echo htmlspecialchars($contactEmail, ENT_QUOTES); ?></span> | Phone: <span class="highlight-text"><?php echo htmlspecialchars($contactPhone, ENT_QUOTES); ?></span>
                 </div>
             </div>
         </div>

@@ -37,6 +37,11 @@ yarn-error.log
 .env.local
 .env.*.local
 
+# Local, uncommitted support contacts (real email/phone must stay out of the
+# public repo). Copy backend/config/local-contact.example.php to
+# backend/config/local-contact.php and edit it for this installation.
+/backend/config/local-contact.php
+
 # Backup files
 *.bak
 *.backup
