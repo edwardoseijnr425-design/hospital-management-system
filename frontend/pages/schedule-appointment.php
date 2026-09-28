@@ -30,15 +30,33 @@ require_once __DIR__ . '/../../backend/config/config.php';
 #schedule-page .input-wrapper{position:relative;display:flex;align-items:center}
 #schedule-page .form-control{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;background-color:#fff;color:#222;transition:border-color 0.2s, box-shadow 0.2s;font-family:inherit}
 #schedule-page .form-control:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,0.25)}
+#schedule-page textarea.form-control{resize:vertical;min-height:70px;font-family:inherit}
 #schedule-page .price-field{background-color:#e8f8f5;font-weight:bold;color:#27ae60;font-size:14px;letter-spacing:0.5px}
 #schedule-page .badge-auto{font-size:9px;background-color:#27ae60;color:#fff;padding:2px 6px;border-radius:2px;margin-left:6px;vertical-align:middle;font-weight:normal}
-#schedule-page textarea.form-control{resize:vertical;min-height:70px;font-family:inherit}
+/* ---- Date & Time scheduling card ---- */
+#schedule-page .date-scheduling-card{background:#fff;border:1px solid #c0d4e8;border-left:4px solid #0b5fa5;border-radius:4px;padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:15px;align-items:start}
+#schedule-page .date-input-container{display:flex;flex-direction:column;gap:6px}
+#schedule-page .date-input-label,#schedule-page .time-slots-container>label{font-weight:600;color:#333;font-size:11px;text-transform:uppercase;letter-spacing:0.3px}
+#schedule-page .date-input-container label .required,#schedule-page .time-slots-container label .required{color:#e74c3c;font-weight:bold}
+#schedule-page .date-input-wrapper{position:relative;display:flex;align-items:center}
+#schedule-page .date-input-wrapper svg{position:absolute;left:10px;width:16px;height:16px;fill:#0b5fa5;pointer-events:none}
+#schedule-page .date-input-wrapper input[type="date"]{padding-left:34px;font-weight:600;color:#0b5fa5;cursor:pointer}
+#schedule-page .formal-date-badge{background-color:#eef5fb;border:1px dashed #0b5fa5;padding:6px 10px;border-radius:3px;font-size:11px;font-weight:bold;color:#0b5fa5;display:flex;align-items:center;gap:6px}
+#schedule-page .formal-date-badge svg{width:14px;height:14px;fill:#0b5fa5}
+#schedule-page .time-slots-container{display:flex;flex-direction:column;gap:6px}
+#schedule-page .time-chips-group{display:flex;gap:6px;flex-wrap:wrap}
+#schedule-page .time-chip{background-color:#f0f4f8;border:1px solid #b2c8de;padding:5px 9px;border-radius:3px;font-size:10px;font-weight:bold;color:#444;cursor:pointer;transition:all 0.2s;font-family:inherit}
+#schedule-page .time-chip:hover{background-color:#d1e3f3;color:#0b5fa5}
+#schedule-page .time-chip.active{background-color:#0b5fa5;color:#fff;border-color:#0b5fa5}
+#schedule-page input[type="time"].form-control{font-weight:600;color:#0b5fa5}
+/* ---- Patient search results ---- */
 #schedule-page .sa-search-wrap{position:relative}
 #schedule-page .sa-results{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #b2c8de;border-radius:3px;max-height:220px;overflow:auto;z-index:50;box-shadow:0 4px 10px rgba(0,0,0,0.12);display:none}
 #schedule-page .sa-results div{padding:8px 10px;cursor:pointer;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
 #schedule-page .sa-results div:hover{background:#eef5fb}
 #schedule-page .sa-results .sa-num{color:#0b5fa5;font-weight:700;letter-spacing:0.3px;white-space:nowrap}
 #schedule-page .sa-results .sa-empty{padding:10px;color:#888;cursor:default;justify-content:center}
+/* ---- Actions / buttons / footer ---- */
 #schedule-page .form-actions{margin-top:25px;padding-top:15px;border-top:1px solid #e1e8f0;display:flex;justify-content:flex-end;gap:12px}
 #schedule-page .btn-action{border:none;padding:8px 20px;font-weight:bold;font-size:12px;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:0.5px;font-family:inherit}
 #schedule-page .btn-action svg{width:14px;height:14px}
@@ -48,7 +66,7 @@ require_once __DIR__ . '/../../backend/config/config.php';
 #schedule-page .btn-secondary:hover{background-color:#636e72}
 #schedule-page .footer-bar{margin-top:15px;background-color:#0b5fa5;color:#fff;padding:7px 12px;font-size:11px;text-align:center;border-radius:3px}
 @media (max-width:768px){
-  #schedule-page .grid-2col{grid-template-columns:1fr}
+  #schedule-page .grid-2col,#schedule-page .date-scheduling-card{grid-template-columns:1fr}
   #schedule-page .grid-full{grid-column:span 1}
 }
 </style><div id="schedule-page">
@@ -77,7 +95,7 @@ require_once __DIR__ . '/../../backend/config/config.php';
 
       <form class="appointment-form" id="appointmentForm">
 
-        <div class="form-section-title">Patient Search &amp; Type</div>
+        <div class="form-section-title">Patient Identification &amp; Consultation Type</div>
 
         <div class="grid-2col">
 
@@ -98,7 +116,9 @@ require_once __DIR__ . '/../../backend/config/config.php';
             </select>
           </div>
 
-        </div>        <div class="form-section-title" style="margin-top:20px;">Clinical Visit &amp; Attending Doctors</div>
+        </div>
+
+        <div class="form-section-title" style="margin-top:20px;">Clinical Specialty &amp; Attending Doctor</div>
 
         <div class="grid-2col">
 
@@ -121,17 +141,37 @@ require_once __DIR__ . '/../../backend/config/config.php';
             </select>
           </div>
 
-          <div class="form-group">
-            <label for="saDate">Appointment Date <span class="required">*</span></label>
-            <input type="date" id="saDate" class="form-control" required>
+        </div>        <div class="form-section-title" style="margin-top:20px;">Appointment Schedule (Date &amp; Time)</div>
+
+        <div class="date-scheduling-card">
+
+          <!-- DATE PICKER COLUMN -->
+          <div class="date-input-container">
+            <label class="date-input-label" for="saDate">Select Appointment Date <span class="required">*</span></label>
+            <div class="date-input-wrapper">
+              <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+              <input type="date" id="saDate" class="form-control" required onchange="saUpdateFormalDate()">
+            </div>
+            <div class="formal-date-badge" id="saFormalDateBadge">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+              <span id="saFormalDateText">-- select date --</span>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label for="saTime">Preferred Time Slot <span class="required">*</span></label>
-            <input type="time" id="saTime" class="form-control" required>
+          <!-- TIME SLOT COLUMN -->
+          <div class="time-slots-container">
+            <label for="saTime">Select Preferred Time Slot <span class="required">*</span></label>
+            <div class="time-chips-group">
+              <button type="button" class="time-chip" data-time="08:30" onclick="saSelectTimeChip('08:30', this)">08:30 AM</button>
+              <button type="button" class="time-chip active" data-time="10:00" onclick="saSelectTimeChip('10:00', this)">10:00 AM</button>
+              <button type="button" class="time-chip" data-time="11:30" onclick="saSelectTimeChip('11:30', this)">11:30 AM</button>
+              <button type="button" class="time-chip" data-time="14:00" onclick="saSelectTimeChip('14:00', this)">02:00 PM</button>
+              <button type="button" class="time-chip" data-time="15:30" onclick="saSelectTimeChip('15:30', this)">03:30 PM</button>
+            </div>
+            <input type="time" id="saTime" class="form-control" value="10:00" required style="margin-top:4px;font-weight:600;color:#0b5fa5;">
           </div>
 
-        </div>        <div class="form-section-title" style="margin-top:20px;">Consultation Pricing Calculation</div>
+        </div>        <div class="form-section-title" style="margin-top:20px;">Consultation Pricing &amp; Notes</div>
 
         <div class="grid-2col">
 
@@ -141,8 +181,8 @@ require_once __DIR__ . '/../../backend/config/config.php';
           </div>
 
           <div class="form-group grid-full">
-            <label for="saNotes">Reason for Visit / Symptoms / Notes</label>
-            <textarea id="saNotes" class="form-control" placeholder="Enter brief symptoms or purpose of appointment..."></textarea>
+            <label for="saNotes">Reason for Visit / Clinical Notes</label>
+            <textarea id="saNotes" class="form-control" rows="2" placeholder="Enter brief symptoms or purpose of appointment..."></textarea>
           </div>
 
         </div>
@@ -175,6 +215,7 @@ function saGoPassword(e) { if (e) e.preventDefault(); if (window.loadModuleTab) 
 function initScheduleAppointment() {
     var today = new Date().toISOString().split('T')[0];
     document.getElementById('saDate').value = today;
+    saUpdateFormalDate();
     saCalcPrice();
     saLoadReference();
     var form = document.getElementById('appointmentForm');
@@ -184,6 +225,23 @@ function initScheduleAppointment() {
         searchInput.addEventListener('input', saOnSearchInput);
         searchInput.addEventListener('blur', saHideResults);
     }
+}
+
+/* ================= FORMAL DATE DISPLAY ================= */
+function saUpdateFormalDate() {
+    var dateVal = document.getElementById('saDate').value;
+    if (!dateVal) return;
+    var dateObj = new Date(dateVal);
+    var formalString = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('saFormalDateText').innerText = formalString;
+}
+
+/* ================= TIME CHIP SELECTOR ================= */
+function saSelectTimeChip(timeVal, chipEl) {
+    document.getElementById('saTime').value = timeVal;
+    var chips = document.querySelectorAll('#schedule-page .time-chip');
+    for (var i = 0; i < chips.length; i++) { chips[i].classList.remove('active'); }
+    chipEl.classList.add('active');
 }
 
 /* ================= AUTO PRICE CALCULATION ================= */
@@ -200,13 +258,21 @@ function saCalcPrice() {
 
 /* ================= RESET ================= */
 function saResetAppointment() {
-    if (confirm('Reset appointment form?')) {
-        document.getElementById('appointmentForm').reset();
-        var today = new Date().toISOString().split('T')[0];
-        document.getElementById('saDate').value = today;
-        document.getElementById('saPatientId').value = '';
-        saCalcPrice();
+    if (confirm('Reset appointment form?')) { saResetSilent(); }
+}
+
+function saResetSilent() {
+    document.getElementById('appointmentForm').reset();
+    document.getElementById('saPatientId').value = '';
+    var today = new Date().toISOString().split('T')[0];
+    document.getElementById('saDate').value = today;
+    document.getElementById('saTime').value = '10:00';
+    var chips = document.querySelectorAll('#schedule-page .time-chip');
+    for (var i = 0; i < chips.length; i++) {
+        chips[i].classList.toggle('active', chips[i].getAttribute('data-time') === '10:00');
     }
+    saUpdateFormalDate();
+    saCalcPrice();
 }
 
 /* ================= PATIENT SEARCH / TYPING ================= */
@@ -361,12 +427,9 @@ async function saSubmitAppointment(e) {
         });
         var d = await r.json();
         if (d.success) {
-            if (window.showAlert) showAlert('Appointment Scheduled Successfully - ' + saVal('saDate') + ' at ' + saVal('saTime'), 'success');
-            document.getElementById('appointmentForm').reset();
-            var today = new Date().toISOString().split('T')[0];
-            document.getElementById('saDate').value = today;
-            document.getElementById('saPatientId').value = '';
-            saCalcPrice();
+            var formalDate = document.getElementById('saFormalDateText').innerText;
+            if (window.showAlert) showAlert('Appointment Scheduled Successfully - ' + formalDate + ' at ' + saVal('saTime'), 'success');
+            saResetSilent();
         } else {
             var err = d.error || (d.errors ? Object.values(d.errors)[0] : null) || 'Failed to schedule appointment';
             if (window.showAlert) showAlert(err, 'error');
