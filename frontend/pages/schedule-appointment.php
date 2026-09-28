@@ -64,7 +64,6 @@ require_once __DIR__ . '/../../backend/config/config.php';
 #schedule-page .btn-primary:hover{background-color:#004080}
 #schedule-page .btn-secondary{background-color:#7f8c8d;color:#fff}
 #schedule-page .btn-secondary:hover{background-color:#636e72}
-#schedule-page .footer-bar{margin-top:15px;background-color:#0b5fa5;color:#fff;padding:7px 12px;font-size:11px;text-align:center;border-radius:3px}
 @media (max-width:768px){
   #schedule-page .grid-2col,#schedule-page .date-scheduling-card{grid-template-columns:1fr}
   #schedule-page .grid-full{grid-column:span 1}
@@ -201,8 +200,6 @@ require_once __DIR__ . '/../../backend/config/config.php';
 
       </form>
     </div>
-
-    <div class="footer-bar">HMS Support: support@example.com | Phone: +233 00 000 0000</div>
   </div>
 </div>
 

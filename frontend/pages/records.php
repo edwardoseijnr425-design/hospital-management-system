@@ -57,7 +57,6 @@
 #nv-page .btn-primary:hover{background-color:#004080}
 #nv-page .btn-secondary{background-color:#7f8c8d;color:#fff}
 #nv-page .btn-secondary:hover{background-color:#636e72}
-#nv-page .footer-bar{margin-top:15px;background-color:#0b5fa5;color:#fff;padding:7px 12px;font-size:11px;text-align:center;border-radius:3px}
 #nv-page .quick-hint{color:#888;font-size:11px;margin-top:2px}
 @media (max-width:768px){
   #nv-page .grid-2col,#nv-page .date-scheduling-card{grid-template-columns:1fr}
@@ -455,8 +454,6 @@
 
       </form>
     </div>
-
-    <div class="footer-bar">HMS Support: support@example.com | Phone: +233 00 000 0000</div>
   </div>
 </div>
 </div>
