@@ -186,6 +186,43 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
     </div>
   </div>
 
+  <!-- CURRENT PATIENT ACCESS CLICKABLE CARD -->
+  <div class="current-patient-card" id="currentPatientCard" onclick="toggleCurrentPatients()" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 12px;">
+    <div style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px; background: #f8fafc;">
+      <!-- Patient Icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+    </div>
+    <div style="display: flex; flex-direction: column;">
+      <span style="font-weight: 700; color: #1e3a8a; font-size: 13px; letter-spacing: 0.5px;">CURRENT PATIENT ACCESS</span>
+      <span style="font-size: 10.5px; color: #64748b;">Click to view currently admitted/active patients</span>
+    </div>
+  </div>
+
+  <!-- Expandable / Modal View for Current Patients (Hidden by default) -->
+  <div id="currentPatientsPanel" style="display: none; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; margin-bottom: 16px;">
+    <div style="font-weight: 700; color: #1e3a8a; font-size: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+      <span>ACTIVE PATIENTS LIST</span>
+      <span style="font-size: 10px; color: #64748b; cursor: pointer;" onclick="toggleCurrentPatients()">[ Close ]</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width: 100%; font-size: 11.5px; border-collapse: collapse;">
+        <thead>
+          <tr style="background: #f8fafc; color: #1e3a8a; text-align: left; border-bottom: 1px solid #e2e8f0;">
+            <th style="padding: 6px;">PATIENT NAME</th>
+            <th style="padding: 6px;">FOLDER NO</th>
+            <th style="padding: 6px;">WARD / BED</th>
+            <th style="padding: 6px;">ADMISSION TIME</th>
+          </tr>
+        </thead>
+        <tbody id="currentPatientsTableBody">
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 6px; color:#94A3B8;">Loading active patients...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- MAIN WARD TITLE & SUMMARY COUNTERS -->
   <div class="text-center mb-3">
     <h5 class="font-weight-bold text-uppercase mb-2" style="letter-spacing: 1px; color: #0F2D59;">WARD DETAILS</h5>
@@ -528,6 +565,46 @@ function ensureVisitOption(visit, selectIt) {
         sel.appendChild(opt);
     }
     if (selectIt) sel.value = String(visit.id);
+}
+
+/* ============================ CURRENT PATIENT ACCESS PANEL ============================ */
+let currentPatientsLoaded = false;
+
+function toggleCurrentPatients() {
+    const panel = document.getElementById('currentPatientsPanel');
+    if (!panel) return;
+    const isOpen = panel.style.display !== 'none';
+    if (isOpen) {
+        panel.style.display = 'none';
+    } else {
+        panel.style.display = 'block';
+        if (!currentPatientsLoaded) loadCurrentPatients();
+    }
+}
+
+async function loadCurrentPatients() {
+    const tbody = document.getElementById('currentPatientsTableBody');
+    if (!tbody) return;
+    try {
+        const response = await fetch('/hms/backend/api/admissions.php?status=Admitted');
+        const data = await response.json();
+        const admissions = (data.success && data.admissions) ? data.admissions : [];
+        currentPatientsLoaded = true;
+        if (!admissions.length) {
+            tbody.innerHTML = '<tr style="border-bottom:1px solid #f1f5f9;"><td colspan="4" style="padding:10px;text-align:center;color:#94A3B8;">No patients currently admitted.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = admissions.map(a => `
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 6px; font-weight: 600;">${escHtml(a.patient_name || '-')}</td>
+                <td style="padding: 6px;">${escHtml(a.hospital_number || '-')}</td>
+                <td style="padding: 6px;">${escHtml(a.ward_name || '-')} / Bed ${escHtml(a.bed_number || '-')}</td>
+                <td style="padding: 6px;">${fmtDateTime(a.admission_date)}</td>
+            </tr>`).join('');
+    } catch (error) {
+        console.error('Current patients load error:', error);
+        tbody.innerHTML = '<tr style="border-bottom:1px solid #f1f5f9;"><td colspan="4" style="padding:10px;text-align:center;color:#C0392B;">Failed to load active patients.</td></tr>';
+    }
 }
 
 /* ============================ FILTER / RENDER ============================ */
