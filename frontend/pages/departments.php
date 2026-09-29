@@ -1,3 +1,22 @@
+<style>
+/* ================= DEPARTMENTS : STATUS BADGES =================
+   Soft pastel status pills matching departments.status
+   ENUM ('Active','Frozen','Deactivated'). Scoped to the table. */
+#departments-table .status-badge{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:12px;
+    font-size:10px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    line-height:1.4;
+}
+#departments-table .status-badge.active{background:#DCFCE7;color:#166534}
+#departments-table .status-badge.frozen{background:#FEF3C7;color:#92400E}
+#departments-table .status-badge.deactivated{background:#FEE2E2;color:#991B1B}
+</style>
+
 <div class="card">
     <div class="card-header">
         <h2>Departments</h2>
@@ -147,11 +166,12 @@ function renderDepartmentsTable(query) {
     
     tbody.innerHTML = rows.map(d => {
         const status = d.status || 'Active';
-        const statusTag = status === 'Frozen'
-            ? '<span class="badge" style="background:#F39C12;color:#fff;">FROZEN</span>'
+        const statusCls = status === 'Frozen'
+            ? 'frozen'
             : status === 'Deactivated'
-                ? '<span class="badge" style="background:#DC3545;color:#fff;">DEACTIVATED</span>'
-                : '<span class="badge" style="background:#28A745;color:#fff;">ACTIVE</span>';
+                ? 'deactivated'
+                : 'active';
+        const statusTag = '<span class="status-badge ' + statusCls + '">' + status.toUpperCase() + '</span>';
         return `
         <tr>
             <td><strong>${d.code || '-'}</strong></td>
