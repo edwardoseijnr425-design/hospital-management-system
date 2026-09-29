@@ -67,14 +67,27 @@ function handleLogout() {
 }
 
 function handleRegister() {
-    // Only super admin can create initial admin accounts
-    // This endpoint is for initial setup only
-    
+    // Only super admin can create initial admin accounts.
+    // This endpoint is for initial setup only.
+    //
+    // The gate is the point of the function: without it, anyone able to reach
+    // the server posts a role of their choosing and mints themselves a
+    // super_admin account with no login at all. setup.php seeds the first
+    // admin with a direct INSERT and never calls this endpoint, and no
+    // frontend page calls it, so requiring a signed-in super admin here
+    // removes the hole without closing off any real flow.
+    requireLogin();
+    requireRole(['super_admin']);
+
     $data = getPostData();
     
     $errors = validateRequired($data, ['username', 'password', 'full_name', 'role']);
     if (!empty($errors)) {
         jsonResponse(['errors' => $errors], 400);
+    }
+    
+    if (!isValidUserRole($data['role'])) {
+        jsonResponse(['error' => 'Invalid role'], 400);
     }
     
     if (strlen($data['password']) < PASSWORD_MIN_LENGTH) {

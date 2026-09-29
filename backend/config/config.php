@@ -21,6 +21,15 @@ ini_set('display_errors', 1);
 define('PASSWORD_MIN_LENGTH', 8);
 define('SESSION_TIMEOUT', 3600); // 1 hour in seconds
 
+// Mirrors the users.role ENUM in database/schema.sql. Every role written to
+// the database must come from this list, so an unknown value is rejected as a
+// client error (400) instead of failing as a MySQL enum error and surfacing
+// as a 500.
+define('USER_ROLES', [
+    'super_admin', 'admin', 'it', 'records', 'nurse', 'doctor',
+    'pharmacy', 'lab', 'radiology', 'account', 'revenue'
+]);
+
 // File Upload
 define('UPLOAD_MAX_SIZE', 5242880); // 5MB in bytes
 define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/gif']);

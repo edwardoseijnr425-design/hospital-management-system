@@ -48,12 +48,20 @@ function getCurrentUser() {
     
     jsonResponse([
         'success' => true,
-        'user' => array_merge($user, ['profile' => $profile])
+        'user' => publicUserFields(array_merge($user, ['profile' => $profile]))
     ]);
 }
 
 function getUser() {
     $userId = $_GET['id'] ?? getCurrentUserId();
+    
+    // Reading your own record is fine; reading someone else's is an admin
+    // action, same as editing them. Previously this took an id straight from
+    // the query string, so any signed-in account could read any other
+    // account's row.
+    if ($userId != getCurrentUserId()) {
+        requireRole(['super_admin', 'admin']);
+    }
     
     $userModel = new User();
     $user = $userModel->getById($userId);
@@ -65,7 +73,7 @@ function getUser() {
     
     jsonResponse([
         'success' => true,
-        'user' => array_merge($user, ['profile' => $profile])
+        'user' => publicUserFields(array_merge($user, ['profile' => $profile]))
     ]);
 }
 
@@ -84,7 +92,7 @@ function listUsers() {
     
     jsonResponse([
         'success' => true,
-        'users' => $users
+        'users' => array_map('publicUserFields', $users)
     ]);
 }
 
@@ -96,6 +104,10 @@ function createUser() {
     $errors = validateRequired($data, ['username', 'password', 'full_name', 'role']);
     if (!empty($errors)) {
         jsonResponse(['errors' => $errors], 400);
+    }
+    
+    if (!isValidUserRole($data['role'])) {
+        jsonResponse(['error' => 'Invalid role'], 400);
     }
     
     if (strlen($data['password']) < PASSWORD_MIN_LENGTH) {
@@ -137,14 +149,43 @@ function updateUser() {
         requireRole(['super_admin', 'admin']);
     }
     
+    $userModel = new User();
+    
+    if (!$userModel->getById($userId)) {
+        jsonResponse(['error' => 'User not found'], 404);
+    }
+    
     $data = getPostData();
     
-    $userModel = new User();
+    // A self-update may only carry the fields listed in
+    // SELF_EDITABLE_USER_FIELDS. Without this the privilege fields reach
+    // User::update() unchecked and a signed-in user can promote themselves by
+    // PUTting their own id with a role of their choosing.
+    if (!hasRole(['super_admin', 'admin'])) {
+        $data = array_intersect_key($data, array_flip(SELF_EDITABLE_USER_FIELDS));
+    }
+    
+    // An admin may move other accounts around, but may not mint a
+    // super_admin - the same limit createUser() applies via
+    // canCreateUser(), otherwise "admin" becomes a stepping stone to full
+    // control of the system.
+    if (isset($data['role'])) {
+        if (!isValidUserRole($data['role'])) {
+            jsonResponse(['error' => 'Invalid role'], 400);
+        }
+        
+        if (!hasRole(['super_admin']) && $data['role'] === 'super_admin') {
+            jsonResponse(['error' => 'You do not have permission to assign this role'], 403);
+        }
+    }
     
     try {
         $userModel->update($userId, $data);
         jsonResponse(['success' => true]);
     } catch (Exception $e) {
+        if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
+            jsonResponse(['error' => 'Username or email already exists'], 409);
+        }
         jsonResponse(['error' => 'User update failed'], 500);
     }
 }

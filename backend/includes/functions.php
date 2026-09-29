@@ -1,6 +1,30 @@
 <?php
 // Common utility functions
 
+// A role is only valid if it is one of the values the users.role ENUM accepts.
+// Checked before any write so a bad value is a 400 rather than a MySQL enum
+// failure reported as a server error.
+function isValidUserRole($role) {
+    return in_array($role, USER_ROLES, true);
+}
+
+// Fields a user is allowed to change on their own account. role,
+// department_id and is_active are absent on purpose: they are privileges, and
+// a user must not be able to grant themselves a different one. Changing
+// another person's privileges goes through the admin path in users.php.
+const SELF_EDITABLE_USER_FIELDS = ['full_name', 'email', 'password', 'profile'];
+
+// Strip secrets before a user record is sent to a browser. The users table is
+// read with SELECT *, so the bcrypt hash would otherwise ride along in every
+// user payload and be harvestable by any logged-in account.
+function publicUserFields($user) {
+    if (!is_array($user)) {
+        return $user;
+    }
+    unset($user['password']);
+    return $user;
+}
+
 function sanitizeInput($data) {
     $data = trim($data);
     $data = stripslashes($data);
