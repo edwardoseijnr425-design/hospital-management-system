@@ -30,7 +30,7 @@ class User {
         $userData = [
             'username' => $data['username'],
             'password' => $hashedPassword,
-            'email' => $data['email'] ?? null,
+            'email' => !empty($data['email']) ? $data['email'] : null,
             'full_name' => $data['full_name'],
             'role' => $data['role'],
             'department_id' => $data['department_id'] ?? null,
@@ -63,8 +63,8 @@ class User {
             $updateData['full_name'] = $data['full_name'];
         }
         
-        if (isset($data['email'])) {
-            $updateData['email'] = $data['email'];
+        if (array_key_exists('email', $data)) {
+            $updateData['email'] = !empty($data['email']) ? $data['email'] : null;
         }
         
         if (isset($data['role'])) {
