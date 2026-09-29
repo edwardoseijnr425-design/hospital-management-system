@@ -117,6 +117,25 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
 #vitals-page .btn-outline-info:hover{background-color:#0EA5E9;color:#fff}
 #vitals-page .btn-outline-secondary{background-color:#fff;color:#475569;border:1px solid #CBD5E1}
 #vitals-page .btn-outline-secondary:hover{background-color:#E2E8F0;color:#0F172A}
+
+/* ================= VITALS MODAL : ABNORMAL / OUT-OF-RANGE STYLING =================
+   The vitals modal sits outside #vitals-page, so these rules are scoped to #vitals-modal. */
+#vitals-modal .form-control.abnormal-vital{
+    border-color:#dc2626 !important;
+    background-color:#fef2f2 !important;
+    color:#991b1b !important;
+    font-weight:700;
+}
+#vitals-modal .range-hint{
+    font-size:9px;
+    color:#64748b;
+    margin-top:2px;
+    display:block;
+}
+#vitals-modal .form-control.abnormal-vital + .range-hint{
+    color:#dc2626;
+    font-weight:600;
+}
 </style>
 
 <div class="container-fluid p-3" id="vitals-page" style="background-color: #F8FAFC; min-height: 100vh;">
@@ -212,50 +231,65 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
                     </select>
                 </div>
 
+                <!-- Abnormal Vitals Warning Alert Banner (Hidden by default) -->
+                <div id="vitalsAlertBanner" style="display: none; background-color: #fef2f2; border: 1px solid #f87171; color: #991b1b; padding: 8px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-bottom: 10px; align-items: center; gap: 6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <span id="vitalsAlertText">Warning: Abnormal vital sign(s) detected. Please review highlighted fields.</span>
+                </div>
+
                 <h4>Vital Signs</h4>
-                <div class="form-row">
+                <div class="form-row" style="grid-template-columns:1fr 1fr;">
                     <div class="form-group">
-                        <label for="vitals-temp">Temperature (°C)</label>
-                        <input type="number" step="0.1" id="vitals-temp" name="temperature" placeholder="36.5">
+                        <label for="vitals-temp">TEMPERATURE (°C)</label>
+                        <input type="number" step="0.1" id="vitals-temp" name="temperature" class="form-control" placeholder="36.5">
+                        <span class="range-hint">Normal: 36.5 - 37.5°C</span>
                     </div>
                     <div class="form-group">
-                        <label for="vitals-bp-sys">BP Systolic (mmHg)</label>
-                        <input type="number" id="vitals-bp-sys" name="blood_pressure_systolic" placeholder="120">
-                    </div>
-                    <div class="form-group">
-                        <label for="vitals-bp-dia">BP Diastolic (mmHg)</label>
-                        <input type="number" id="vitals-bp-dia" name="blood_pressure_diastolic" placeholder="80">
+                        <label for="vitals-bp-sys">BP SYSTOLIC (MMHG)</label>
+                        <input type="number" id="vitals-bp-sys" name="blood_pressure_systolic" class="form-control" placeholder="120">
+                        <span class="range-hint">Normal: 90 - 120 mmHg</span>
                     </div>
                 </div>
 
-                <div class="form-row">
+                <div class="form-row" style="grid-template-columns:1fr 1fr;">
                     <div class="form-group">
-                        <label for="vitals-hr">Heart Rate (bpm)</label>
-                        <input type="number" id="vitals-hr" name="heart_rate" placeholder="72">
+                        <label for="vitals-bp-dia">BP DIASTOLIC (MMHG)</label>
+                        <input type="number" id="vitals-bp-dia" name="blood_pressure_diastolic" class="form-control" placeholder="80">
+                        <span class="range-hint">Normal: 60 - 80 mmHg</span>
                     </div>
                     <div class="form-group">
-                        <label for="vitals-rr">Respiratory Rate (bpm)</label>
-                        <input type="number" id="vitals-rr" name="respiratory_rate" placeholder="16">
-                    </div>
-                    <div class="form-group">
-                        <label for="vitals-spo2">SpO2 (%)</label>
-                        <input type="number" id="vitals-spo2" name="oxygen_saturation" placeholder="98">
+                        <label for="vitals-hr">HEART RATE (BPM)</label>
+                        <input type="number" id="vitals-hr" name="heart_rate" class="form-control" placeholder="72">
+                        <span class="range-hint">Normal: 60 - 100 bpm</span>
                     </div>
                 </div>
 
-                <div class="form-row">
+                <div class="form-row" style="grid-template-columns:1fr 1fr;">
                     <div class="form-group">
-                        <label for="vitals-weight">Weight (kg)</label>
-                        <input type="number" step="0.1" id="vitals-weight" name="weight" placeholder="70">
+                        <label for="vitals-rr">RESPIRATORY RATE (BPM)</label>
+                        <input type="number" id="vitals-rr" name="respiratory_rate" class="form-control" placeholder="18">
+                        <span class="range-hint">Normal: 12 - 20 bpm</span>
                     </div>
                     <div class="form-group">
-                        <label for="vitals-height">Height (cm)</label>
-                        <input type="number" step="0.1" id="vitals-height" name="height" placeholder="170">
+                        <label for="vitals-spo2">SPO2 (%)</label>
+                        <input type="number" id="vitals-spo2" name="oxygen_saturation" class="form-control" placeholder="98">
+                        <span class="range-hint">Normal: 95 - 100%</span>
+                    </div>
+                </div>
+
+                <div class="form-row" style="grid-template-columns:1fr 1fr;">
+                    <div class="form-group">
+                        <label for="vitals-weight">WEIGHT (KG)</label>
+                        <input type="number" step="0.1" id="vitals-weight" name="weight" class="form-control" placeholder="70">
+                    </div>
+                    <div class="form-group">
+                        <label for="vitals-height">HEIGHT (CM)</label>
+                        <input type="number" step="0.1" id="vitals-height" name="height" class="form-control" placeholder="170">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="vitals-notes">Notes</label>
+                    <label for="vitals-notes">NOTES</label>
                     <textarea id="vitals-notes" name="notes" rows="2" placeholder="Additional observations..."></textarea>
                 </div>
 
@@ -436,6 +470,7 @@ const DRAFT_KEY = 'hms:vitals-draft';
 
 async function initVitals() {
     setupEventListeners();
+    setupVitalsRangeCheck();
     await Promise.all([loadWards(), loadActiveVisits()]);
     await filterVitalsByWard();
     setupDraftAutosave();
@@ -1252,6 +1287,10 @@ function openVitalsModal() {
     document.getElementById('vitals-submit-btn').textContent = 'Save Vitals';
     document.getElementById('vitals-save-status').textContent = 'Draft auto-save enabled — in-progress entries are kept if the page or tab closes unexpectedly.';
     checkDraftBanner();
+    // Reset abnormal-vitals warning state
+    document.querySelectorAll('#vitals-modal .abnormal-vital').forEach(el => el.classList.remove('abnormal-vital'));
+    const warnBanner = document.getElementById('vitalsAlertBanner');
+    if (warnBanner) warnBanner.style.display = 'none';
     document.getElementById('vitals-modal').classList.add('show');
 }
 
@@ -1343,6 +1382,49 @@ async function editVitals(vitalId, pid) {
     document.getElementById('vitals-submit-btn').textContent = 'Update Vitals';
     document.getElementById('vitals-save-status').textContent = 'Editing record #' + vital.id + ' — changes update the existing entry.';
     document.getElementById('vitals-draft-banner').style.display = 'none';
+    checkVitalsRanges();
+}
+
+/* ============================ ABNORMAL VITALS RANGE CHECK ============================ */
+const VITALS_RANGES = {
+    temperature: { min: 36.5, max: 37.5 },
+    blood_pressure_systolic: { min: 90, max: 120 },
+    blood_pressure_diastolic: { min: 60, max: 80 },
+    heart_rate: { min: 60, max: 100 },
+    respiratory_rate: { min: 12, max: 20 },
+    oxygen_saturation: { min: 95, max: 100 }
+};
+
+function checkVitalsRanges() {
+    const abnormal = [];
+    Object.keys(VITALS_RANGES).forEach(key => {
+        const el = document.getElementById(DRAFT_FIELDS[key]);
+        if (!el) return;
+        const val = parseFloat(el.value);
+        const r = VITALS_RANGES[key];
+        const out = !isNaN(val) && (val < r.min || val > r.max);
+        el.classList.toggle('abnormal-vital', out);
+        if (out) abnormal.push(el.name || key);
+    });
+    const banner = document.getElementById('vitalsAlertBanner');
+    if (!banner) return;
+    if (abnormal.length) {
+        document.getElementById('vitalsAlertText').textContent =
+            'Warning: Abnormal vital sign(s) detected — ' + abnormal.join(', ') + '. Please review highlighted fields.';
+        banner.style.display = 'flex';
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+function setupVitalsRangeCheck() {
+    Object.keys(VITALS_RANGES).forEach(key => {
+        const el = document.getElementById(DRAFT_FIELDS[key]);
+        if (el) {
+            el.addEventListener('input', checkVitalsRanges);
+            el.addEventListener('change', checkVitalsRanges);
+        }
+    });
 }
 
 /* ============================ AUTO-DRAFT (localStorage) ============================ */
@@ -1424,6 +1506,7 @@ function restoreDraft() {
     });
     checkDraftBanner();
     showAlert('Draft restored. Review the values and Save.', 'success');
+    checkVitalsRanges();
 }
 
 function discardDraft() {
