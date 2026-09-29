@@ -30,6 +30,29 @@
     #adm-outcome-grid textarea{resize:vertical}
     #adm-outcome-grid select:focus,#adm-outcome-grid input:focus,#adm-outcome-grid textarea:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
     #adm-outcome-grid .req{color:#e74c3c}
+
+    /* ---- Discharge modal: patient admission + doctor's entries panels ---- */
+    #discharge-modal .adm-design-panel{background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:14px;margin-bottom:16px;display:flex;flex-direction:column;gap:12px}
+    #discharge-modal .adm-panel-title{font-weight:700;color:#1e3a8a;font-size:13px;border-bottom:1px solid #e2e8f0;padding-bottom:6px}
+    #discharge-modal .adm-panel-row{display:flex;gap:12px}
+    #discharge-modal .adm-panel-col{flex:1;display:flex;flex-direction:column;gap:4px}
+    #discharge-modal .adm-panel-col>label{font-size:10px;font-weight:700;color:#1e3a8a}
+    #discharge-modal .adm-select{border:1px solid #cbd5e1;border-radius:4px;padding:7px 10px;font-size:11.5px;background:#f8fafc;color:#1e293b;width:100%;font-family:inherit}
+    #discharge-modal .adm-select:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
+    #discharge-modal .adm-date-input-group{display:flex;align-items:center;gap:7px;border:1px solid #cbd5e1;border-radius:4px;padding:7px 10px;background:#f8fafc;font-size:11.5px;color:#1e293b}
+    #discharge-modal .adm-date-input-group svg{flex-shrink:0;color:#1e3a8a}
+    #discharge-modal .adm-doc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:11.5px}
+    #discharge-modal .adm-doc-card{background:#f8fafc;padding:10px;border-radius:4px;border:1px solid #e2e8f0}
+    #discharge-modal .adm-doc-card strong{color:#1e3a8a;display:block;margin-bottom:4px;font-size:11.5px}
+    #discharge-modal .adm-doc-card p{color:#334155;line-height:1.4;margin:0;white-space:pre-wrap}
+    #discharge-modal .adm-doc-card.full{grid-column:1/-1}
+    #discharge-modal .adm-nav-btn{background-color:#1e3a8a;color:#fff;border:none;border-radius:4px;padding:8px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.3px;display:inline-flex;align-items:center;gap:6px}
+    #discharge-modal .adm-nav-btn:hover{background-color:#16306e}
+    @media (max-width:640px){
+        #discharge-modal .adm-panel-row{flex-direction:column}
+        #discharge-modal .adm-doc-grid{grid-template-columns:1fr}
+        #discharge-modal .adm-doc-card.full{grid-column:span 1}
+    }
     #adm-pending-warning{background:#FEF5E0;border:1px solid #F0AD4E;border-left:4px solid #f0ad4e;color:#8A5A00;border-radius:4px;padding:10px 12px;font-size:12px;margin-bottom:14px;display:none;align-items:flex-start;gap:9px}
     #adm-pending-warning.show{display:flex}
     #adm-pending-warning svg{width:16px;height:16px;fill:none;stroke:#B9770E;stroke-width:2;flex-shrink:0;margin-top:1px}
@@ -240,9 +263,9 @@
     </div>
 </div>
 
-<!-- Discharge Modal: billing summary + clinical discharge summary -->
+<!-- Discharge Modal: admission info + discharge process + doctor's entries + billing (behind a toggle) -->
 <div class="modal" id="discharge-modal">
-    <div class="modal-content" style="max-width:480px;">
+    <div class="modal-content" style="max-width:880px;">
         <div class="modal-header">
             <h3><i class="fa-solid fa-right-from-bracket"></i> Discharge Patient</h3>
             <button class="modal-close" id="close-discharge-modal">&times;</button>
@@ -250,52 +273,97 @@
         <div class="modal-body">
             <div id="discharge-summary" style="background:#F0F4F8;border:1px solid #DCE4EC;border-radius:6px;padding:12px;margin-bottom:16px;font-size:13px;"></div>
 
-            <!-- Outstanding-billing warning (shown only when a real balance is due) -->
-            <div id="adm-pending-warning">
-                <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                <span id="adm-pending-warning-text"></span>
+            <!-- Toggle Button to Show/Hide Billing Details -->
+            <div style="margin-bottom:12px;">
+                <button type="button" id="toggle-billing-btn" class="adm-nav-btn">
+                    <i class="fa-solid fa-receipt"></i> <span id="toggle-billing-label">SHOW BILLING DETAILS</span>
+                </button>
             </div>
 
-            <!-- BILLING SUMMARY (live invoices + line items) -->
-            <div id="adm-bill-card">
-                <div id="adm-bill-head">
-                    <span><i class="fa-solid fa-receipt"></i> Billing Summary</span>
-                    <span style="display:flex;gap:8px;align-items:center;">
-                        <span style="color:#D1E5F7;font-size:10px;" id="adm-bill-count"></span>
-                        <button type="button" id="adm-open-charge"><i class="fa-solid fa-plus"></i> Add Billing Item</button>
-                    </span>
-                </div>
-                <div id="adm-bill-body">
-                    <div id="adm-bill-scroll">
-                        <div class="empty" style="padding:14px;text-align:center;color:#8A94A6;font-size:12px;">Loading billing summary...</div>
+            <!-- Discharge Process & Admission Info Panel -->
+            <div id="patient-admission-panel" class="adm-design-panel">
+                <div class="adm-panel-title">PATIENT DISCHARGE &amp; ADMISSION MANAGEMENT</div>
+                <div class="adm-panel-row">
+                    <div class="adm-panel-col">
+                        <label>ADMISSION DATE &amp; TIME</label>
+                        <div class="adm-date-input-group">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            <span id="adm-admission-date">—</span>
+                        </div>
+                    </div>
+                    <div class="adm-panel-col">
+                        <label for="discharge-outcome">DISCHARGE PROCESS <span style="color:#e74c3c;">*</span></label>
+                        <select id="discharge-outcome" class="adm-select" required>
+                            <option value="">-- Select Status / Outcome --</option>
+                            <option value="Improved">Improved</option>
+                            <option value="Unchanged">Unchanged</option>
+                            <option value="Referred">Referred</option>
+                            <option value="Transferred Out">Transferred Out</option>
+                            <option value="Discharged on Medical Advice">Discharged on Medical Advice</option>
+                            <option value="Absconded">Absconded</option>
+                            <option value="Died">Died</option>
+                        </select>
                     </div>
                 </div>
-                <div id="adm-bill-foot">
-                    <span>Auto-generated from the patient's invoices &amp; billing items</span>
-                    <span>Fee To Be Paid: <span id="adm-bill-due" class="due">GHS 0.00</span></span>
+            </div>
+
+            <!-- Doctor's Entries & Medical Record History (read from the admission + linked visit) -->
+            <div class="adm-design-panel">
+                <div class="adm-panel-title">DOCTOR'S ENTRIES &amp; MEDICAL RECORD HISTORY</div>
+                <div class="adm-doc-grid">
+                    <div class="adm-doc-card">
+                        <strong>Presenting History / Complaints:</strong>
+                        <p id="adm-presenting-history">Loading...</p>
+                    </div>
+                    <div class="adm-doc-card">
+                        <strong>Clinical Examination:</strong>
+                        <p id="adm-clinical-exam">No clinical examination record on file.</p>
+                    </div>
+                </div>
+                <div class="adm-doc-card full">
+                    <strong>Diagnosis &amp; Doctor's Notes:</strong>
+                    <p id="adm-doctor-diagnosis">No admission diagnosis recorded.</p>
+                </div>
+            </div>
+
+            <!-- Billing Summary Container (hidden by default, toggled by the button above) -->
+            <div id="billing-summary-container" style="display:none;">
+                <div style="font-weight:700;color:#1e3a8a;font-size:13px;margin-bottom:8px;">BILLING SUMMARY</div>
+
+                <!-- Outstanding-billing warning (shown only when a real balance is due) -->
+                <div id="adm-pending-warning">
+                    <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span id="adm-pending-warning-text"></span>
+                </div>
+
+                <!-- BILLING SUMMARY (live invoices + line items) -->
+                <div id="adm-bill-card">
+                    <div id="adm-bill-head">
+                        <span><i class="fa-solid fa-receipt"></i> Billing Summary</span>
+                        <span style="display:flex;gap:8px;align-items:center;">
+                            <span style="color:#D1E5F7;font-size:10px;" id="adm-bill-count"></span>
+                            <button type="button" id="adm-open-charge"><i class="fa-solid fa-plus"></i> Add Billing Item</button>
+                        </span>
+                    </div>
+                    <div id="adm-bill-body">
+                        <div id="adm-bill-scroll">
+                            <div class="empty" style="padding:14px;text-align:center;color:#8A94A6;font-size:12px;">Loading billing summary...</div>
+                        </div>
+                    </div>
+                    <div id="adm-bill-foot">
+                        <span>Auto-generated from the patient's invoices &amp; billing items</span>
+                        <span>Fee To Be Paid: <span id="adm-bill-due" class="due">GHS 0.00</span></span>
+                    </div>
                 </div>
             </div>
 
             <!-- CLINICAL DISCHARGE SUMMARY -->
             <div id="adm-outcome-grid">
                 <div>
-                    <label for="discharge-outcome">Discharge Outcome <span class="req">*</span></label>
-                    <select id="discharge-outcome" required>
-                        <option value="">-- Select Outcome --</option>
-                        <option value="Improved">Improved</option>
-                        <option value="Unchanged">Unchanged</option>
-                        <option value="Referred">Referred</option>
-                        <option value="Transferred Out">Transferred Out</option>
-                        <option value="Discharged on Medical Advice">Discharged on Medical Advice</option>
-                        <option value="Absconded">Absconded</option>
-                        <option value="Died">Died</option>
-                    </select>
-                </div>
-                <div>
                     <label for="discharge-followup">Follow-up Date</label>
                     <input type="date" id="discharge-followup">
                 </div>
-                <div class="full">
+                <div>
                     <label for="discharge-final-dx">Final Diagnosis <span class="req">*</span></label>
                     <input type="text" id="discharge-final-dx" maxlength="255" placeholder="Confirmed diagnosis at discharge">
                 </div>
@@ -525,6 +593,7 @@ function setupAdmissionListeners() {
     document.getElementById('close-discharge-modal').addEventListener('click', closeDischargeModal);
     document.getElementById('cancel-discharge').addEventListener('click', closeDischargeModal);
     document.getElementById('confirm-discharge').addEventListener('click', submitDischarge);
+    document.getElementById('toggle-billing-btn').addEventListener('click', toggleBillingDetails);
 
     // Billing charge dialog (opened from the discharge billing summary)
     document.getElementById('adm-open-charge').addEventListener('click', openChargeModal);
@@ -736,6 +805,15 @@ function openDischargeModal(id) {
     document.getElementById('discharge-followup').value = '';
     document.getElementById('adm-pending-warning').classList.remove('show');
     document.getElementById('discharge-modal').classList.add('show');
+
+    // Admission panel: real admission date/time + doctor's record history.
+    document.getElementById('adm-admission-date').textContent = fmtDateTime(admission.admission_date);
+    loadAdmissionDoctorEntries(admission);
+
+    // Billing starts collapsed behind the toggle (matching the design).
+    document.getElementById('billing-summary-container').style.display = 'none';
+    document.getElementById('toggle-billing-label').textContent = 'SHOW BILLING DETAILS';
+
     loadAdmissionBilling();
 }
 
@@ -743,6 +821,46 @@ function closeDischargeModal() {
     document.getElementById('discharge-modal').classList.remove('show');
     document.getElementById('adm-charge-modal').classList.remove('show');
     dischargeTarget = null;
+}
+
+// Toggle the billing summary container behind the "SHOW/HIDE BILLING DETAILS" button.
+function toggleBillingDetails() {
+    const box = document.getElementById('billing-summary-container');
+    const label = document.getElementById('toggle-billing-label');
+    const hidden = box.style.display === 'none' || !box.style.display;
+    box.style.display = hidden ? 'block' : 'none';
+    label.textContent = hidden ? 'HIDE BILLING DETAILS' : 'SHOW BILLING DETAILS';
+}
+
+/* ============ DISCHARGE : DOCTOR'S ENTRIES & MEDICAL RECORD HISTORY ============
+   Real data only: the presenting complaint comes from the patient's latest
+   visit, and the diagnosis / doctor's notes come from the admission's own
+   clinical fields. A visit may not exist, so the complaint shows an empty
+   state then. */
+async function loadAdmissionDoctorEntries(admission) {
+    const present = document.getElementById('adm-presenting-history');
+    const dx = document.getElementById('adm-doctor-diagnosis');
+    present.textContent = 'Loading...';
+    dx.textContent = 'Loading...';
+    try {
+        const res = await fetch('/hms/backend/api/visits.php?patient_id=' + admission.patient_id + '&per_page=1');
+        const data = await res.json();
+        const visit = (data.success && data.visits && data.visits.length) ? data.visits[0] : null;
+        const complaint = (visit && visit.chief_complaint) ? String(visit.chief_complaint).trim() : '';
+        present.textContent = complaint || 'No recorded presenting complaint on file for this admission.';
+    } catch (error) {
+        present.textContent = 'Could not load the presenting history.';
+    }
+    const diagnosis = (admission.diagnosis || '').trim();
+    const notes = (admission.notes || '').trim();
+    if (diagnosis || notes) {
+        const parts = [];
+        if (diagnosis) parts.push('Primary Diagnosis: ' + diagnosis);
+        if (notes) parts.push("Doctor's Notes: " + notes);
+        dx.textContent = parts.join('\n\n');
+    } else {
+        dx.textContent = 'No admission diagnosis or notes recorded.';
+    }
 }
 
 /* ============ DISCHARGE : BILLING SUMMARY (live invoice data) ============ */
