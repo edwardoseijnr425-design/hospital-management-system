@@ -1,6 +1,6 @@
 <?php
 // EHMS — EDDIE HEALTHCARE SOLUTIONS · EDDIE HOSPITAL
-// Old-system login page (EHMS teal/orange card design).
+// Login page (modern single-card portal design).
 session_start();
 
 // Already logged in? Straight to the dashboard shell.
@@ -14,196 +14,205 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log In - Eddie Health Care Solutions</title>
+    <title>Login - Eddie Health Care Solutions</title>
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #2b2b2b;
-            position: relative;
-            overflow: hidden;
+            background-color: #f8fafc;
+            padding: 16px;
         }
 
-        /* Abstract Background Elements */
-        .bg-shape-1 {
-            position: absolute;
-            width: 450px;
-            height: 450px;
-            background-color: #1e938f;
-            border-radius: 30px;
-            transform: rotate(-15deg);
-            top: 50px;
-            left: 100px;
-            z-index: 1;
-        }
-
-        .bg-shape-2 {
-            position: absolute;
-            width: 350px;
-            height: 350px;
-            background-color: #e09867;
-            border-radius: 30px;
-            transform: rotate(20deg);
-            bottom: 50px;
-            right: 120px;
-            z-index: 1;
-        }
-
-        /* Main Container Card */
+        /* Main Card */
         .login-card {
-            position: relative;
-            z-index: 2;
-            width: 85%;
-            max-width: 960px;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(8px);
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-            display: flex;
+            max-width: 448px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
             overflow: hidden;
-            min-height: 520px;
+            border: 1px solid #f1f5f9;
         }
 
-        /* Left Section - Medical Illustration Side */
-        .card-left {
-            flex: 1;
-            padding: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: transparent;
-        }
-
-        .card-left img {
-            max-width: 100%;
-            height: auto;
-        }
-
-        /* Right Section - Form Side */
-        .card-right {
-            flex: 1;
-            padding: 50px 60px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: #fdfdfd;
-        }
-
-        .logo-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 35px;
-        }
-
-        .cross-logo {
-            width: 50px;
-            height: 50px;
-            margin-bottom: 12px;
-        }
-
-        .login-title {
-            color: #1a8b86;
-            font-size: 2rem;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .login-form {
-            width: 100%;
-            max-width: 320px;
-        }
-
-        .input-group {
+        /* Header Banner */
+        .card-header {
+            background-color: #0f766e;
+            padding: 24px;
+            text-align: center;
+            color: #ffffff;
             position: relative;
-            margin-bottom: 25px;
         }
 
-        .input-group input,
-        .input-group select {
-            width: 100%;
-            padding: 10px 0;
-            border: none;
-            border-bottom: 1px solid #b0bec5;
-            outline: none;
-            font-size: 0.95rem;
-            color: #455a64;
-            background: transparent;
-            transition: border-color 0.3s;
-        }
-
-        .input-group input::placeholder {
-            color: #90a4ae;
-        }
-
-        .input-group input:focus,
-        .input-group select:focus {
-            border-bottom-color: #1e938f;
-        }
-
-        .password-toggle {
+        .card-header .hosp-badge {
             position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #1e938f;
-            opacity: 0.7;
+            top: 16px;
+            left: 16px;
+            background: rgba(15, 118, 110, 0.6);
+            padding: 8px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .password-toggle:hover {
-            opacity: 1;
+        .card-header .hosp-badge i {
+            font-size: 1.25rem;
+            color: #ffffff;
         }
 
-        .button-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 35px;
+        .card-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
         }
 
-        .btn {
-            flex: 1;
-            padding: 12px 0;
-            border: none;
-            border-radius: 4px;
-            font-size: 0.9rem;
+        .card-header p {
+            color: #ccfbf1;
+            font-size: 0.875rem;
+            margin-top: 4px;
+        }
+
+        /* Form Body */
+        .card-body {
+            padding: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-of-type {
+            margin-bottom: 0;
+        }
+
+        .field-label {
+            display: block;
+            font-size: 0.75rem;
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .field-wrap {
+            position: relative;
+        }
+
+        .field-icon {
+            position: absolute;
+            inset: 0 auto 0 0;
+            display: flex;
+            align-items: center;
+            padding-left: 16px;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .field-wrap input,
+        .field-wrap select {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+            color: #334155;
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+        }
+
+        .field-wrap input::placeholder {
+            color: #94a3b8;
+        }
+
+        .field-wrap input:focus,
+        .field-wrap select:focus {
+            border-color: transparent;
+            box-shadow: 0 0 0 2px #14b8a6;
+            background-color: #ffffff;
+        }
+
+        /* Remember row */
+        .remember-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            margin-top: 4px;
+        }
+
+        .remember-label {
+            display: flex;
+            align-items: center;
+            color: #475569;
             cursor: pointer;
-            letter-spacing: 0.5px;
-            transition: opacity 0.2s;
         }
 
-        .btn-login {
-            background-color: #198782;
+        .remember-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            accent-color: #0d9488;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .remember-label input[type="checkbox"]:focus {
+            outline: 2px solid #14b8a6;
+            outline-offset: 2px;
+        }
+
+        /* Submit Button */
+        .btn-submit {
+            width: 100%;
+            background-color: #0d9488;
             color: #ffffff;
+            font-weight: 600;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(15, 23, 42, 0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 20px;
         }
 
-        .btn-cancel {
-            background-color: #a80015;
-            color: #ffffff;
+        .btn-submit:hover {
+            background-color: #0f766e;
+            box-shadow: 0 8px 16px rgba(15, 23, 42, 0.15);
         }
 
-        .btn:hover {
-            opacity: 0.9;
+        .btn-submit:active {
+            background-color: #115e59;
         }
 
+        /* Error message */
         .error-message {
             margin-top: 16px;
             padding: 10px 14px;
-            border-radius: 4px;
-            background: #fdecea;
-            border: 1px solid #f5b5b1;
-            color: #a80015;
+            border-radius: 8px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
             font-size: 0.85rem;
             font-weight: 600;
             text-align: center;
@@ -218,128 +227,114 @@ if (isset($_SESSION['user_id'])) {
             display: none;
         }
 
-        @media (max-width: 768px) {
-            .login-card {
-                flex-direction: column;
-            }
-            .card-left {
-                display: none;
-            }
+        /* Footer Note */
+        .card-footer {
+            background-color: #f8fafc;
+            padding: 16px 32px;
+            border-top: 1px solid #f1f5f9;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #94a3b8;
         }
     </style>
 </head>
 <body>
 
-    <!-- Background Deco Shapes -->
-    <div class="bg-shape-1"></div>
-    <div class="bg-shape-2"></div>
-
-    <!-- Main Card -->
     <div class="login-card">
-
-        <!-- Left Side: Illustration -->
-        <div class="card-left">
-            <svg width="340" height="280" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Background Decorative Foliage -->
-                <path d="M120 220 C80 180, 70 120, 100 80 C120 120, 130 180, 120 220 Z" fill="#D3C0DB"/>
-                <path d="M340 230 C370 190, 360 130, 330 90 C320 130, 320 190, 340 230 Z" fill="#E8BDC4"/>
-
-                <!-- Floating Medical Icons -->
-                <circle cx="200" cy="80" r="18" fill="#FADBD8"/>
-                <path d="M194 80 H206 M200 74 V86" stroke="#C0392B" stroke-width="3" stroke-linecap="round"/>
-
-                <circle cx="160" cy="110" r="14" fill="#FADBD8"/>
-                <path d="M154 105 L166 115" stroke="#E74C3C" stroke-width="4" stroke-linecap="round"/>
-
-                <!-- Stool -->
-                <ellipse cx="202" cy="225" rx="18" ry="5" fill="#5D4037"/>
-                <path d="M192 225 L188 280 M212 225 L216 280" stroke="#5D4037" stroke-width="3"/>
-
-                <!-- Characters (Simplified Vectors) -->
-                <!-- Patient -->
-                <circle cx="190" cy="155" r="10" fill="#E0AC69"/>
-                <path d="M178 180 C178 170, 202 170, 202 180 L205 220 H175 Z" fill="#E74C3C"/>
-
-                <!-- Doctor Seated -->
-                <circle cx="230" cy="150" r="10" fill="#F1C40F"/>
-                <path d="M218 175 C218 165, 242 165, 242 175 L240 225 H220 Z" fill="#2C3E50"/>
-
-                <!-- Nurse Standing -->
-                <circle cx="265" cy="140" r="10" fill="#E0AC69"/>
-                <path d="M253 165 C253 155, 277 155, 277 165 L275 250 H255 Z" fill="#16A085"/>
-            </svg>
+        <!-- Header Banner -->
+        <div class="card-header">
+            <div class="hosp-badge">
+                <i class="fa-solid fa-hospital"></i>
+            </div>
+            <h1>Eddie Health Care</h1>
+            <p>Hospital Management System Portal</p>
         </div>
 
-        <!-- Right Side: Login Form -->
-        <div class="card-right">
-            <div class="logo-container">
-                <!-- Custom Green/Orange Medical Cross Logo -->
-                <svg class="cross-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M35 15 H65 V35 H85 V65 H65 V85 H35 V65 H15 V35 H35 Z" fill="#008080" />
-                    <path d="M50 15 H65 V35 H85 V50 H50 Z" fill="#F28D35" />
-                </svg>
-                <h1 class="login-title">Log In</h1>
-            </div>
+        <!-- Form Body -->
+        <div class="card-body">
+            <form id="login-form" autocomplete="on" class="space-y-5" novalidate>
 
-            <form class="login-form" id="login-form" autocomplete="off">
-                <div class="input-group">
-                    <input type="text" id="username" name="username" placeholder="Username" required autofocus>
+                <!-- Role Selection -->
+                <div class="form-group">
+                    <label class="field-label" for="role">Select User Role</label>
+                    <div class="field-wrap">
+                        <span class="field-icon"><i class="fa-solid fa-user-doctor"></i></span>
+                        <select id="role" name="role">
+                            <option value="" selected>Select User Role</option>
+                            <option value="doctor">Doctor / Physician</option>
+                            <option value="nurse">Nurse / Clinician</option>
+                            <option value="receptionist">Reception / Front Desk</option>
+                            <option value="admin">System Administrator</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="input-group">
-                    <input type="password" id="password" name="password" placeholder="Password" required>
-                    <span class="password-toggle" onclick="togglePassword()" aria-label="Toggle password visibility">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                    </span>
+                <!-- Username / Staff ID Field -->
+                <div class="form-group">
+                    <label class="field-label" for="username">Username or Staff ID</label>
+                    <div class="field-wrap">
+                        <span class="field-icon"><i class="fa-solid fa-user"></i></span>
+                        <input type="text" id="username" name="username" required placeholder="e.g. DR_EDDIE_01" autocomplete="username" autofocus>
+                    </div>
                 </div>
 
-                <div class="input-group">
-                    <select name="hospital" aria-label="Hospital Name">
-                        <option value="" disabled selected hidden>Hospital Name</option>
-                        <option value="main" selected>Eddie Hospital</option>
-                    </select>
+                <!-- Password Field -->
+                <div class="form-group">
+                    <label class="field-label" for="password">Password</label>
+                    <div class="field-wrap">
+                        <span class="field-icon"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+                    </div>
+                </div>
+
+                <!-- Remember This Device -->
+                <div class="remember-row">
+                    <label class="remember-label">
+                        <input type="checkbox" name="remember" id="remember">
+                        Remember this device
+                    </label>
                 </div>
 
                 <div id="login-error" class="error-message hidden"></div>
 
-                <div class="button-group">
-                    <button type="submit" class="btn btn-login">LOGIN</button>
-                    <button type="button" class="btn btn-cancel" id="login-cancel-btn">CANCEL</button>
-                </div>
+                <!-- Submit Button -->
+                <button type="submit" class="btn-submit">
+                    <span>Secure Sign In</span>
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                </button>
             </form>
         </div>
 
+        <!-- Footer Note -->
+        <div class="card-footer">
+            Authorized Personnel Only &bull; Protected by SSL Encryption
+        </div>
     </div>
 
     <script>
-        function togglePassword() {
-            const pwd = document.getElementById('password');
-            if (pwd.type === 'password') {
-                pwd.type = 'text';
-            } else {
-                pwd.type = 'password';
-            }
-        }
+        // "Remember this device" persists the username (never the password).
+        (function() {
+            var remember = document.getElementById('remember');
+            var userField = document.getElementById('username');
 
-        // CANCEL clears the form and any previous error message.
-        document.addEventListener('DOMContentLoaded', function() {
-            const cancelBtn = document.getElementById('login-cancel-btn');
-            if (cancelBtn) {
-                cancelBtn.addEventListener('click', function() {
-                    const form = document.getElementById('login-form');
-                    if (form) form.reset();
-                    const err = document.getElementById('login-error');
-                    if (err) {
-                        err.textContent = '';
-                        err.classList.add('hidden');
-                        err.classList.remove('show');
+            if (localStorage.getItem('hms_remember') === '1' && userField) {
+                userField.value = localStorage.getItem('hms_username') || '';
+                if (remember) remember.checked = true;
+            }
+
+            var form = document.getElementById('login-form');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    if (remember && remember.checked) {
+                        localStorage.setItem('hms_remember', '1');
+                        localStorage.setItem('hms_username', userField.value.trim());
+                    } else {
+                        localStorage.removeItem('hms_remember');
+                        localStorage.removeItem('hms_username');
                     }
                 });
             }
-        });
+        })();
     </script>
 
     <script src="assets/js/auth.js"></script>
