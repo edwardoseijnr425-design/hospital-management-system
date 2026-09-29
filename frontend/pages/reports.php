@@ -60,6 +60,44 @@ require_once __DIR__ . '/../../backend/config/config.php';
 #dhims-cc .mt15{margin-top:15px}
 #dhims-cc .misdhims-divider{height:2px;background:#c0d4e8;margin:26px 0 20px;border-radius:2px;position:relative}
 #dhims-cc .misdhims-divider span{position:absolute;top:-9px;left:16px;background:#0b5fa5;color:#fff;font-size:10px;font-weight:700;padding:3px 12px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ---- Monthly indicators: Edit control, reported-figure markers, dialog ---- */
+#dhims-cc .dhi-edit-btn{background:#fff;color:#0b5fa5;border:1px solid #b2c8de;border-radius:3px;padding:4px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+#dhims-cc .dhi-edit-btn svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#dhims-cc .dhi-edit-btn:hover{background:#e2edf7}
+#dhims-cc .dhi-edit-btn.is-ovr{background:#FEF5E0;border-color:#f0ad4e;color:#B9770E}
+#dhims-cc .dhi-edit-btn.is-ovr:hover{background:#FDEBC8}
+#dhims-cc .ovr-tag{display:inline-block;margin-top:3px;background:#FEF5E0;color:#B9770E;border:1px solid #f0ad4e;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:1px 6px;cursor:help}
+#dhims-cc .ovr-sub{text-transform:none;letter-spacing:0;font-weight:600;color:#8A5A00;background:none;border:none;padding:1px 0 0}
+#dhims-cc .ovr-badge{background:#E9F9EF;color:#1E7A34;border:1px solid #b7e4c6;border-radius:999px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:3px 9px;white-space:nowrap}
+#dhims-cc .ovr-badge.has-ovr{background:#FEF5E0;color:#B9770E;border-color:#f0ad4e}
+#dhims-cc .data-table td.ctr{text-align:center;white-space:nowrap}
+#dhi-override-modal{display:none;position:fixed;inset:0;z-index:2200;background:rgba(15,45,89,.55);align-items:center;justify-content:center;padding:24px 16px;overflow-y:auto}
+#dhi-override-modal.show{display:flex}
+#dhi-override-modal .modal-content{background:#fff;border-radius:8px;width:100%;box-shadow:0 12px 34px rgba(0,0,0,.25);overflow:hidden}
+#dhi-override-modal .modal-header{background-color:#0b5fa5;color:#fff;padding:13px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+#dhi-override-modal .modal-header h3{margin:0;font-size:13.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:8px;min-width:0}
+#dhi-override-modal .modal-header h3 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#dhi-override-modal .modal-header svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+#dhi-override-modal .modal-close{background:none;border:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:0 4px;flex-shrink:0}
+#dhi-override-modal .modal-close:hover{color:#FFD54F}
+#dhi-override-modal .modal-body{padding:18px 20px;background:#F8FAFC}
+#dhi-override-modal .ovr-computed{display:flex;justify-content:space-between;align-items:center;background:#E6EEF5;border:1px solid #b2c8de;border-radius:4px;padding:9px 12px;margin-bottom:14px;font-size:11.5px;color:#334155}
+#dhi-override-modal .ovr-computed b{color:#0F2D59;font-size:14px}
+#dhi-override-modal .form-group{margin-bottom:14px}
+#dhi-override-modal label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#64748b;margin-bottom:5px}
+#dhi-override-modal input,#dhi-override-modal textarea{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;background:#fff;color:#222;font-family:inherit;box-sizing:border-box}
+#dhi-override-modal textarea{resize:vertical}
+#dhi-override-modal input:focus,#dhi-override-modal textarea:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
+#dhi-override-modal .ovr-hint{margin:0 0 8px;font-size:11px;color:#475569}
+#dhi-override-modal .ovr-note{margin:0;font-size:10.5px;color:#94a3b8;line-height:1.5}
+#dhi-override-modal .form-actions{display:flex;justify-content:flex-end;gap:10px;padding:13px 20px;background:#F1F5F9;border-top:1px solid #e1e8f0}
+#dhi-override-modal .btn{border:none;border-radius:3px;cursor:pointer;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:8px 16px;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+#dhi-override-modal .btn-primary{background-color:#0072BC;color:#fff}
+#dhi-override-modal .btn-primary:hover{filter:brightness(1.08)}
+#dhi-override-modal .btn-primary:disabled{opacity:.6;cursor:not-allowed}
+#dhi-override-modal .btn-secondary{background:#F1F5F9;color:#34495E;border:1px solid #C0C0C0}
+#dhi-override-modal .btn-secondary:hover{background:#E2E8F0}
 @media (max-width:900px){
   #dhims-cc .kpi-grid{grid-template-columns:repeat(2,1fr)}
   #dhims-cc .cat-grid{grid-template-columns:1fr}
@@ -140,7 +178,12 @@ require_once __DIR__ . '/../../backend/config/config.php';
   <div class="panel-box" id="dhiMonthlyPanel">
     <div class="panel-header">
       <div class="ph-l"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>Monthly Aggregated Data</div>
-      <button type="button" class="btn-action btn-export" style="padding:4px 10px;font-size:10px;" onclick="dhiExportMonthly()">CSV</button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="ovr-badge" id="dhiOverrideBadge">all figures live</span>
+        <button type="button" class="btn-action btn-export" style="padding:4px 10px;font-size:10px;" onclick="dhiExportMonthly()">
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:#fff;vertical-align:-2px;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>CSV
+        </button>
+      </div>
     </div>
     <div class="panel-body">
       <div class="table-container" id="dhiMonthlyTable"><div class="empty-note">Select a month and click Generate DHIMS Report.</div></div>
@@ -180,6 +223,36 @@ require_once __DIR__ . '/../../backend/config/config.php';
         <button type="button" class="btn-action btn-export" onclick="dhiExportNhia()"><svg viewBox="0 0 24 24"><path d="M12 3v10.55l-2.94-2.94-1.41 1.41L12 16.41l4.35-4.35-1.41-1.41L12 13.55V3z"/><path d="M19 13v6H5v-6H3v6c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-6h-2z"/></svg>Export NHIA Claims CSV</button>
         <button type="button" class="btn-action btn-export" onclick="dhiExportDiseases()"><svg viewBox="0 0 24 24"><path d="M12 3v10.55l-2.94-2.94-1.41 1.41L12 16.41l4.35-4.35-1.41-1.41L12 13.55V3z"/><path d="M19 13v6H5v-6H3v6c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-6h-2z"/></svg>Export Disease CSV</button>
         <button type="button" class="btn-action btn-chart" style="background-color:#7f8c8d;color:#fff;" onclick="dhiExportAll()"><svg viewBox="0 0 24 24"><path d="M12 3v10.55l-2.94-2.94-1.41 1.41L12 16.41l4.35-4.35-1.41-1.41L12 13.55V3z"/><path d="M19 13v6H5v-6H3v6c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-6h-2z"/></svg>Export All (DHIMS2)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORTED FIGURE DIALOG -->
+  <div class="modal" id="dhi-override-modal">
+    <div class="modal-content" style="max-width:520px;">
+      <div class="modal-header">
+        <h3><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span id="dhi-ovr-title">Indicator</span></h3>
+        <button class="modal-close" onclick="closeDhiOverride()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="ovr-computed">
+          <span>Live value from the records</span>
+          <b id="dhi-ovr-computed">0</b>
+        </div>
+        <div class="form-group">
+          <label for="dhi-ovr-value" id="dhi-ovr-label">Reported value</label>
+          <input type="number" id="dhi-ovr-value" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label for="dhi-ovr-reason">Reason for the reported figure</label>
+          <textarea id="dhi-ovr-reason" rows="2" maxlength="255" placeholder="e.g. Figure confirmed with the district health information officer"></textarea>
+        </div>
+        <p class="ovr-hint" id="dhi-ovr-hint"></p>
+        <p class="ovr-note">The reported figure is stored with your name and the reason in the audit trail. The live value is always kept alongside it, and the original records are never changed.</p>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="dhi-ovr-clear">Clear Figure</button>
+        <button type="button" class="btn btn-primary" id="dhi-ovr-save">Save Figure</button>
       </div>
     </div>
   </div>
@@ -262,6 +335,14 @@ function dhiInit(){
     var now = new Date();
     var m = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
     document.getElementById('dhiMonth').value = m;
+
+    // Reported-figure dialog (the monthly indicator Edit control)
+    document.getElementById('dhi-ovr-save').addEventListener('click', dhiSaveIndicator);
+    document.getElementById('dhi-ovr-clear').addEventListener('click', function(){
+        var key = document.getElementById('dhi-override-modal').dataset.key;
+        if(key) dhiClearIndicator(key);
+    });
+
     dhiLoadDepartments();
 }
 
@@ -339,27 +420,181 @@ function dhiRenderKpis(){
     });
 }
 
-/* ---------- MONTHLY AGGREGATED DATA ---------- */
+/* ---------- MONTHLY AGGREGATED DATA ----------
+   Each row is described once (label + summary key + formatting) and rendered
+   from that list, so the table, the Edit control and the CSV export can never
+   drift apart. `dhiOverrides` holds the manually reported figures for the
+   month, keyed by the same summary key. */
+var DHI_ROWS = [
+    {key:'registrations',           label:'Patient Registrations',                  indent:0, kind:'count'},
+    {key:'registrations_male',      label:'Male Registrations',                     indent:1, kind:'count'},
+    {key:'registrations_female',    label:'Female Registrations',                   indent:1, kind:'count'},
+    {key:'registrations_insured',   label:'Insured (NHIA / Sponsor) Registrations', indent:1, kind:'count'},
+    {key:'visits',                  label:'Total Patient Visits',                   indent:0, kind:'count'},
+    {key:'visits_opd',              label:'OPD Visits',                             indent:1, kind:'count'},
+    {key:'visits_ipd',              label:'IPD Visits',                             indent:1, kind:'count'},
+    {key:'visits_emergency',        label:'Emergency Visits',                       indent:1, kind:'count'},
+    {key:'consultations',           label:'Consultations (Total)',                  indent:0, kind:'count'},
+    {key:'consultations_completed', label:'Completed Consultations',               indent:1, kind:'count'},
+    {key:'invoices',                label:'Invoices Issued',                        indent:0, kind:'count'},
+    {key:'revenue',                 label:'Gross Revenue',                          indent:0, kind:'money'},
+    {key:'revenue_paid',            label:'Paid Revenue',                           indent:1, kind:'money'},
+    {key:'revenue_outstanding',     label:'Outstanding Revenue',                    indent:1, kind:'money', total:true}
+];
+var dhiOverrides = {};
+
+function dhiFmt(v, kind){
+    if(kind === 'money'){
+        return 'GH&#8373; ' + Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+    return String(Number(v||0).toLocaleString());
+}
+
 function dhiRenderMonthly(){
     var s = dhiData ? dhiData.summary : null;
     var wrap = document.getElementById('dhiMonthlyTable');
     if(!s){ wrap.innerHTML='<div class="empty-note">No data for this month.</div>'; return; }
-    var rows = '';
-    rows += '<tr><td>Patient Registrations</td><td class="num">'+s.registrations+'</td></tr>';
-    rows += '<tr><td>— Male Registrations</td><td class="num">'+s.registrations_male+'</td></tr>';
-    rows += '<tr><td>— Female Registrations</td><td class="num">'+s.registrations_female+'</td></tr>';
-    rows += '<tr><td>— Insured (NHIA / Sponsor) Registrations</td><td class="num">'+s.registrations_insured+'</td></tr>';
-    rows += '<tr><td>Total Patient Visits</td><td class="num">'+s.visits+'</td></tr>';
-    rows += '<tr><td>— OPD Visits</td><td class="num">'+s.visits_opd+'</td></tr>';
-    rows += '<tr><td>— IPD Visits</td><td class="num">'+s.visits_ipd+'</td></tr>';
-    rows += '<tr><td>— Emergency Visits</td><td class="num">'+s.visits_emergency+'</td></tr>';
-    rows += '<tr><td>Consultations (Total)</td><td class="num">'+s.consultations+'</td></tr>';
-    rows += '<tr><td>— Completed Consultations</td><td class="num">'+s.consultations_completed+'</td></tr>';
-    rows += '<tr><td>Invoices Issued</td><td class="num">'+s.invoices+'</td></tr>';
-    rows += '<tr><td>Gross Revenue (GH&#8373;)</td><td class="num">'+Number(s.revenue).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+'</td></tr>';
-    rows += '<tr><td>— Paid Revenue</td><td class="num">'+Number(s.revenue_paid).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+'</td></tr>';
-    rows += '<tr class="total-row"><td>— Outstanding Revenue</td><td class="num">'+Number(s.revenue_outstanding).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+'</td></tr>';
-    wrap.innerHTML = '<table class="data-table"><thead><tr><th>Indicator</th><th class="num">Value</th></tr></thead><tbody>'+rows+'</tbody></table>';
+
+    dhiOverrides = (dhiData && dhiData.overrides) ? dhiData.overrides : {};
+
+    var rows = DHI_ROWS.map(function(def){
+        var o = dhiOverrides[def.key];
+        var label = (def.indent ? '<span style="color:#64748B;">— </span>' : '') + def.label;
+
+        var valueCell = dhiFmt(o ? o.value : s[def.key], def.kind);
+        if(o){
+            // A reported figure always says so, and keeps the live count
+            // alongside it so the difference is never hidden.
+            valueCell = '<strong>'+valueCell+'</strong>'
+                + '<div class="ovr-tag" title="'+dhiEsc(o.reason||'Manual correction')+'">reported'
+                + '<div class="ovr-sub">computed: '+dhiFmt(s[def.key], def.kind)+'</div></div>';
+        }
+
+        var action = '<button class="dhi-edit-btn'+(o?' is-ovr':'')+'"'
+            + ' onclick="dhiEditIndicator(\''+dhiEsc(def.key)+'\')"'
+            + ' title="'+(o ? 'Edit the reported figure' : 'Report a figure for this indicator')+'">'
+            + '<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
+            + ' Edit</button>';
+
+        return '<tr'+(def.total?' class="total-row"':'')+'>'
+            + '<td>'+label+'</td>'
+            + '<td class="num">'+valueCell+'</td>'
+            + '<td class="ctr">'+action+'</td>'
+            + '</tr>';
+    }).join('');
+
+    wrap.innerHTML = '<table class="data-table"><thead><tr>'
+        + '<th>Indicator</th><th class="num" style="width:180px;">Value</th><th class="ctr" style="width:110px;">Action</th>'
+        + '</tr></thead><tbody>'+rows+'</tbody></table>';
+
+    var count = Object.keys(dhiOverrides).length;
+    var badge = document.getElementById('dhiOverrideBadge');
+    if(badge){
+        badge.textContent = count ? count + ' reported figure' + (count===1?'':'s') : 'all figures live';
+        badge.className = 'ovr-badge' + (count ? ' has-ovr' : '');
+    }
+}
+
+/* ---------- EDIT A REPORTED FIGURE ---------- */
+function dhiEditIndicator(key){
+    if(!dhiData){ showAlert('Generate the DHIMS report first','error'); return; }
+    var def = null;
+    for(var i=0;i<DHI_ROWS.length;i++){ if(DHI_ROWS[i].key === key){ def = DHI_ROWS[i]; break; } }
+    if(!def) return;
+
+    var s = dhiData.summary;
+    var existing = dhiOverrides[key];
+    var computed = s[key];
+
+    var modal = document.getElementById('dhi-override-modal');
+    document.getElementById('dhi-ovr-title').textContent = def.label;
+    document.getElementById('dhi-ovr-computed').textContent = dhiFmt(computed, def.kind).replace(/&#8373;/g, 'GH¢');
+    document.getElementById('dhi-ovr-label').textContent = 'Reported ' + def.label + (def.kind==='money' ? ' (GH¢)' : '');
+    document.getElementById('dhi-ovr-value').value = existing ? existing.value : computed;
+    document.getElementById('dhi-ovr-reason').value = existing ? (existing.reason||'') : '';
+    document.getElementById('dhi-ovr-hint').textContent = existing
+        ? 'Currently reported: ' + dhiFmt(existing.value, def.kind).replace(/&#8373;/g, 'GH¢')
+          + ' — saved by ' + (existing.updated_by||'system') + '.'
+        : 'This is the live value computed from the records.';
+
+    var clearBtn = document.getElementById('dhi-ovr-clear');
+    clearBtn.style.display = existing ? 'inline-flex' : 'none';
+
+    // Remember which indicator the dialog is editing, for the save handler.
+    modal.dataset.key = key;
+    modal.classList.add('show');
+    document.getElementById('dhi-ovr-value').focus();
+}
+
+function closeDhiOverride(){
+    document.getElementById('dhi-override-modal').classList.remove('show');
+}
+
+async function dhiSaveIndicator(){
+    if(!dhiData) return;
+    var key = document.getElementById('dhi-override-modal').dataset.key;
+    if(!key) return;
+    var value = document.getElementById('dhi-ovr-value').value.trim();
+    var reason = document.getElementById('dhi-ovr-reason').value.trim();
+
+    if(value === ''){ showAlert('Enter the figure to report','error'); return; }
+    if(isNaN(Number(value))){ showAlert('The figure must be a number','error'); return; }
+    if(!reason){ showAlert('Give a reason for the reported figure — it is stored in the audit trail','error'); return; }
+
+    var btn = document.getElementById('dhi-ovr-save');
+    btn.disabled = true;
+    try{
+        var res = await fetch('/hms/backend/api/dhims.php?action=set_override', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ indicator_key:key, month:dhiData.month, value:Number(value), reason:reason })
+        });
+        var data = await res.json();
+        if(!data.success) throw new Error(data.error || 'Failed to save');
+
+        closeDhiOverride();
+        showAlert('Reported figure saved for ' + dhiData.month_label,'success');
+        await dhiReload();
+    }catch(e){
+        showAlert(e.message,'error');
+    }finally{
+        btn.disabled = false;
+    }
+}
+
+async function dhiClearIndicator(key){
+    if(!dhiData) return;
+    try{
+        var res = await fetch('/hms/backend/api/dhims.php?action=clear_override', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ indicator_key:key, month:dhiData.month })
+        });
+        var data = await res.json();
+        if(!data.success) throw new Error(data.error || 'Failed to clear');
+
+        closeDhiOverride();
+        showAlert('Reported figure cleared — the live value is shown again','success');
+        await dhiReload();
+    }catch(e){
+        showAlert(e.message,'error');
+    }
+}
+
+/* Re-run the current month/department selection without touching the inputs. */
+async function dhiReload(){
+    var m = document.getElementById('dhiMonth').value;
+    var dept = document.getElementById('dhiDept').value;
+    var url = '/hms/backend/api/dhims.php?action=monthly&month='+encodeURIComponent(m);
+    if(dept) url += '&department_id='+encodeURIComponent(dept);
+    var data = await fetch(url).then(function(r){ return r.json(); });
+    if(!data || !data.success) throw new Error((data && data.error) || 'Failed to reload');
+    dhiData = data;
+    dhiRenderKpis();
+    dhiRenderMonthly();
+    dhiRenderDiseases();
+    dhiRenderOpdIpd();
+    dhiRenderNhia();
 }
 
 /* ---------- DISEASE SURVEILLANCE ---------- */
@@ -436,23 +671,31 @@ function dhiExportAll(){
 function dhiExportMonthly(){
     if(!dhiData){ showAlert('Generate a DHIMS report first','error'); return; }
     var s = dhiData.summary;
-    dhiDownload('dhims_monthly_'+dhiData.month, ['Indicator','Value'], [
-        ['Reporting Month', dhiData.month_label],
-        ['Patient Registrations', s.registrations],
-        ['Male Registrations', s.registrations_male],
-        ['Female Registrations', s.registrations_female],
-        ['Insured Registrations', s.registrations_insured],
-        ['Total Patient Visits', s.visits],
-        ['OPD Visits', s.visits_opd],
-        ['IPD Visits', s.visits_ipd],
-        ['Emergency Visits', s.visits_emergency],
-        ['Consultations', s.consultations],
-        ['Completed Consultations', s.consultations_completed],
-        ['Invoices Issued', s.invoices],
-        ['Gross Revenue', s.revenue],
-        ['Paid Revenue', s.revenue_paid],
-        ['Outstanding Revenue', s.revenue_outstanding]
-    ]);
+    var ovr = (dhiData.overrides) ? dhiData.overrides : {};
+    dhiOverrides = ovr;
+
+    // Built from DHI_ROWS so the export always matches the table. Each row
+    // carries the live value and the source, so a reader of the CSV can tell
+    // a manual correction from a computed count.
+    var rows = [['Reporting Month', dhiData.month_label, '', '']];
+    DHI_ROWS.forEach(function(def){
+        var o = ovr[def.key];
+        rows.push([
+            (def.indent ? '  ' : '') + def.label,
+            dhiCsvNumber(o ? o.value : s[def.key], def.kind),
+            dhiCsvNumber(s[def.key], def.kind),
+            o ? 'reported manually (' + (o.updated_by || 'unknown') + ')' : 'computed'
+        ]);
+    });
+
+    dhiDownload('dhims_monthly_'+dhiData.month,
+        ['Indicator','Value','Computed From Records','Source'], rows);
+}
+
+/* Plain numeric text for CSV: money to 2dp, counts as whole numbers. */
+function dhiCsvNumber(v, kind){
+    var n = Number(v||0);
+    return kind === 'money' ? n.toFixed(2) : String(n);
 }
 
 function dhiExportDiseases(){

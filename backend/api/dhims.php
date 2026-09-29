@@ -2,8 +2,17 @@
 /**
  * DHIMS Report API — monthly aggregated data for the District Health
  * Information Management System dashboard and DHIMS2/NHIA export tools.
- * Read-only aggregations over existing tables (registration, visits,
- * consultations, invoices/sponsors). No fabricated data.
+ * Aggregations over existing tables (registration, visits, consultations,
+ * invoices/sponsors). No fabricated data.
+ *
+ *   GET  ?action=monthly&month=YYYY-MM[&department_id=N]
+ *        -> monthly aggregates. Any indicator with a stored override also
+ *           reports the live computed value alongside it.
+ *   POST ?action=set_override    {indicator_key, month, value, reason}
+ *   POST ?action=clear_override  {indicator_key, month}
+ *        -> audited manual correction of a single indicator, for figures
+ *           that must be reported from an external source. An override never
+ *           rewrites the underlying records.
  */
 require_once __DIR__ . '/../config/config.php';
 
@@ -15,6 +24,15 @@ requireRole(['admin', 'account']);
 $action = $_GET['action'] ?? '';
 $month  = $_GET['month'] ?? date('Y-m');
 $deptId = isset($_GET['department_id']) && $_GET['department_id'] !== '' ? (int)$_GET['department_id'] : null;
+
+$method = $_SERVER['REQUEST_METHOD'];
+
+/* ---- Manual indicator corrections (admin / account only) ---- */
+if ($method === 'POST' && $action === 'set_override') {
+    setIndicatorOverride();
+} elseif ($method === 'POST' && $action === 'clear_override') {
+    clearIndicatorOverride();
+}
 
 if ($action !== 'monthly') {
     jsonResponse(['error' => 'Invalid action'], 400);
@@ -188,5 +206,162 @@ jsonResponse([
     'registrations_daily' => $regDaily,
     'visits_daily'     => $visitsDaily,
     'diagnoses'        => $diagnoses,
-    'sponsor_claims'   => $sponsorClaims
+    'sponsor_claims'   => $sponsorClaims,
+    'overrides'        => (object) indicatorOverrides($month)
 ]);
+
+/**
+ * The indicators the report may override, and whether each is a whole-number
+ * count or a currency figure. Anything not listed here cannot be edited, so
+ * the override surface stays tied to the real computed indicators.
+ */
+function editableIndicators() {
+    return [
+        'registrations'           => ['label' => 'Patient Registrations', 'kind' => 'count'],
+        'registrations_male'      => ['label' => 'Male Registrations', 'kind' => 'count'],
+        'registrations_female'    => ['label' => 'Female Registrations', 'kind' => 'count'],
+        'registrations_insured'   => ['label' => 'Insured (NHIA / Sponsor) Registrations', 'kind' => 'count'],
+        'visits'                  => ['label' => 'Total Patient Visits', 'kind' => 'count'],
+        'visits_opd'              => ['label' => 'OPD Visits', 'kind' => 'count'],
+        'visits_ipd'              => ['label' => 'IPD Visits', 'kind' => 'count'],
+        'visits_emergency'        => ['label' => 'Emergency Visits', 'kind' => 'count'],
+        'consultations'           => ['label' => 'Consultations (Total)', 'kind' => 'count'],
+        'consultations_completed' => ['label' => 'Completed Consultations', 'kind' => 'count'],
+        'invoices'                => ['label' => 'Invoices Issued', 'kind' => 'count'],
+        'revenue'                 => ['label' => 'Gross Revenue', 'kind' => 'money'],
+        'revenue_paid'            => ['label' => 'Paid Revenue', 'kind' => 'money'],
+        'revenue_outstanding'     => ['label' => 'Outstanding Revenue', 'kind' => 'money'],
+    ];
+}
+
+/** Stored overrides for a reporting month, keyed by indicator. */
+function indicatorOverrides($month) {
+    $db = Database::getInstance();
+    $rows = $db->fetchAll(
+        "SELECT o.indicator_key, o.override_value, o.reason, o.report_month, o.updated_at,
+                IFNULL(u.full_name, '') AS updated_by_name
+         FROM dhims_indicator_overrides o
+         LEFT JOIN users u ON u.id = o.updated_by
+         WHERE o.report_month = ?
+         ORDER BY o.indicator_key",
+        [$month . '-01']
+    );
+
+    $allowed = editableIndicators();
+    $out = [];
+    foreach ($rows as $r) {
+        $key = $r['indicator_key'];
+        // Ignore any override for an indicator that is no longer editable.
+        if (!isset($allowed[$key])) continue;
+        $out[$key] = [
+            'key'        => $key,
+            'label'      => $allowed[$key]['label'],
+            'kind'       => $allowed[$key]['kind'],
+            'value'      => (float)$r['override_value'],
+            'reason'     => $r['reason'],
+            'updated_at' => $r['updated_at'],
+            'updated_by' => $r['updated_by_name'],
+        ];
+    }
+    return $out;
+}
+
+function setIndicatorOverride() {
+    $data = getPostData();
+    $key = trim($data['indicator_key'] ?? '');
+    $month = trim($data['month'] ?? '');
+    $reason = trim($data['reason'] ?? '');
+
+    $allowed = editableIndicators();
+    if ($key === '' || !isset($allowed[$key])) {
+        jsonResponse(['error' => 'Unknown indicator'], 400);
+    }
+    if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
+        jsonResponse(['error' => 'Invalid month format (expected YYYY-MM)'], 400);
+    }
+    if ($reason === '' || strlen($reason) > 255) {
+        jsonResponse(['error' => 'A short reason is required (max 255 characters)'], 400);
+    }
+    if (!isset($data['value']) || !is_numeric($data['value'])) {
+        jsonResponse(['error' => 'Enter a numeric value'], 400);
+    }
+
+    $value = round((float)$data['value'], 2);
+    if ($value < 0) {
+        jsonResponse(['error' => 'The reported value cannot be negative'], 400);
+    }
+    if ($allowed[$key]['kind'] === 'count' && floor($value) != $value) {
+        jsonResponse(['error' => 'This indicator is a count - use a whole number'], 400);
+    }
+    if ($value > 99999999999.99) {
+        jsonResponse(['error' => 'That value is out of range'], 400);
+    }
+
+    $db = Database::getInstance();
+    $monthStart = $month . '-01';
+    try {
+        $existing = $db->fetchOne(
+            "SELECT id, override_value FROM dhims_indicator_overrides WHERE indicator_key = ? AND report_month = ?",
+            [$key, $monthStart]
+        );
+        if ($existing) {
+            $db->update('dhims_indicator_overrides', [
+                'override_value' => $value,
+                'reason'         => $reason,
+                'updated_by'     => getCurrentUserId(),
+            ], 'id = ?', [$existing['id']]);
+            $overrideId = $existing['id'];
+        } else {
+            $overrideId = $db->insert('dhims_indicator_overrides', [
+                'indicator_key'  => $key,
+                'report_month'   => $monthStart,
+                'override_value' => $value,
+                'reason'         => $reason,
+                'updated_by'     => getCurrentUserId(),
+            ]);
+        }
+
+        logAudit($existing ? 'UPDATE' : 'CREATE', 'dhims_indicator_overrides', $overrideId, $existing, [
+            'indicator_key'  => $key,
+            'report_month'   => $monthStart,
+            'override_value' => $value,
+            'reason'         => $reason,
+        ]);
+
+        jsonResponse(['success' => true, 'indicator_key' => $key, 'value' => $value]);
+    } catch (Exception $e) {
+        error_log("DHIMS override error: " . $e->getMessage());
+        jsonResponse(['error' => 'Failed to save the reported figure'], 500);
+    }
+}
+
+function clearIndicatorOverride() {
+    $data = getPostData();
+    $key = trim($data['indicator_key'] ?? '');
+    $month = trim($data['month'] ?? '');
+
+    $allowed = editableIndicators();
+    if ($key === '' || !isset($allowed[$key])) {
+        jsonResponse(['error' => 'Unknown indicator'], 400);
+    }
+    if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
+        jsonResponse(['error' => 'Invalid month format (expected YYYY-MM)'], 400);
+    }
+
+    $db = Database::getInstance();
+    $monthStart = $month . '-01';
+    $existing = $db->fetchOne(
+        "SELECT id FROM dhims_indicator_overrides WHERE indicator_key = ? AND report_month = ?",
+        [$key, $monthStart]
+    );
+    if (!$existing) {
+        jsonResponse(['success' => true, 'removed' => false]);
+    }
+
+    $db->query("DELETE FROM dhims_indicator_overrides WHERE id = ?", [$existing['id']]);
+    logAudit('DELETE', 'dhims_indicator_overrides', $existing['id'], $existing, [
+        'indicator_key' => $key,
+        'report_month'  => $monthStart,
+    ]);
+    jsonResponse(['success' => true, 'removed' => true]);
+}
