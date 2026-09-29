@@ -47,25 +47,38 @@
 #um-page .um-a-btn.warn{border-color:#f8d7a3;color:#B9770E}
 #um-page .um-a-btn.warn:hover{background:#FEF5E0}
 #um-page .um-a-btn i{font-size:11px}
-/* ============ ADD / EDIT USER MODAL (scoped) ============ */
-#um-page .modal{display:none;position:fixed;inset:0;z-index:2000;background:rgba(15,45,89,.55);align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
-#um-page .modal.show{display:flex}
-#um-page .modal-content{background:#fff;border-radius:8px;width:min(560px,100%);box-shadow:0 12px 34px rgba(0,0,0,.25);overflow:hidden}
-#um-page .modal-header{background-color:#0b5fa5;color:#fff;padding:13px 18px;display:flex;justify-content:space-between;align-items:center}
-#um-page .modal-header h3{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:.4px}
-#um-page .modal-close{background:none;border:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:0 4px}
-#um-page .modal-close:hover{color:#FFD54F}
-#um-page .modal-body{padding:18px 20px;background:#F8FAFC}
-#um-page .modal-body .form-group{margin-bottom:14px}
-#um-page .modal-body label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#64748b;margin-bottom:5px}
-#um-page .modal-body input,#um-page .modal-body select{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;background-color:#fff;color:#222;font-family:inherit;box-sizing:border-box}
-#um-page .modal-body input:focus,#um-page .modal-body select:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
-#um-page .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #e1e8f0}
-#um-page .btn{border:none;border-radius:3px;cursor:pointer;font-weight:bold;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:8px 18px;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
-#um-page .btn-primary{background-color:#0072BC;color:#fff}
-#um-page .btn-primary:hover{filter:brightness(1.08)}
-#um-page .btn-secondary{background:#F1F5F9;color:#34495E;border:1px solid #C0C0C0}
-#um-page .btn-secondary:hover{background:#E2E8F0}
+/* ============ ADD / EDIT USER MODAL (scoped to #user-modal) ============ */
+#user-modal{display:none;position:fixed;inset:0;z-index:2100;background:rgba(11,29,58,.55);align-items:center;justify-content:center;padding:24px 16px;overflow-y:auto}
+#user-modal.show{display:flex}
+#user-modal .modal-container{background:#fff;border-radius:10px;width:min(580px,100%);max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 14px 40px rgba(0,0,0,.28)}
+#user-modal .modal-header{background:linear-gradient(135deg,#0b3d66,#0b5fa5);color:#fff;padding:15px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+#user-modal .modal-header span{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:9px}
+#user-modal .modal-header span svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+#user-modal .modal-close-btn{background:transparent;border:none;color:#fff;font-size:24px;line-height:1;cursor:pointer;opacity:.85;padding:0 4px}
+#user-modal .modal-close-btn:hover{opacity:1}
+#user-modal .modal-body{padding:20px 22px;background:#F8FAFC;overflow-y:auto;flex:1}
+#user-modal .form-group{margin-bottom:14px;min-width:0}
+#user-modal .form-row{display:flex;gap:14px}
+#user-modal .form-row .form-group{flex:1}
+#user-modal label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#64748b;margin-bottom:5px}
+#user-modal .form-control{width:100%;padding:9px 11px;border:1px solid #b2c8de;border-radius:4px;font-size:13px;background:#fff;color:#222;font-family:inherit;box-sizing:border-box}
+#user-modal .form-control:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
+#user-modal .form-control[readonly]{background:#eef3f8;color:#555}
+#user-modal .modern-date-wrapper{max-width:100%}
+#user-modal .modern-date-input-group{display:flex;align-items:center;gap:8px;border:1px solid #b2c8de;border-radius:4px;background:#fff;padding:9px 11px}
+#user-modal .modern-date-input-group svg{flex-shrink:0;color:#0b5fa5}
+#user-modal .modern-date-value{font-size:13px;color:#222;font-weight:600}
+#user-modal .signature-upload-box{margin-top:2px}
+#user-modal .signature-dropzone{border:2px dashed #b2c8de;border-radius:6px;background:#fff;padding:18px 14px;display:flex;align-items:center;justify-content:center;gap:10px;color:#64748b;font-size:12px;cursor:pointer;text-align:center;transition:border-color .15s,background .15s}
+#user-modal .signature-dropzone:hover{border-color:#0b5fa5;background:#eef4fb}
+#user-modal .signature-dropzone svg{color:#0b5fa5;flex-shrink:0}
+#user-modal .sig-file-name{margin-top:7px;font-size:12px;color:#1E7A34;display:none;font-weight:600}
+#user-modal .modal-footer-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #e1e8f0}
+#user-modal .btn-save{background:#0b5fa5;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.4px;padding:10px 22px;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+#user-modal .btn-save:hover{background:#094d83}
+#user-modal .btn-cancel{background:#fff;color:#34495E;border:1px solid #C0C0C0;border-radius:4px;cursor:pointer;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.4px;padding:10px 22px;font-family:inherit}
+#user-modal .btn-cancel:hover{background:#F1F5F9}
+@media (max-width:560px){#user-modal .form-row{flex-direction:column;gap:0}}
 @media (max-width:640px){#um-page .um-topbar .hospital-tag{display:none}}
 </style>
 
@@ -155,68 +168,110 @@
   </div>
 </div>
 
-<!-- User Modal -->
-<div class="modal" id="user-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="user-modal-title">Add User</h3>
-            <button class="modal-close" id="close-user-modal">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="user-form">
-                <input type="hidden" id="user-id">
-                
-                <div class="form-group">
-                    <label for="user-fullname">Full Name *</label>
-                    <input type="text" id="user-fullname" name="full_name" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="user-username">Username *</label>
-                    <input type="text" id="user-username" name="username" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="user-email">Email</label>
-                    <input type="email" id="user-email" name="email">
-                </div>
-                
-                <div class="form-group">
-                    <label for="user-password">Password *</label>
-                    <input type="password" id="user-password" name="password" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="user-role">Role *</label>
-                    <select id="user-role" name="role" required>
-                        <option value="">Select Role</option>
-                        <option value="admin">Admin</option>
-                        <option value="doctor">Doctor</option>
-                        <option value="nurse">Nurse</option>
-                        <option value="pharmacy">Pharmacy</option>
-                        <option value="lab">Laboratory</option>
-                        <option value="radiology">Radiology</option>
-                        <option value="records">Records</option>
-                        <option value="account">Account</option>
-                        <option value="revenue">Revenue</option>
-                        <option value="it">IT</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="user-department">Department</label>
-                    <select id="user-department" name="department_id">
-                        <option value="">Select Department</option>
-                    </select>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Save User</button>
-                    <button type="button" class="btn btn-secondary" id="cancel-user">Cancel</button>
-                </div>
-            </form>
-        </div>
+<!-- ADD / EDIT USER MODAL -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <span id="user-modal-title">
+        <svg viewBox="0 0 24 24"><path d="M19 5v14H5V5h14zm0-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-3 6h-2v2h2v2h-2v2h-2v-2H8v2H6v-4h4V9h4V7h4v4z" fill="none" stroke="#fff" stroke-width="1.5"/></svg>
+        <span id="user-modal-title-text">ADD USER</span>
+      </span>
+      <button class="modal-close-btn" id="close-user-modal">&times;</button>
     </div>
+
+    <div class="modal-body">
+      <form id="user-form">
+        <input type="hidden" id="user-id">
+
+        <div class="form-group">
+          <label>FULL NAME *</label>
+          <input type="text" class="form-control" id="user-fullname" name="full_name" placeholder="Enter full name" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>STAFF ID / REGISTRATION NO.</label>
+            <input type="text" class="form-control" id="user-staff-id" name="staff_id" placeholder="e.g. STF-2026-001">
+          </div>
+          <div class="form-group">
+            <label>CONTACT NUMBER</label>
+            <input type="tel" class="form-control" id="user-phone" name="phone" placeholder="e.g. +233 54 000 0000">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>USERNAME *</label>
+            <input type="text" class="form-control" id="user-username" name="username" placeholder="Enter username" required>
+          </div>
+          <div class="form-group">
+            <label>EMAIL</label>
+            <input type="email" class="form-control" id="user-email" name="email" placeholder="Enter email address">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>PASSWORD *</label>
+          <input type="password" class="form-control" id="user-password" name="password" placeholder="Enter temporary password" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>ROLE *</label>
+            <select class="form-control" id="user-role" name="role" required>
+              <option value="">Select Role</option>
+              <option value="super_admin">Super Admin</option>
+              <option value="admin">Admin</option>
+              <option value="doctor">Doctor</option>
+              <option value="nurse">Nurse</option>
+              <option value="pharmacy">Pharmacy</option>
+              <option value="lab">Laboratory</option>
+              <option value="radiology">Radiology</option>
+              <option value="records">Records</option>
+              <option value="account">Account</option>
+              <option value="revenue">Revenue</option>
+              <option value="it">IT</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>DEPARTMENT</label>
+            <select class="form-control" id="user-department" name="department_id">
+              <option value="">Select Department</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Registration Date & Time -->
+        <div class="form-group">
+          <label>REGISTRATION DATE &amp; TIME</label>
+          <div class="modern-date-wrapper">
+            <div class="modern-date-input-group">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <span class="modern-date-value" id="user-reg-date">&mdash;</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Signature Upload (visual only) -->
+        <div class="form-group">
+          <label>SIGNATURE (Digital Upload)</label>
+          <div class="signature-upload-box">
+            <input type="file" id="sigFile" accept="image/*" style="display:none;">
+            <div class="signature-dropzone" onclick="document.getElementById('sigFile').click()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Click to upload signature image (PNG/JPG)</span>
+            </div>
+            <div class="sig-file-name" id="sig-file-name"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer-btns">
+          <button type="submit" class="btn-save">SAVE USER</button>
+          <button type="button" class="btn-cancel" id="cancel-user">CANCEL</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -299,6 +354,17 @@ function setupEventListeners() {
     
     document.getElementById('user-form').addEventListener('submit', handleUserSubmit);
     
+    document.getElementById('sigFile').addEventListener('change', function() {
+        const label = document.getElementById('sig-file-name');
+        if (this.files && this.files.length) {
+            label.textContent = '\u2713 ' + this.files[0].name;
+            label.style.display = 'block';
+        } else {
+            label.textContent = '';
+            label.style.display = 'none';
+        }
+    });
+    
     document.getElementById('search-users').addEventListener('input', debounce(function() {
         loadUsers({ search: this.value });
     }, 300));
@@ -312,25 +378,44 @@ function setupEventListeners() {
     });
 }
 
+function formatRegDateTime(dt) {
+    if (!dt) return '\u2014';
+    const d = new Date(dt);
+    if (isNaN(d.getTime())) return '\u2014';
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const pad = n => String(n).padStart(2, '0');
+    return pad(d.getDate()) + '-' + months[d.getMonth()] + '-' + d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
 function openUserModal(user = null) {
     const modal = document.getElementById('user-modal');
-    const title = document.getElementById('user-modal-title');
+    const titleText = document.getElementById('user-modal-title-text');
     const form = document.getElementById('user-form');
     
     form.reset();
     document.getElementById('user-id').value = '';
+    document.getElementById('sig-file-name').style.display = 'none';
+    document.getElementById('sig-file-name').textContent = '';
+    document.getElementById('sigFile').value = '';
+    
+    // Registration date & time: now for a new user, created_at when editing
+    document.getElementById('user-reg-date').textContent = formatRegDateTime(
+        user ? (user.created_at || new Date()) : new Date()
+    );
     
     if (user) {
-        title.textContent = 'Edit User';
+        titleText.textContent = 'Edit User';
         document.getElementById('user-id').value = user.id;
         document.getElementById('user-fullname').value = user.full_name;
         document.getElementById('user-username').value = user.username;
         document.getElementById('user-email').value = user.email || '';
         document.getElementById('user-role').value = user.role;
         document.getElementById('user-department').value = user.department_id || '';
+        document.getElementById('user-staff-id').value = user.profile_staff_id || user.staff_id || '';
+        document.getElementById('user-phone').value = user.profile_phone || '';
         document.getElementById('user-password').required = false;
     } else {
-        title.textContent = 'Add User';
+        titleText.textContent = 'Add User';
         document.getElementById('user-password').required = true;
     }
     
@@ -350,6 +435,21 @@ async function handleUserSubmit(e) {
     
     if (!data.password) {
         delete data.password;
+    }
+    
+    // Profile fields (staff_id, phone) live in user_profiles — nest them so the
+    // backend routes them to createProfile/updateProfile.
+    const profile = {};
+    if (data.staff_id !== undefined) {
+        profile.staff_id = data.staff_id.trim() !== '' ? data.staff_id.trim() : null;
+    }
+    if (data.phone !== undefined) {
+        profile.phone = data.phone.trim() !== '' ? data.phone.trim() : null;
+    }
+    delete data.staff_id;
+    delete data.phone;
+    if (Object.keys(profile).length) {
+        data.profile = profile;
     }
     
     try {

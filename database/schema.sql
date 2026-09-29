@@ -53,6 +53,7 @@ CREATE TABLE users (
 CREATE TABLE user_profiles (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNIQUE NOT NULL,
+    staff_id VARCHAR(50),
     phone VARCHAR(20),
     address TEXT,
     license_number VARCHAR(50),

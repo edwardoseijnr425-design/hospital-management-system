@@ -136,9 +136,11 @@ class User {
     }
     
     public function getAll($filters = []) {
-        $sql = "SELECT u.*, d.name as department_name, d.code as department_code
+        $sql = "SELECT u.*, d.name as department_name, d.code as department_code,
+                       p.staff_id AS profile_staff_id, p.phone AS profile_phone
                 FROM users u
                 LEFT JOIN departments d ON u.department_id = d.id
+                LEFT JOIN user_profiles p ON p.user_id = u.id
                 WHERE 1=1";
         
         $params = [];
