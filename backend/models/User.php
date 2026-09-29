@@ -34,6 +34,7 @@ class User {
             'full_name' => $data['full_name'],
             'role' => $data['role'],
             'department_id' => $data['department_id'] ?? null,
+            'is_active' => array_key_exists('is_active', $data) ? (int)(bool)$data['is_active'] : 1,
             'created_by' => getCurrentUserId()
         ];
         
@@ -76,7 +77,7 @@ class User {
         }
         
         if (isset($data['is_active'])) {
-            $updateData['is_active'] = $data['is_active'];
+            $updateData['is_active'] = (int)(bool)$data['is_active'];
         }
         
         if (isset($data['password'])) {

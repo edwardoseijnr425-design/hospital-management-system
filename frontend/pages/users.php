@@ -241,13 +241,21 @@
           </div>
         </div>
 
-        <!-- Registration Date & Time -->
-        <div class="form-group">
-          <label>REGISTRATION DATE &amp; TIME</label>
-          <div class="modern-date-wrapper">
-            <div class="modern-date-input-group">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              <span class="modern-date-value" id="user-reg-date">&mdash;</span>
+        <div class="form-row">
+          <div class="form-group">
+            <label>ACCOUNT STATUS</label>
+            <select class="form-control" id="user-status" name="is_active">
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>REGISTRATION DATE &amp; TIME</label>
+            <div class="modern-date-wrapper">
+              <div class="modern-date-input-group">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span class="modern-date-value" id="user-reg-date">&mdash;</span>
+              </div>
             </div>
           </div>
         </div>
@@ -411,6 +419,7 @@ function openUserModal(user = null) {
         document.getElementById('user-email').value = user.email || '';
         document.getElementById('user-role').value = user.role;
         document.getElementById('user-department').value = user.department_id || '';
+        document.getElementById('user-status').value = user.is_active ? '1' : '0';
         document.getElementById('user-staff-id').value = user.profile_staff_id || user.staff_id || '';
         document.getElementById('user-phone').value = user.profile_phone || '';
         document.getElementById('user-password').required = false;
