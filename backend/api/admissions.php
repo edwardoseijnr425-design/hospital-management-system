@@ -5,6 +5,9 @@
 //   POST ?action=admit                                                             -> admit a patient (creates admission + occupies the bed)
 //   POST ?action=discharge&id=N                                                    -> discharge (outcome + final diagnosis,
 //                                                                                    optional follow-up date, releases the bed)
+//   GET  ?action=wards                                                             -> ward occupancy overview (real bed counts)
+//   GET  ?action=transfers&id=N                                                    -> transfer history for one admission
+//   POST ?action=transfer&id=N                                                     -> move an admitted patient to another ward/bed
 require_once __DIR__ . '/../config/config.php';
 
 header('Content-Type: application/json');
@@ -17,14 +20,201 @@ requireRole(['admin', 'doctor', 'nurse']);
 
 if ($method === 'GET' && $action === 'available_beds') {
     availableBeds();
+} elseif ($method === 'GET' && $action === 'wards') {
+    wardOccupancy();
+} elseif ($method === 'GET' && $action === 'transfers') {
+    transferHistory();
 } elseif ($method === 'GET') {
     listAdmissions();
 } elseif ($method === 'POST' && $action === 'admit') {
     admitPatient();
 } elseif ($method === 'POST' && $action === 'discharge') {
     dischargePatient();
+} elseif ($method === 'POST' && $action === 'transfer') {
+    transferPatient();
 } else {
     jsonResponse(['error' => 'Invalid request'], 400);
+}
+
+// Ward occupancy overview. Every figure is counted from the beds table, so it
+// reflects real occupancy rather than the ward's declared capacity.
+function wardOccupancy() {
+    $db = Database::getInstance();
+    $wards = $db->fetchAll(
+        "SELECT w.id, w.ward_code, w.ward_name, w.ward_type, w.floor_level, w.capacity, w.status,
+                COUNT(b.id) AS beds_total,
+                COALESCE(SUM(CASE WHEN b.status = 'Occupied' THEN 1 ELSE 0 END), 0) AS beds_occupied,
+                COALESCE(SUM(CASE WHEN b.status = 'Available' THEN 1 ELSE 0 END), 0) AS beds_free,
+                COALESCE(SUM(CASE WHEN b.status = 'Reserved' THEN 1 ELSE 0 END), 0) AS beds_reserved,
+                COALESCE(SUM(CASE WHEN b.status = 'Maintenance' THEN 1 ELSE 0 END), 0) AS beds_maintenance
+         FROM wards w
+         LEFT JOIN beds b ON b.ward_id = w.id
+         WHERE w.is_frozen = 0
+         GROUP BY w.id, w.ward_code, w.ward_name, w.ward_type, w.floor_level, w.capacity, w.status
+         ORDER BY w.ward_name"
+    );
+
+    // Patients actually admitted right now, per ward.
+    $admitted = $db->fetchAll(
+        "SELECT ward_id, COUNT(*) AS patients
+         FROM admissions
+         WHERE status = 'Admitted'
+         GROUP BY ward_id"
+    );
+    $admittedByWard = [];
+    foreach ($admitted as $row) {
+        $admittedByWard[(int)$row['ward_id']] = (int)$row['patients'];
+    }
+
+    $totals = ['beds_total' => 0, 'beds_occupied' => 0, 'beds_free' => 0, 'patients' => 0];
+    foreach ($wards as &$w) {
+        $w['beds_total']     = (int)$w['beds_total'];
+        $w['beds_occupied']   = (int)$w['beds_occupied'];
+        $w['beds_free']       = (int)$w['beds_free'];
+        $w['beds_reserved']   = (int)$w['beds_reserved'];
+        $w['beds_maintenance'] = (int)$w['beds_maintenance'];
+        $w['patients_admitted'] = $admittedByWard[(int)$w['id']] ?? 0;
+        $w['occupancy_pct'] = $w['beds_total'] > 0
+            ? round(($w['beds_occupied'] / $w['beds_total']) * 100, 1)
+            : 0;
+        $totals['beds_total']   += $w['beds_total'];
+        $totals['beds_occupied'] += $w['beds_occupied'];
+        $totals['beds_free']     += $w['beds_free'];
+        $totals['patients']      += $w['patients_admitted'];
+    }
+    unset($w);
+
+    jsonResponse(['success' => true, 'wards' => $wards, 'totals' => $totals]);
+}
+
+// Where one admission has been during this stay.
+function transferHistory() {
+    $id = (int)($_GET['id'] ?? 0);
+    if (!$id) {
+        jsonResponse(['error' => 'Admission ID is required'], 400);
+    }
+
+    $db = Database::getInstance();
+    $rows = $db->fetchAll(
+        "SELECT t.id, t.reason, t.created_at,
+                wf.ward_name AS from_ward, bf.bed_number AS from_bed,
+                wt.ward_name AS to_ward,   bt.bed_number AS to_bed,
+                u.full_name AS moved_by_name
+         FROM bed_transfer_history t
+         JOIN wards wf ON wf.id = t.from_ward_id
+         JOIN beds  bf ON bf.id = t.from_bed_id
+         JOIN wards wt ON wt.id = t.to_ward_id
+         JOIN beds  bt ON bt.id = t.to_bed_id
+         LEFT JOIN users u ON u.id = t.moved_by
+         WHERE t.admission_id = ?
+         ORDER BY t.created_at DESC, t.id DESC",
+        [$id]
+    );
+    jsonResponse(['success' => true, 'transfers' => $rows]);
+}
+
+// Move an admitted patient to another bed. Frees the old bed, occupies the new
+// one, repoints the admission and records the move, all in one transaction so
+// the two bed rows can never disagree with the admission.
+function transferPatient() {
+    $id = (int)($_GET['id'] ?? 0);
+    if (!$id) {
+        jsonResponse(['error' => 'Admission ID is required'], 400);
+    }
+
+    $data = getPostData();
+    $toBedId = (int)($data['bed_id'] ?? 0);
+    $reason = trim($data['reason'] ?? '');
+    if (strlen($reason) > 255) {
+        jsonResponse(['error' => 'Reason is too long (max 255 characters)'], 400);
+    }
+
+    if (!$toBedId) {
+        jsonResponse(['error' => 'Select the bed to transfer the patient to'], 400);
+    }
+
+    $db = Database::getInstance();
+    $admission = $db->fetchOne("SELECT * FROM admissions WHERE id = ?", [$id]);
+    if (!$admission) {
+        jsonResponse(['error' => 'Admission not found'], 404);
+    }
+    if (strtolower($admission['status']) !== 'admitted') {
+        jsonResponse(['error' => 'Only an admitted patient can be transferred'], 400);
+    }
+
+    $targetBed = $db->fetchOne(
+        "SELECT b.id, b.bed_number, b.status, b.ward_id, b.current_patient_id, w.ward_name
+         FROM beds b
+         JOIN wards w ON w.id = b.ward_id
+         WHERE b.id = ?",
+        [$toBedId]
+    );
+    if (!$targetBed) {
+        jsonResponse(['error' => 'Target bed not found'], 404);
+    }
+    if ($targetBed['status'] === 'Maintenance') {
+        jsonResponse(['error' => 'That bed is out of service'], 400);
+    }
+    if ($targetBed['status'] === 'Occupied' && (int)$targetBed['current_patient_id'] !== (int)$admission['patient_id']) {
+        jsonResponse(['error' => 'That bed is already occupied'], 400);
+    }
+    if ((int)$targetBed['id'] === (int)$admission['bed_id']) {
+        jsonResponse(['error' => 'The patient is already in that bed'], 400);
+    }
+
+    $patientId = (int)$admission['patient_id'];
+    $oldBedId  = (int)$admission['bed_id'];
+    $oldWardId = (int)$admission['ward_id'];
+
+    try {
+        $db->beginTransaction();
+
+        // Release the old bed, then occupy the new one.
+        if ($oldBedId !== $toBedId) {
+            $db->update('beds', ['current_patient_id' => null, 'status' => 'Available'],
+                'id = ?', [$oldBedId]);
+        }
+        $db->update('beds', ['current_patient_id' => $patientId, 'status' => 'Occupied'],
+            'id = ?', [$toBedId]);
+
+        $db->update('admissions', [
+            'ward_id' => (int)$targetBed['ward_id'],
+            'bed_id'  => $toBedId,
+        ], 'id = ?', [$id]);
+
+        $transferId = $db->insert('bed_transfer_history', [
+            'admission_id' => $id,
+            'patient_id'   => $patientId,
+            'from_ward_id' => $oldWardId,
+            'from_bed_id'  => $oldBedId,
+            'to_ward_id'   => (int)$targetBed['ward_id'],
+            'to_bed_id'    => $toBedId,
+            'reason'       => $reason !== '' ? $reason : null,
+            'moved_by'     => getCurrentUserId(),
+        ]);
+
+        $db->commit();
+
+        logAudit('UPDATE', 'admissions', $id, [
+            'ward_id' => $oldWardId,
+            'bed_id'  => $oldBedId,
+        ], [
+            'ward_id' => (int)$targetBed['ward_id'],
+            'bed_id'  => $toBedId,
+            'transfer_id' => $transferId,
+        ]);
+
+        jsonResponse([
+            'success' => true,
+            'message' => 'Patient transferred to ' . $targetBed['ward_name'] . ' / ' . $targetBed['bed_number'],
+            'ward_name' => $targetBed['ward_name'],
+            'bed_number' => $targetBed['bed_number'],
+        ]);
+    } catch (Exception $e) {
+        $db->rollback();
+        error_log("Bed transfer error: " . $e->getMessage());
+        jsonResponse(['error' => 'Failed to transfer the patient'], 500);
+    }
 }
 
 function listAdmissions() {

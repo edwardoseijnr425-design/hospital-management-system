@@ -36,11 +36,80 @@
     #adm-charge-modal .modal-content{max-width:520px !important}
     #adm-charge-total{display:flex;justify-content:space-between;align-items:center;background:#F1F5F9;border:1px solid #C9D4E0;border-radius:4px;padding:10px 12px;font-size:12px}
     #adm-charge-total b{color:#1E7A34;font-size:15px}
+
+    /* ---- Ward occupancy overview: counts are taken from the beds table ---- */
+    #ward-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:10px;margin-bottom:16px}
+    #ward-stats .ws{background:#F8FAFC;border:1px solid #DCE4EC;border-left:4px solid #0b5fa5;border-radius:5px;padding:10px 12px}
+    #ward-stats .ws .lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#64748B}
+    #ward-stats .ws .val{font-size:21px;font-weight:800;color:#0F2D59;line-height:1.2;margin-top:3px}
+    #ward-stats .ws .sub{font-size:10.5px;color:#64748B}
+    #ward-stats .ws.occ{border-left-color:#C0392B}
+    #ward-stats .ws.free{border-left-color:#1E7A34}
+    #ward-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:12px}
+    #ward-grid .wcard{border:1px solid #DCE4EC;border-radius:6px;background:#fff;padding:12px 13px}
+    #ward-grid .wcard .nm{font-weight:700;color:#0F2D59;font-size:13.5px;line-height:1.25}
+    #ward-grid .wcard .cd{font-size:10.5px;color:#64748B;margin-top:2px;word-break:break-all}
+    #ward-grid .wcard .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+    #ward-grid .wcard .tag{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;background:#E6EEF5;color:#33526F;border-radius:3px;padding:3px 6px}
+    #ward-grid .wcard .tag.hot{background:#FDECEA;color:#C0392B}
+    #ward-grid .wcard .bar{height:8px;border-radius:4px;background:#E2E8F0;overflow:hidden;margin-top:9px}
+    #ward-grid .wcard .bar i{display:block;height:100%;background:#0b5fa5}
+    #ward-grid .wcard .bar i.full{background:#C0392B}
+    #ward-grid .wcard .figs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px;text-align:center;font-size:10px;color:#64748B}
+    #ward-grid .wcard .figs b{display:block;font-size:15px;color:#1E293B;margin-top:1px}
+    #ward-grid .wcard .figs b.warn{color:#C0392B}
+    #ward-grid .empty{grid-column:1/-1;text-align:center;padding:22px;color:#8A94A6;font-size:12px}
+    #ward-no-beds{font-size:10.5px;color:#8A5A00;background:#FEF5E0;border:1px solid #F0AD4E;border-radius:4px;padding:5px 8px;margin-top:8px}
+
+    /* ---- Transfer Ward & Bed ---- */
+    #transfer-modal .modal-content{max-width:640px !important}
+    #transfer-current{background:#F0F4F8;border:1px solid #DCE4EC;border-radius:6px;padding:11px 12px;font-size:12.5px;margin-bottom:14px}
+    #transfer-current div+div{margin-top:4px}
+    #transfer-current b{color:#0072BC}
+    #transfer-move{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#E7F3FC;border:1px solid #b2c8de;border-radius:5px;padding:10px 12px;font-size:12.5px;margin-bottom:14px}
+    #transfer-move .arrow{color:#0b5fa5}
+    #transfer-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    #transfer-grid .full{grid-column:span 2}
+    #transfer-grid label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#64748B;margin-bottom:5px}
+    #transfer-grid select,#transfer-grid textarea{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;font-family:inherit;background:#fff;color:#222;box-sizing:border-box}
+    #transfer-grid textarea{resize:vertical}
+    #transfer-grid select:focus,#transfer-grid textarea:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
+    #transfer-grid .opt{font-size:10.5px;color:#64748B;margin-top:5px}
+    #transfer-history{border:1px solid #DCE4EC;border-radius:5px;overflow:hidden;margin-top:14px}
+    #transfer-history .th-hd{background:#E6EEF5;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#222;padding:7px 9px;border-bottom:2px solid #b2c8de;display:flex;justify-content:space-between;gap:8px}
+    #transfer-history .th-bd{max-height:170px;overflow-y:auto}
+    #transfer-history table{width:100%;border-collapse:collapse;font-size:11px}
+    #transfer-history th{background:#F1F5F9;font-size:9.5px;text-transform:uppercase;letter-spacing:.3px;color:#475569;padding:5px 8px;text-align:left;border-bottom:1px solid #E1E8F0}
+    #transfer-history td{padding:6px 8px;border-bottom:1px solid #EEF2F7;vertical-align:top}
+    #transfer-history .mv{font-weight:600;color:#1E293B}
+    #transfer-history .why{color:#64748B;font-style:italic}
+    #transfer-history .empty{padding:14px;text-align:center;color:#8A94A6}
     @media (max-width:640px){
         #adm-outcome-grid{grid-template-columns:1fr}
         #adm-outcome-grid .full{grid-column:span 1}
+        #transfer-grid{grid-template-columns:1fr}
+        #transfer-grid .full{grid-column:span 1}
     }
 </style>
+
+<!-- ================= WARD OCCUPANCY ================= -->
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fa-solid fa-hospital"></i> Ward Occupancy</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <select id="filter-ward-type" style="padding:6px 9px;border:1px solid #C9D4E0;border-radius:4px;font-size:12px;font-family:inherit;background:#fff;">
+                <option value="">All Ward Types</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" id="refresh-wards-btn"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="ward-stats"></div>
+        <div id="ward-grid">
+            <div class="empty">Loading ward occupancy...</div>
+        </div>
+    </div>
+</div>
 
 <div class="card">
     <div class="card-header">
@@ -294,14 +363,70 @@
     </div>
 </div>
 
+<!-- TRANSFER WARD & BED MODAL -->
+<div class="modal" id="transfer-modal">
+    <div class="modal-content" style="max-width:640px;">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-arrows-right-left"></i> Transfer Ward &amp; Bed</h3>
+            <button class="modal-close" id="close-transfer-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="transfer-current"></div>
+
+            <div id="transfer-move">
+                <i class="fa-solid fa-arrow-right-arrow-left arrow"></i>
+                <span id="transfer-move-text">Select the destination ward and bed.</span>
+            </div>
+
+            <div id="transfer-grid">
+                <div>
+                    <label for="transfer-ward">To Ward <span style="color:#e74c3c;">*</span></label>
+                    <select id="transfer-ward">
+                        <option value="">-- Select Ward --</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="transfer-bed">To Bed <span style="color:#e74c3c;">*</span></label>
+                    <select id="transfer-bed">
+                        <option value="">Select Ward first</option>
+                    </select>
+                </div>
+                <div class="full">
+                    <label for="transfer-reason">Reason for Transfer</label>
+                    <textarea id="transfer-reason" rows="2" maxlength="255"
+                        placeholder="Optional — e.g. clinical need, isolation, bed unavailable"></textarea>
+                    <div class="opt">Left blank, the move is still recorded with a timestamp and the staff member who made it.</div>
+                </div>
+            </div>
+
+            <div id="transfer-history">
+                <div class="th-hd">
+                    <span>Bed History For This Stay</span>
+                    <span id="transfer-history-count" style="color:#64748B;font-weight:600;"></span>
+                </div>
+                <div class="th-bd" id="transfer-history-body">
+                    <div class="empty">Loading movement history...</div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancel-transfer">Cancel</button>
+            <button class="btn btn-primary" id="confirm-transfer"><i class="fa-solid fa-arrows-right-left"></i> Transfer Patient</button>
+        </div>
+    </div>
+</div>
+
 <script>
 let admissionsData = [];
 let dischargeTarget = null;
 let wardsList = [];
+let wardStats = null;
+let transferTarget = null;
 
 async function initAdmissions() {
     setupAdmissionListeners();
     await Promise.all([loadAdmissionWards(), loadAdmissions()]);
+    await loadWardOccupancy();
 }
 
 async function loadAdmissionWards() {
@@ -342,22 +467,23 @@ async function loadAdmissions() {
         renderAdmissions(tbody);
     } catch (error) {
         console.error('Admissions load error:', error);
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Failed to load admissions</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">Failed to load admissions</td></tr>';
     }
 }
 
 function renderAdmissions(tbody) {
     if (!tbody) return;
     if (!admissionsData.length) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No admissions found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">No admissions found</td></tr>';
         return;
     }
     tbody.innerHTML = admissionsData.map(a => {
         const isAdmitted = a.status === 'Admitted';
         const badge = isAdmitted ? 'badge-info' : 'badge-secondary';
         const bedLabel = a.bed_number + (a.bed_type ? ` (${a.bed_type})` : '');
-        const dischargeBtn = isAdmitted
-            ? `<button class="btn btn-danger btn-sm" data-discharge="${a.id}"><i class="fa-solid fa-right-from-bracket"></i> Discharge</button>`
+        const actionCell = isAdmitted
+            ? `<button class="btn btn-secondary btn-sm" data-transfer="${a.id}" title="Move to another ward or bed"><i class="fa-solid fa-arrows-right-left"></i> Transfer</button>
+               <button class="btn btn-danger btn-sm" data-discharge="${a.id}"><i class="fa-solid fa-right-from-bracket"></i> Discharge</button>`
             : '<span style="color:#95A5A6;">—</span>';
         return `
         <tr>
@@ -371,7 +497,7 @@ function renderAdmissions(tbody) {
             <td>${escHtml(a.admitting_doctor || '-')}</td>
             <td><span class="badge ${badge}">${escHtml(a.status)}</span></td>
             <td>${dischargedMeta(a)}</td>
-            <td>${dischargeBtn}</td>
+            <td style="white-space:nowrap;">${actionCell}</td>
         </tr>`;
     }).join('');
 }
@@ -405,6 +531,16 @@ function setupAdmissionListeners() {
     document.getElementById('close-adm-charge').addEventListener('click', closeChargeModal);
     document.getElementById('cancel-adm-charge').addEventListener('click', closeChargeModal);
     document.getElementById('save-adm-charge').addEventListener('click', saveCharge);
+
+    // Transfer Ward & Bed
+    document.getElementById('refresh-wards-btn').addEventListener('click', loadWardOccupancy);
+    document.getElementById('filter-ward-type').addEventListener('change', renderWards);
+    document.getElementById('close-transfer-modal').addEventListener('click', closeTransferModal);
+    document.getElementById('cancel-transfer').addEventListener('click', closeTransferModal);
+    document.getElementById('confirm-transfer').addEventListener('click', submitTransfer);
+    document.getElementById('transfer-ward').addEventListener('change', function() {
+        loadTransferBeds(this.value);
+    });
     document.getElementById('adm-charge-qty').addEventListener('input', updateChargeTotal);
     document.getElementById('adm-charge-price').addEventListener('input', updateChargeTotal);
     document.getElementById('adm-charge-category').addEventListener('change', function() {
@@ -456,11 +592,16 @@ function setupAdmissionListeners() {
         if (!patResults.contains(e.target) && e.target !== patInput) patResults.style.display = 'none';
     });
 
-    // Discharge buttons (event delegation)
+    // Discharge + Transfer buttons (event delegation)
     const tbody = document.getElementById('admissions-table');
     tbody.addEventListener('click', function(e) {
-        const btn = e.target.closest('[data-discharge]');
-        if (btn) openDischargeModal(parseInt(btn.getAttribute('data-discharge'), 10));
+        const dis = e.target.closest('[data-discharge]');
+        if (dis) {
+            openDischargeModal(parseInt(dis.getAttribute('data-discharge'), 10));
+            return;
+        }
+        const tr = e.target.closest('[data-transfer]');
+        if (tr) openTransferModal(parseInt(tr.getAttribute('data-transfer'), 10));
     });
 }
 
@@ -573,6 +714,7 @@ async function submitAdmission() {
         showAlert('Patient admitted — ' + data.admission_code, 'success');
         closeAdmitModal();
         await loadAdmissions();
+        await loadWardOccupancy();
     } catch (error) {
         showAlert(error.message, 'error');
     } finally {
@@ -808,10 +950,225 @@ async function submitDischarge() {
         showAlert('Patient discharged — bed released', 'success');
         closeDischargeModal();
         await loadAdmissions();
+        await loadWardOccupancy();
     } catch (error) {
         showAlert(error.message, 'error');
     } finally {
         confirmBtn.disabled = false;
+    }
+}
+
+/* ==================== WARD OCCUPANCY ====================
+   Every figure comes from the beds table, so the overview reflects real
+   occupancy rather than each ward's declared capacity. */
+async function loadWardOccupancy() {
+    const grid = document.getElementById('ward-grid');
+    if (!grid) return;
+    try {
+        const res = await fetch('/hms/backend/api/admissions.php?action=wards');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Could not load ward occupancy');
+
+        wardStats = data;
+        renderWardTypeFilter();
+        renderWards();
+    } catch (error) {
+        grid.innerHTML = '<div class="empty">Failed to load ward occupancy — ' + escHtml(error.message) + '</div>';
+        document.getElementById('ward-stats').innerHTML = '';
+    }
+}
+
+function renderWardTypeFilter() {
+    const sel = document.getElementById('filter-ward-type');
+    if (!sel || !wardStats) return;
+    const types = (wardStats.wards || []).map(w => w.ward_type).filter(Boolean);
+    const uniq = types.filter((t, i) => types.indexOf(t) === i).sort();
+    const keep = sel.value;
+    sel.innerHTML = '<option value="">All Ward Types</option>'
+        + uniq.map(t => `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('');
+    if (keep && uniq.indexOf(keep) !== -1) sel.value = keep;
+}
+
+function renderWards() {
+    const grid = document.getElementById('ward-grid');
+    const statsBox = document.getElementById('ward-stats');
+    if (!grid || !wardStats) return;
+
+    const all = wardStats.wards || [];
+    const t = wardStats.totals || {};
+    const filter = document.getElementById('filter-ward-type').value;
+    const wards = filter ? all.filter(w => w.ward_type === filter) : all;
+
+    // The totals always describe the whole hospital, so filtering the grid
+    // never makes the headline figures disagree with the wards listed below.
+    const stat = (label, value, sub, cls) =>
+        `<div class="ws${cls ? ' ' + cls : ''}"><div class="lbl">${label}</div>`
+        + `<div class="val">${value}</div><div class="sub">${sub}</div></div>`;
+    statsBox.innerHTML =
+        stat('Active Wards', all.length, all.length === 1 ? 'ward open' : 'wards open')
+        + stat('Patients Admitted', t.patients || 0, 'currently in a bed', 'occ')
+        + stat('Beds Occupied', t.beds_occupied || 0, 'of ' + (t.beds_total || 0) + ' beds', 'occ')
+        + stat('Beds Free', t.beds_free || 0, 'ready for admission', 'free');
+
+    if (!wards.length) {
+        grid.innerHTML = all.length
+            ? '<div class="empty">No ward matches this ward type.</div>'
+            : '<div class="empty">No active wards have been set up yet.</div>';
+        return;
+    }
+
+    grid.innerHTML = wards.map(w => {
+        const occupied = w.beds_occupied;
+        const total = w.beds_total;
+        const pct = w.occupancy_pct || 0;
+        const full = total > 0 && occupied >= total;
+        const barW = Math.min(pct, 100);
+        const tags = [];
+        if (w.ward_type) tags.push('<span class="tag">' + escHtml(w.ward_type) + '</span>');
+        if (w.floor_level) tags.push('<span class="tag">Floor ' + escHtml(w.floor_level) + '</span>');
+        if (full) tags.push('<span class="tag hot">Full</span>');
+        if (w.beds_reserved) tags.push('<span class="tag">' + w.beds_reserved + ' reserved</span>');
+        if (w.beds_maintenance) tags.push('<span class="tag">' + w.beds_maintenance + ' out of service</span>');
+
+        return `<div class="wcard">
+            <div>
+                <div class="nm">${escHtml(w.ward_name || '-')}</div>
+                <div class="cd">${escHtml(w.ward_code || '-')} &middot; declared capacity ${w.capacity}</div>
+                <div class="tags">${tags.join('')}</div>
+            </div>
+            <div class="bar"><i class="${full ? 'full' : ''}" style="width:${barW}%"></i></div>
+            <div class="figs">
+                <div>Occupied<b class="${full ? 'warn' : ''}">${occupied}</b></div>
+                <div>Free<b>${w.beds_free}</b></div>
+                <div>Admitted<b>${w.patients_admitted}</b></div>
+            </div>
+            ${total === 0 ? '<div id="ward-no-beds">No beds have been created for this ward yet.</div>' : ''}
+        </div>`;
+    }).join('');
+}
+
+/* ==================== TRANSFER WARD & BED ==================== */
+function openTransferModal(id) {
+    const admission = admissionsData.find(a => a.id === id);
+    if (!admission || admission.status !== 'Admitted') return;
+
+    transferTarget = admission;
+    document.getElementById('transfer-current').innerHTML =
+        `<div><b>PATIENT:</b> ${escHtml(admission.patient_name || '-')} (${escHtml(admission.hospital_number || '-')})</div>
+         <div><b>ADMISSION:</b> ${escHtml(admission.admission_code || '-')} &middot; admitted ${fmtDateTime(admission.admission_date)}</div>
+         <div><b>CURRENT WARD / BED:</b> ${escHtml(admission.ward_name || '-')} &middot; ${escHtml(admission.bed_number || '-')}</div>`;
+
+    document.getElementById('transfer-reason').value = '';
+    document.getElementById('transfer-move-text').textContent = 'Select the destination ward and bed.';
+
+    // The current ward is hidden: a transfer to the bed the patient is already
+    // in is rejected, and offering it only invites a dead end.
+    const sel = document.getElementById('transfer-ward');
+    const other = wardsList.filter(w => String(w.id) !== String(admission.ward_id));
+    sel.innerHTML = '<option value="">-- Select Ward --</option>'
+        + other.map(w => `<option value="${w.id}">${escHtml(w.ward_name)}</option>`).join('');
+
+    document.getElementById('transfer-bed').innerHTML = '<option value="">Select Ward first</option>';
+    document.getElementById('transfer-modal').classList.add('show');
+    loadTransferHistory();
+}
+
+function closeTransferModal() {
+    document.getElementById('transfer-modal').classList.remove('show');
+    transferTarget = null;
+}
+
+async function loadTransferBeds(wardId) {
+    const bedSel = document.getElementById('transfer-bed');
+    const moveText = document.getElementById('transfer-move-text');
+    if (!wardId) {
+        bedSel.innerHTML = '<option value="">Select Ward first</option>';
+        moveText.textContent = 'Select the destination ward and bed.';
+        return;
+    }
+    bedSel.innerHTML = '<option value="">Loading beds...</option>';
+    moveText.textContent = 'Loading available beds...';
+    try {
+        const res = await fetch('/hms/backend/api/admissions.php?action=available_beds&ward_id=' + encodeURIComponent(wardId));
+        const data = await res.json();
+        const beds = (data.success && data.beds) ? data.beds : [];
+        if (!beds.length) {
+            bedSel.innerHTML = '<option value="">No free beds in this ward</option>';
+            moveText.textContent = 'This ward has no free bed — pick another ward.';
+            return;
+        }
+        bedSel.innerHTML = beds.map(b =>
+            `<option value="${b.id}">${escHtml(b.bed_number)}${b.bed_type ? ' (' + escHtml(b.bed_type) + ')' : ''}</option>`).join('');
+        moveText.textContent = beds.length === 1
+            ? '1 free bed available.'
+            : beds.length + ' free beds available.';
+    } catch (error) {
+        bedSel.innerHTML = '<option value="">Failed to load beds</option>';
+        moveText.textContent = 'Could not load the beds for this ward.';
+    }
+}
+
+async function loadTransferHistory() {
+    const body = document.getElementById('transfer-history-body');
+    const count = document.getElementById('transfer-history-count');
+    if (!transferTarget) return;
+    body.innerHTML = '<div class="empty">Loading movement history...</div>';
+    try {
+        const res = await fetch('/hms/backend/api/admissions.php?action=transfers&id=' + transferTarget.id);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Could not load the history');
+
+        const rows = data.transfers || [];
+        count.textContent = rows.length
+            ? (rows.length === 1 ? '1 move recorded' : rows.length + ' moves recorded')
+            : 'no moves yet';
+
+        if (!rows.length) {
+            body.innerHTML = '<div class="empty">This patient has not been moved since admission.</div>';
+            return;
+        }
+        body.innerHTML = '<table><thead><tr>'
+            + '<th>From</th><th>To</th><th>When</th><th>Reason</th>'
+            + '</tr></thead><tbody>'
+            + rows.map(t => `<tr>
+                <td class="mv">${escHtml(t.from_ward || '-')}<br><span style="color:#64748B;font-weight:400;">${escHtml(t.from_bed || '-')}</span></td>
+                <td class="mv">${escHtml(t.to_ward || '-')}<br><span style="color:#64748B;font-weight:400;">${escHtml(t.to_bed || '-')}</span></td>
+                <td>${fmtDateTime(t.created_at)}<br><span style="color:#64748B;">${escHtml(t.moved_by_name || 'Unknown')}</span></td>
+                <td class="why">${t.reason ? escHtml(t.reason) : '—'}</td>
+            </tr>`).join('')
+            + '</tbody></table>';
+    } catch (error) {
+        body.innerHTML = '<div class="empty">Could not load the history — ' + escHtml(error.message) + '</div>';
+    }
+}
+
+async function submitTransfer() {
+    if (!transferTarget) return;
+
+    const bedId = document.getElementById('transfer-bed').value;
+    const reason = document.getElementById('transfer-reason').value.trim();
+
+    if (!bedId) { showAlert('Select the bed to transfer the patient to.', 'error'); return; }
+
+    const btn = document.getElementById('confirm-transfer');
+    btn.disabled = true;
+    try {
+        const res = await fetch('/hms/backend/api/admissions.php?action=transfer&id=' + transferTarget.id, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bed_id: bedId, reason: reason })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Transfer failed');
+
+        showAlert('Patient transferred to ' + data.ward_name + ' / ' + data.bed_number, 'success');
+        closeTransferModal();
+        await loadAdmissions();
+        await loadWardOccupancy();
+    } catch (error) {
+        showAlert(error.message, 'error');
+    } finally {
+        btn.disabled = false;
     }
 }
 </script>

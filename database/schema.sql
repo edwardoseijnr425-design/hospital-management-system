@@ -430,6 +430,31 @@ CREATE TABLE admissions (
     FOREIGN KEY (department_id) REFERENCES departments(id)
 );
 
+-- Bed transfer history
+-- Bed occupancy itself lives on beds.current_patient_id, so nothing records
+-- where a patient has been during a stay. This table is that history: one row
+-- per ward/bed move, written in the same transaction that frees the old bed
+-- and occupies the new one.
+CREATE TABLE bed_transfer_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admission_id INT NOT NULL,
+    patient_id INT NOT NULL,
+    from_ward_id INT NOT NULL,
+    from_bed_id INT NOT NULL,
+    to_ward_id INT NOT NULL,
+    to_bed_id INT NOT NULL,
+    reason VARCHAR(255) DEFAULT NULL,
+    moved_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admission_id) REFERENCES admissions(id),
+    FOREIGN KEY (patient_id) REFERENCES patient_registrations(id),
+    FOREIGN KEY (from_ward_id) REFERENCES wards(id),
+    FOREIGN KEY (from_bed_id) REFERENCES beds(id),
+    FOREIGN KEY (to_ward_id) REFERENCES wards(id),
+    FOREIGN KEY (to_bed_id) REFERENCES beds(id),
+    FOREIGN KEY (moved_by) REFERENCES users(id)
+);
+
 -- Invoices
 CREATE TABLE invoices (
     id INT AUTO_INCREMENT PRIMARY KEY,
