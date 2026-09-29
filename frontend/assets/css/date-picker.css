@@ -1,7 +1,8 @@
 /* EHMS — custom date-picker widget (old EHMS dropdown calendar design).
-   initCustomDatePickers() replaces native <input type="date"> fields with
-   a dropdown calendar; the native input is kept hidden inside the wrapper
-   so its value stays in sync (YYYY-MM-DD) for existing form/JS logic. */
+   initCustomDatePickers() replaces native <input type="date"> and
+   <input type="month"> fields with a dropdown calendar; the native input is
+   kept hidden inside the wrapper so its value stays in sync (YYYY-MM-DD, or
+   YYYY-MM for a month field) for existing form/JS logic. */
 
 /* Native input is retained in the DOM but hidden by the widget. */
 .calendar-wrapper .dp-native-input{display:none}
@@ -75,6 +76,26 @@
 .day-cell.today{border:1px solid #0b5fa5;color:#0b5fa5;font-weight:700}
 .day-cell.selected{background:#0b5fa5;color:#fff;font-weight:700}
 .day-cell.selected.today{border-color:#0b5fa5}
+
+/* ---- Month mode (input[type="month"]): a 12-month grid for one year.
+       The header arrows step a year, since a month is the smallest selectable
+       unit and stepping one month at a time would be a dead end. ---- */
+.months-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.month-cell{
+    display:flex;align-items:center;justify-content:center;
+    height:38px;border-radius:6px;
+    font-size:.85rem;font-weight:600;color:#1e293b;cursor:pointer;
+    user-select:none;transition:background-color .12s ease,color .12s ease;
+}
+.month-cell:hover{background:#e0edff;color:#0b5fa5}
+.month-cell.today{border:1px solid #0b5fa5;color:#0b5fa5}
+.month-cell.selected{background:#0b5fa5;color:#fff;font-weight:700}
+.month-cell.selected.today{border-color:#0b5fa5}
+/* A month that has not happened yet cannot hold records, so it is not offered
+   unless the field opts in with data-dp-allow-future. */
+.month-cell.disabled{color:#cbd5e1;background:#f8fafc;cursor:not-allowed;border-color:#f1f5f9}
+.month-cell.disabled:hover{background:#f8fafc;color:#cbd5e1}
+.calendar-popover.month-mode{width:252px}
 
 .calendar-footer{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0}
 .footer-action-btn{
