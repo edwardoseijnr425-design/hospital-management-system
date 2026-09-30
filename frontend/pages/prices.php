@@ -138,12 +138,21 @@
                     <label for="price-effective">Effective Date <span class="text-danger">*</span></label>
                     <input type="date" id="price-effective" name="effective_date" required value="<?= date('Y-m-d') ?>">
                 </div>
+
+                <!-- STATUS (ACTIVE / DEACTIVE) -->
+                <div class="form-group">
+                    <label for="price-status">Status <span class="text-danger">*</span></label>
+                    <select id="price-status" name="is_active" class="font-weight-bold">
+                        <option value="1">ACTIVE</option>
+                        <option value="0">DEACTIVE</option>
+                    </select>
+                </div>
             </div>
 
             <!-- MODAL FOOTER -->
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="cancel-price">CANCEL</button>
-                <button type="submit" class="btn btn-primary">SAVE PRICE</button>
+                <button type="submit" class="btn btn-primary" id="price-submit-btn">SAVE PRICE</button>
             </div>
         </form>
     </div>
@@ -247,15 +256,19 @@ function openPriceModal(price = null) {
     document.getElementById('price-id').value = '';
     document.getElementById('price-effective').value = new Date().toISOString().split('T')[0];
     document.getElementById('copay-amount').value = '0.00';
+    document.getElementById('price-status').value = '1';   // ACTIVE by default
+    document.getElementById('price-submit-btn').textContent = 'SAVE PRICE';
     
     if (price) {
-        title.textContent = 'Edit Price';
+        title.textContent = 'Edit Service Price';
         document.getElementById('price-id').value = price.id;
         document.getElementById('price-type').value = price.service_type;
         document.getElementById('price-amount').value = price.price;
         document.getElementById('price-currency').value = price.currency;
         document.getElementById('price-effective').value = price.effective_date;
         document.getElementById('copay-amount').value = price.copay_amount ?? '0.00';
+        document.getElementById('price-status').value = (price.is_active ? '1' : '0');
+        document.getElementById('price-submit-btn').textContent = 'UPDATE SERVICE';
         
         // Trigger service load
         document.getElementById('price-type').dispatchEvent(new Event('change'));

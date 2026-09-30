@@ -203,7 +203,10 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
   <div id="currentPatientsPanel" style="display: none; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; margin-bottom: 16px;">
     <div style="font-weight: 700; color: #1e3a8a; font-size: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
       <span>ACTIVE &amp; NEWLY ADMITTED PATIENTS</span>
-      <span style="font-size: 10px; color: #64748b; cursor: pointer;" onclick="toggleCurrentPatients()">[ Close ]</span>
+      <span style="display:flex;align-items:center;gap:10px;">
+        <button type="button" class="btn btn-sm font-weight-bold" style="background-color:#0EA5E9; border:none; color:#fff; border-radius:4px; white-space:nowrap; font-size:10px; padding:4px 10px;" onclick="navigateTo('admissions')">+ ADMIT PATIENT</button>
+        <span style="font-size: 10px; color: #64748b; cursor: pointer;" onclick="toggleCurrentPatients()">[ Close ]</span>
+      </span>
     </div>
 
     <!-- SEARCH BAR -->
