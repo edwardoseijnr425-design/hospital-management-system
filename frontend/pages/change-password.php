@@ -1,159 +1,229 @@
 <?php
-// Change Password - EHMS standalone style (SPA fragment).
-// Two flows: self-service change (current password verified) and admin
-// username-based reset. Loaded by the shell into #page-content via
-// loadPage('change-password'). Real backend: backend/api/auth.php
-// (actions change_password / reset_password).
+// Change Password - EHMS standalone style restyled to the pasted Bootstrap-5
+// design (SPA fragment). Two flows: self-service change (current password
+// verified) and admin username-based reset. Loaded by the shell into
+// #page-content via loadPage('change-password'). Real backend:
+// backend/api/auth.php (actions change_password / reset_password).
 require_once __DIR__ . '/../../backend/config/config.php';
 ?>
 <style>
-/* ============ CHANGE PASSWORD : EHMS STANDALONE ============
-   Scoped under #cp-page. No Bootstrap - utilities defined here.
-   FontAwesome (loaded by the shell) used for action-button icons. */
-#cp-page{background:#dce7f2;color:#333;font-size:13px;min-height:100vh;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding-bottom:30px}
+/* ============ CHANGE PASSWORD : BOOTSTRAP-5 STANDALONE (SPA FRAGMENT) ============
+   Scoped under #cp-page. The shell already provides container-fluid/row/
+   col-md-6/card/d-flex/shadow-sm/border-0/font-weight-bold/text-uppercase
+   and auto-appends the contact banner below every module page, so no support
+   details are hardcoded here. Everything else matches the pasted design. */
+#cp-page{background:#f8f9fa;color:#212529;font-size:14px;min-height:100vh;padding:.75rem 1rem;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
 #cp-page *,#cp-page *::before,#cp-page *::after{box-sizing:border-box}
-#cp-page .top-bar{background-color:#0b5fa5;color:#fff;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 5px rgba(0,0,0,0.15);flex-wrap:wrap;gap:8px}
-#cp-page .top-bar .title-group{display:flex;align-items:center;gap:10px}
-#cp-page .top-bar .title-group svg{width:24px;height:24px;fill:#ffffff}
-#cp-page .top-bar .title{font-size:16px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase}
-#cp-page .top-bar .right-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-#cp-page .top-bar .hospital-tag{font-size:11px;color:#d1e5f7;margin-right:15px;font-weight:500}
-#cp-page .top-bar .btn-nav{background-color:#0088cc;color:#fff;border:none;padding:5px 12px;font-size:11px;font-weight:bold;border-radius:3px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:background-color 0.2s;font-family:inherit}
-#cp-page .top-bar .btn-nav:hover{background-color:#006699}
-#cp-page .form-wrapper{max-width:760px;margin:20px auto;padding:0 15px;display:flex;flex-direction:column;gap:18px}
-#cp-page .panel-box{background:#fff;border:1px solid #b2c8de;border-radius:4px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,0.06)}
-#cp-page .panel-header{background-color:#0b5fa5;color:#fff;font-weight:bold;font-size:12px;padding:10px 15px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
-#cp-page .panel-header svg{width:16px;height:16px;fill:#ffffff}
-#cp-page .panel-body{padding:18px 22px;background-color:#f8fafc}
-#cp-page .form-section-title{font-size:12px;font-weight:bold;color:#0b5fa5;border-bottom:2px solid #0b5fa5;padding-bottom:4px;margin-bottom:15px;text-transform:uppercase}
-#cp-page .grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:15px 25px}
-#cp-page .grid-full{grid-column:span 2}
-#cp-page .form-group{display:flex;flex-direction:column;gap:5px}
-#cp-page .form-group label{font-weight:600;color:#333;font-size:11px;text-transform:uppercase;letter-spacing:0.3px}
-#cp-page .form-group label .required{color:#e74c3c;font-weight:bold}
-#cp-page .input-wrapper{position:relative;display:flex;align-items:center}
-#cp-page .input-wrapper svg{position:absolute;left:10px;width:15px;height:15px;fill:#0b5fa5;pointer-events:none}
-#cp-page .input-wrapper input{padding-left:34px}
-#cp-page .form-control{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;background-color:#fff;color:#222;transition:border-color 0.2s, box-shadow 0.2s;font-family:inherit}
-#cp-page .form-control:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,0.25)}
-#cp-page .form-actions{margin-top:20px;padding-top:15px;border-top:1px solid #e1e8f0;display:flex;justify-content:flex-end;gap:12px;align-items:center}
-#cp-page .btn-action{border:none;padding:8px 20px;font-weight:bold;font-size:12px;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:0.5px;font-family:inherit;text-decoration:none}
-#cp-page .btn-action i{font-size:13px}
-#cp-page .btn-primary{background-color:#0b5fa5;color:#fff}
-#cp-page .btn-primary:hover{background-color:#004080}
-#cp-page .btn-secondary{background-color:#7f8c8d;color:#fff}
-#cp-page .btn-secondary:hover{background-color:#636e72}
-#cp-page .hint-note{font-size:11px;color:#64748b;margin-top:4px;line-height:1.5}
-#cp-page .info-bar{background:#eef5fb;border-left:4px solid #0b5fa5;padding:10px 14px;border-radius:3px;font-size:12px;color:#0c4a75;margin-bottom:16px;line-height:1.5}
+
+/* ---------- Top header nav banner ---------- */
+#cp-page .bg-primary{background-color:#0d6efd}
+#cp-page .text-white{color:#fff}
+#cp-page .text-primary{color:#0d6efd}
+#cp-page .rounded{border-radius:.375rem}
+#cp-page .shadow-sm{box-shadow:0 .125rem .25rem rgba(0,0,0,.075)}
+#cp-page .align-items-center{align-items:center}
+#cp-page .justify-content-between{justify-content:space-between}
+#cp-page .justify-content-end{justify-content:flex-end}
+#cp-page .gap-2{gap:.5rem}
+#cp-page .gap-3{gap:1rem}
+#cp-page .p-2{padding:.5rem}
+#cp-page .p-4{padding:1.5rem}
+#cp-page .ps-2{padding-left:.5rem}
+#cp-page .pe-1{padding-right:.25rem}
+#cp-page .py-2{padding-top:.5rem;padding-bottom:.5rem}
+#cp-page .px-3{padding-left:1rem;padding-right:1rem}
+#cp-page .px-4{padding-left:1.5rem;padding-right:1.5rem}
+#cp-page .mb-0{margin-bottom:0}
+#cp-page .mb-3{margin-bottom:1rem}
+#cp-page .mb-4{margin-bottom:1.5rem}
+#cp-page .me-1{margin-right:.25rem}
+#cp-page .bg-white{background-color:#fff}
+#cp-page .bg-light{background-color:#f8f9fa}
+#cp-page .text-muted{color:#6c757d}
+#cp-page .small{font-size:.85em}
+#cp-page .fw-bold{font-weight:700}
+
+/* ---------- Buttons ---------- */
+#cp-page .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid transparent;padding:.375rem .75rem;font-size:.875rem;font-weight:700;line-height:1.5;border-radius:.375rem;cursor:pointer;text-decoration:none;font-family:inherit;transition:background-color .15s ease-in-out,color .15s ease-in-out,box-shadow .15s ease-in-out}
+#cp-page .btn-sm{padding:.25rem .5rem;font-size:.765625rem;border-radius:.25rem}
+#cp-page .btn-primary{background-color:#0d6efd;color:#fff}
+#cp-page .btn-primary:hover{background-color:#0b5ed7}
+#cp-page .btn-secondary{background-color:#6c757d;color:#fff}
+#cp-page .btn-secondary:hover{background-color:#5c636a}
+#cp-page .btn-light{background-color:#f8f9fa;color:#0d6efd;border-color:#f8f9fa}
+#cp-page .btn-light:hover{background-color:#e2e6ea;color:#0a58ca}
+
+/* ---------- Cards ---------- */
+#cp-page .card{position:relative;display:flex;flex-direction:column;min-width:0;word-wrap:break-word;background-color:#fff;background-clip:border-box;border:1px solid rgba(0,0,0,.125);border-radius:.375rem}
+#cp-page .card-header{padding:.5rem 1rem;margin-bottom:0;background-color:rgba(0,0,0,.03);border-bottom:1px solid rgba(0,0,0,.125)}
+#cp-page .card-header-main{background-color:#0d6efd;color:#fff}
+#cp-page .card-header-sub{background-color:#0b5ed7;color:#fff}
+#cp-page .card-body{flex:1 1 auto;padding:1rem}
+#cp-page .border{border:1px solid #dee2e6 !important}
+#cp-page .border-0{border:0 !important}
+#cp-page .d-flex{display:flex}
+
+/* ---------- Forms ---------- */
+#cp-page .form-label{font-size:.85rem;font-weight:700;text-transform:uppercase;color:#495057;margin-bottom:.5rem;display:block}
+#cp-page .input-group{display:flex;align-items:stretch;width:100%;position:relative}
+#cp-page .input-group-text{display:flex;align-items:center;background-color:#fff;border:1px solid #ced4da;border-right:0;border-radius:.375rem 0 0 .375rem;padding:.375rem .75rem}
+#cp-page .input-group-text svg{width:16px;height:16px;display:block}
+#cp-page .form-control{display:block;width:100%;padding:.375rem .75rem;font-size:.875rem;font-weight:400;line-height:1.5;color:#212529;background-color:#fff;background-clip:padding-box;border:1px solid #ced4da;border-radius:.375rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;font-family:inherit}
+#cp-page .form-control:focus{outline:0;border-color:#86b7fe;box-shadow:0 0 0 .25rem rgba(13,110,253,.25)}
+#cp-page .input-group .form-control{border-top-left-radius:0;border-bottom-left-radius:0}
+
+/* ---------- Alerts ---------- */
+#cp-page .alert{position:relative;padding:1rem;margin-bottom:1rem;border:1px solid transparent;border-radius:.375rem;font-size:.875rem}
+#cp-page .alert-success{color:#0f5132;background-color:#d1e7dd;border-color:#badbcc}
+#cp-page .alert-danger{color:#842029;background-color:#f8d7da;border-color:#f5c2c7}
+#cp-page .alert-dismissible{padding-right:3rem}
+#cp-page .btn-close{box-sizing:content-box;width:1em;height:1em;padding:1rem 1rem;position:absolute;top:0;right:0;color:#000;background:transparent;border:0;border-radius:.25rem;opacity:.5;cursor:pointer;font-size:1rem;line-height:1}
+
 @media (max-width:640px){
-  #cp-page .grid-2col{grid-template-columns:1fr}
-  #cp-page .grid-full{grid-column:span 1}
+  #cp-page .p-4{padding:1rem}
+  #cp-page .px-4{padding-left:1rem;padding-right:1rem}
 }
 </style><div id="cp-page">
 
-  <!-- TOP BAR (HMS - HEALTHCARE MANAGEMENT SYSTEM branding) -->
-  <div class="top-bar">
-    <div class="title-group">
-      <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-      <div class="title">CHANGE PASSWORD</div>
+  <!-- TOP HEADER NAV BANNER -->
+  <div class="d-flex justify-content-between align-items-center bg-primary text-white p-2 rounded mb-3 shadow-sm">
+    <div class="d-flex align-items-center gap-2 ps-2">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+      <h5 class="fw-bold text-uppercase mb-0 text-white" style="font-size:15px;letter-spacing:.5px;">CHANGE PASSWORD</h5>
     </div>
-    <div class="right-nav">
-      <span class="hospital-tag">HMS - HEALTHCARE MANAGEMENT SYSTEM</span>
-      <a href="#" class="btn-nav" onclick="cpNavHome(event)"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>HOME</a>
-      <a href="#" class="btn-nav" onclick="cpGoBack(event)"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>BACK</a>
-      <a href="#" class="btn-nav" onclick="cpGoPassword(event)"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>PASSWORD</a>
+    <div class="d-flex gap-2 pe-1">
+      <a href="#" class="btn btn-sm btn-light fw-bold text-primary px-3" onclick="cpNavHome(event)">HOME</a>
+      <a href="#" class="btn btn-sm btn-light fw-bold text-primary px-3" onclick="cpGoBack(event)">&lt; BACK</a>
+      <a href="#" class="btn btn-sm btn-light fw-bold text-primary px-3" onclick="cpGoPassword(event)">PASSWORD</a>
     </div>
   </div>
 
-  <div class="form-wrapper">
+  <!-- STATUS / ERROR NOTIFICATION MESSAGE (populated by JS) -->
+  <div class="alert alert-dismissible shadow-sm" id="cpAlert" role="alert" style="display:none;">
+    <span id="cpAlertMsg"></span>
+    <button type="button" class="btn-close" aria-label="Close" onclick="document.getElementById('cpAlert').style.display='none';">&times;</button>
+  </div>
 
-    <!-- ============ SELF-SERVICE : CHANGE MY PASSWORD ============ -->
-    <div class="panel-box">
-      <div class="panel-header">
-        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
-        Change My Password
-      </div>
-      <div class="panel-body">
-        <div class="info-bar">
-          Update your own login password. You must enter your current password to confirm your identity before the new password is saved.
+  <!-- OUTER CONTAINER CARD -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-header card-header-main d-flex justify-content-between align-items-center py-2 px-3">
+      <span class="fw-bold text-uppercase" style="letter-spacing:.5px;font-size:15px;">CHANGE PASSWORD</span>
+      <small style="color:#dbeafe;font-size:11px;">HMS - HEALTHCARE MANAGEMENT SYSTEM</small>
+    </div>
+
+    <div class="card-body p-4 bg-white">
+
+      <!-- SECTION 1: CHANGE MY PASSWORD -->
+      <div class="card border mb-4 shadow-sm">
+        <div class="card-header card-header-sub py-2 px-3 fw-bold text-uppercase d-flex align-items-center" style="font-size:.9rem;letter-spacing:.4px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          CHANGE MY PASSWORD
         </div>
-        <form id="cpChangeForm" autocomplete="off">
-          <div class="grid-2col">
-            <div class="form-group grid-full">
-              <label for="cpCurrent">Current Password <span class="required">*</span></label>
-              <div class="input-wrapper">
-                <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+        <div class="card-body bg-light">
+          <p class="text-muted small mb-3">Update your own logging-in password. You must enter your current password to confirm your identity before the new password is saved.</p>
+
+          <form id="cpChangeForm" autocomplete="off">
+            <!-- CURRENT PASSWORD -->
+            <div class="mb-3">
+              <label class="form-label" for="cpCurrent">CURRENT PASSWORD *</label>
+              <div class="input-group">
+                <span class="input-group-text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
                 <input type="password" id="cpCurrent" class="form-control" placeholder="Enter current password" required>
               </div>
             </div>
-            <div class="form-group">
-              <label for="cpNew">New Password <span class="required">*</span></label>
-              <div class="input-wrapper">
-                <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z"/></svg>
-                <input type="password" id="cpNew" class="form-control" placeholder="Minimum 8 characters" required>
-              </div>
-              <div class="hint-note">Minimum <?php echo PASSWORD_MIN_LENGTH; ?> characters.</div>
-            </div>
-            <div class="form-group">
-              <label for="cpConfirm">Confirm New Password <span class="required">*</span></label>
-              <div class="input-wrapper">
-                <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z"/></svg>
-                <input type="password" id="cpConfirm" class="form-control" placeholder="Re-enter new password" required>
-              </div>
-            </div>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn-action btn-secondary" onclick="cpCancel()"><i class="fa fa-undo"></i> CANCEL</button>
-            <button type="submit" class="btn-action btn-primary"><i class="fa fa-lock"></i> SAVE PASSWORD</button>
-          </div>
-        </form>
-      </div>
-    </div>
 
-    <!-- ============ ADMIN : RESET USER PASSWORD ============ -->
-    <div class="panel-box" id="cpResetPanel">
-      <div class="panel-header">
-        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
-        Reset User Password (Administrator)
-      </div>
-      <div class="panel-body">
-        <div class="info-bar">
-          Administrator tool: set a new password for any user account. The user's current password is not required — the account is reset directly.
+            <!-- NEW & CONFIRM PASSWORD -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label" for="cpNew">NEW PASSWORD *</label>
+                <div class="input-group">
+                  <span class="input-group-text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+                  <input type="password" id="cpNew" class="form-control" placeholder="Minimum <?php echo PASSWORD_MIN_LENGTH; ?> characters" minlength="<?php echo PASSWORD_MIN_LENGTH; ?>" required>
+                </div>
+                <small class="text-muted">Minimum <?php echo PASSWORD_MIN_LENGTH; ?> characters</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="cpConfirm">CONFIRM NEW PASSWORD *</label>
+                <div class="input-group">
+                  <span class="input-group-text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+                  <input type="password" id="cpConfirm" class="form-control" placeholder="Re-enter new password" minlength="<?php echo PASSWORD_MIN_LENGTH; ?>" required>
+                </div>
+              </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="d-flex justify-content-end gap-2">
+              <button type="reset" class="btn btn-secondary px-4 fw-bold">CANCEL</button>
+              <button type="submit" class="btn btn-primary px-4 fw-bold">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                SAVE PASSWORD
+              </button>
+            </div>
+          </form>
         </div>
-        <form id="cpResetForm" autocomplete="off">
-          <div class="grid-2col">
-            <div class="form-group grid-full">
-              <label for="cpUsername">Username / User Account <span class="required">*</span></label>
-              <div class="input-wrapper">
-                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                <input type="text" id="cpUsername" class="form-control" placeholder="e.g. admin" required>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="cpResetNew">New Password <span class="required">*</span></label>
-              <div class="input-wrapper">
-                <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z"/></svg>
-                <input type="password" id="cpResetNew" class="form-control" placeholder="Minimum 8 characters" required>
-              </div>
-              <div class="hint-note">Minimum <?php echo PASSWORD_MIN_LENGTH; ?> characters.</div>
-            </div>
-            <div class="form-group">
-              <label for="cpResetConfirm">Confirm New Password <span class="required">*</span></label>
-              <div class="input-wrapper">
-                <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z"/></svg>
-                <input type="password" id="cpResetConfirm" class="form-control" placeholder="Re-enter new password" required>
-              </div>
-            </div>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn-action btn-secondary" onclick="cpCancel()"><i class="fa fa-undo"></i> CANCEL</button>
-            <button type="submit" class="btn-action btn-primary"><i class="fa fa-calendar-check"></i> RESET PASSWORD</button>
-          </div>
-        </form>
       </div>
-    </div>
 
+      <!-- SECTION 2: RESET USER PASSWORD (ADMINISTRATOR) -->
+      <div class="card border shadow-sm" id="cpResetPanel">
+        <div class="card-header card-header-sub py-2 px-3 fw-bold text-uppercase d-flex align-items-center" style="font-size:.9rem;letter-spacing:.4px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          RESET USER PASSWORD (ADMINISTRATOR)
+        </div>
+        <div class="card-body bg-light">
+          <p class="text-muted small mb-3">Administrator tool: set a new password for any user account. The user's current password is not required — the account is reset directly.</p>
+
+          <form id="cpResetForm" autocomplete="off">
+            <!-- USERNAME / USER ACCOUNT -->
+            <div class="mb-3">
+              <label class="form-label" for="cpUsername">USERNAME / USER ACCOUNT *</label>
+              <div class="input-group">
+                <span class="input-group-text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
+                <input type="text" id="cpUsername" class="form-control" placeholder="Enter username (e.g. admin)" required>
+              </div>
+            </div>
+
+            <!-- NEW & CONFIRM RESET PASSWORD -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label" for="cpResetNew">NEW PASSWORD *</label>
+                <div class="input-group">
+                  <span class="input-group-text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+                  <input type="password" id="cpResetNew" class="form-control" placeholder="Minimum <?php echo PASSWORD_MIN_LENGTH; ?> characters" minlength="<?php echo PASSWORD_MIN_LENGTH; ?>" required>
+                </div>
+                <small class="text-muted">Minimum <?php echo PASSWORD_MIN_LENGTH; ?> characters</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="cpResetConfirm">CONFIRM NEW PASSWORD *</label>
+                <div class="input-group">
+                  <span class="input-group-text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+                  <input type="password" id="cpResetConfirm" class="form-control" placeholder="Re-enter new password" minlength="<?php echo PASSWORD_MIN_LENGTH; ?>" required>
+                </div>
+              </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="d-flex justify-content-end gap-2">
+              <button type="reset" class="btn btn-secondary px-4 fw-bold">CANCEL</button>
+              <button type="submit" class="btn btn-primary px-4 fw-bold">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                RESET PASSWORD
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
   </div>
+
 </div>
 
 <script>
@@ -161,7 +231,21 @@ require_once __DIR__ . '/../../backend/config/config.php';
 function cpNavHome(e) { if (e) e.preventDefault(); if (window.navigateTo) window.navigateTo('dashboard'); else if (window.loadPage) window.loadPage('dashboard'); }
 function cpGoBack(e) { if (e) e.preventDefault(); if (window.goBackPage && typeof window.goBackPage === 'function') window.goBackPage(); else if (window.navigateTo) window.navigateTo('dashboard'); }
 function cpGoPassword(e) { if (e) e.preventDefault(); if (window.navigateTo) window.navigateTo('change-password'); else if (window.loadPage) window.loadPage('change-password'); }
-function cpCancel() { if (window.goBackPage && typeof window.goBackPage === 'function') window.goBackPage(); else if (window.navigateTo) window.navigateTo('dashboard'); }
+
+/* ================= INLINE ALERT ================= */
+function cpShowAlert(msg, type) {
+    var el = document.getElementById('cpAlert');
+    if (!el) return;
+    el.className = 'alert alert-dismissible shadow-sm ' + (type === 'success' ? 'alert-success' : 'alert-danger');
+    el.style.display = 'block';
+    var span = document.getElementById('cpAlertMsg');
+    if (span) span.innerHTML = msg;
+}
+
+function cpHideAlert() {
+    var el = document.getElementById('cpAlert');
+    if (el) el.style.display = 'none';
+}
 
 /* ================= INIT ================= */
 function initChangePassword() {
@@ -183,12 +267,13 @@ function initChangePassword() {
 /* ================= SELF-SERVICE CHANGE ================= */
 function cpSubmitChange(e) {
     e.preventDefault();
+    cpHideAlert();
     var current = document.getElementById('cpCurrent').value;
     var next = document.getElementById('cpNew').value;
     var confirm = document.getElementById('cpConfirm').value;
 
-    if (!current || !next || !confirm) { showAlert('Please fill in all fields.', 'error'); return; }
-    if (next !== confirm) { showAlert('New password and confirmation password do not match.', 'error'); return; }
+    if (!current || !next || !confirm) { cpShowAlert('Please fill in all fields.', 'danger'); return; }
+    if (next !== confirm) { cpShowAlert('New password and confirmation password do not match.', 'danger'); return; }
 
     var btn = e.target.querySelector('button[type="submit"]');
     var original = btn ? btn.innerHTML : '';
@@ -201,31 +286,30 @@ function cpSubmitChange(e) {
     })
     .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, data: d }; }); })
     .then(function(res){
+        if (btn) { btn.disabled = false; btn.innerHTML = original; }
         if (res.ok && res.data.success) {
-            showAlert('Password updated successfully.', 'success');
-            if (btn) { btn.disabled = false; btn.innerHTML = original; }
-            cpChangeForm.reset();
-            if (window.navigateTo) window.navigateTo('dashboard');
+            cpShowAlert('Your password has been updated successfully!', 'success');
+            if (document.getElementById('cpChangeForm')) document.getElementById('cpChangeForm').reset();
         } else {
-            showAlert((res.data && res.data.error) || 'Failed to update password.', 'error');
-            if (btn) { btn.disabled = false; btn.innerHTML = original; }
+            cpShowAlert((res.data && res.data.error) || 'Failed to update password.', 'danger');
         }
     })
     .catch(function(err){
-        showAlert('Network error: ' + err.message, 'error');
         if (btn) { btn.disabled = false; btn.innerHTML = original; }
+        cpShowAlert('Network error: ' + err.message, 'danger');
     });
 }
 
 /* ================= ADMIN RESET ================= */
 function cpSubmitReset(e) {
     e.preventDefault();
+    cpHideAlert();
     var username = document.getElementById('cpUsername').value.trim();
     var next = document.getElementById('cpResetNew').value;
     var confirm = document.getElementById('cpResetConfirm').value;
 
-    if (!username || !next || !confirm) { showAlert('Please fill in all fields.', 'error'); return; }
-    if (next !== confirm) { showAlert('New password and confirmation password do not match.', 'error'); return; }
+    if (!username || !next || !confirm) { cpShowAlert('Please fill in all fields.', 'danger'); return; }
+    if (next !== confirm) { cpShowAlert('New password and confirmation password do not match.', 'danger'); return; }
 
     var btn = e.target.querySelector('button[type="submit"]');
     var original = btn ? btn.innerHTML : '';
@@ -238,18 +322,17 @@ function cpSubmitReset(e) {
     })
     .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, data: d }; }); })
     .then(function(res){
+        if (btn) { btn.disabled = false; btn.innerHTML = original; }
         if (res.ok && res.data.success) {
-            showAlert('Password reset successfully for "' + res.data.username + '".', 'success');
-            if (btn) { btn.disabled = false; btn.innerHTML = original; }
-            cpResetForm.reset();
+            cpShowAlert('Password for user "<strong>' + (res.data.username || username) + '</strong>" has been reset successfully!', 'success');
+            if (document.getElementById('cpResetForm')) document.getElementById('cpResetForm').reset();
         } else {
-            showAlert((res.data && res.data.error) || 'Failed to reset password.', 'error');
-            if (btn) { btn.disabled = false; btn.innerHTML = original; }
+            cpShowAlert((res.data && res.data.error) || 'Failed to reset password.', 'danger');
         }
     })
     .catch(function(err){
-        showAlert('Network error: ' + err.message, 'error');
         if (btn) { btn.disabled = false; btn.innerHTML = original; }
+        cpShowAlert('Network error: ' + err.message, 'danger');
     });
 }
 </script>
