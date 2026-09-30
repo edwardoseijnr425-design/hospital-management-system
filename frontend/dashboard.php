@@ -547,6 +547,7 @@ function hcBrandLogo($px = 45) {
             <a href="#" class="nav-link" data-page="account-management">Account Management</a>
             <a href="#" class="nav-link" data-page="users">User Management</a>
             <a href="#" class="nav-link" data-page="administrator">Administrator</a>
+            <a href="#" class="nav-link" data-page="system-configuration">System Configuration</a>
             <a href="#" class="nav-link" data-page="wards">Departments</a>
             <a href="#" class="nav-link" data-page="system-activities">System Activities</a>
         </nav>
@@ -792,6 +793,21 @@ function hcBrandLogo($px = 45) {
                                     </div>
                                     <div class="text-center flex-grow-1 me-4">
                                         <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">INVENTORY MANAGEMENT</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 15. SYSTEM CONFIGURATION -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('system_configuration')">
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(15, 45, 89, 0.08); border-radius: 6px;">
+                                        <!-- Cog / Settings Icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F2D59" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                    </div>
+                                    <div class="text-center flex-grow-1 me-4">
+                                        <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">SYSTEM CONFIGURATION</span>
                                     </div>
                                 </div>
                             </div>
@@ -1224,7 +1240,8 @@ window.fmtDateTime = fmtDateTime;
             nhia_claim:'sponsors',
             radiology:'vitals',
             messages_alerts:'messages',
-            inventory_management:'inventory_management'
+            inventory_management:'inventory_management',
+            system_configuration:'system-configuration'
         };
         var page=map[moduleId] || moduleId;
         var target=document.querySelector('.side-nav .nav-link[data-page="'+page+'"]');
