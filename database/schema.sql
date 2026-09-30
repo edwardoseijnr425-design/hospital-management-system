@@ -116,6 +116,7 @@ CREATE TABLE service_prices (
     service_type ENUM('consultation', 'procedure', 'drug', 'lab_test', 'radiology', 'other') NOT NULL,
     service_id INT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
+    copay_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     currency VARCHAR(3) DEFAULT 'GHS',
     effective_date DATE NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,

@@ -75,6 +75,7 @@ function createPrice() {
         'service_type' => $data['service_type'],
         'service_id' => $data['service_id'],
         'price' => $data['price'],
+        'copay_amount' => $data['copay_amount'] ?? 0.00,
         'currency' => $data['currency'] ?? 'GHS',
         'effective_date' => $data['effective_date'],
         'is_active' => true
