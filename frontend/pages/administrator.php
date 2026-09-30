@@ -1,148 +1,157 @@
 <style>
 /* ============ ADMINISTRATOR CONSOLE : SYSTEM DASHBOARD-STYLE LAUNCHER ============
    Scoped under #admin-cc. The shell already provides row/col-md-6/card/d-flex,
-   border-0/shadow-sm/p-3/h-100/font-weight-bold/text-uppercase/hms-module-card
-   and auto-appends the dark-blue contact banner below every module page. */
+   shadow-sm/p-3/h-100/font-weight-bold/text-uppercase/hms-module-card and
+   auto-appends the dark-blue contact banner (system-footer-strip) below every
+   module page, so this page never hardcodes support contact details. */
 #admin-cc .justify-content-between{justify-content:space-between}
+#admin-cc .align-items-center{align-items:center}
 #admin-cc .mb-3{margin-bottom:1rem}
+#admin-cc .mb-0{margin:0}
 #admin-cc .p-2{padding:.5rem}
+#admin-cc .p-3{padding:1rem}
+#admin-cc .pe-1{padding-right:.25rem}
+#admin-cc .ps-2{padding-left:.5rem}
 #admin-cc .bg-white{background-color:#fff}
+#admin-cc .bg-primary{background-color:#0072BC}
+#admin-cc .text-white{color:#fff}
+#admin-cc .text-dark{color:#0F2D59}
 #admin-cc .rounded{border-radius:8px}
 #admin-cc .border{border:1px solid #E2E8F0}
 #admin-cc .gap-2{gap:.5rem}
 #admin-cc .gap-3{gap:1rem}
-#admin-cc .d-block{display:block}
-#admin-cc .acc-btn{display:inline-flex;align-items:center;gap:6px;border:none;padding:5px 14px;font-size:11px;font-weight:700;border-radius:4px;color:#fff;cursor:pointer;text-decoration:none;font-family:inherit;transition:background-color .2s}
-#admin-cc .acc-btn-blue{background-color:#0072BC}
-#admin-cc .acc-btn-blue:hover{background-color:#0b5fa5}
-#admin-cc .acc-btn-info{background-color:#0EA5E9}
-#admin-cc .acc-btn-info:hover{background-color:#0284C7}
+#admin-cc .small{font-size:12px}
+#admin-cc .tracking-wide{letter-spacing:.5px}
+#admin-cc .admin-tile{transition:box-shadow .2s ease, transform .2s ease;cursor:pointer;background-color:#fff}
+#admin-cc .admin-tile:hover{box-shadow:0 6px 16px rgba(15,45,89,.14) !important;transform:translateY(-2px)}
+#admin-cc .acc-btn{display:inline-flex;align-items:center;gap:6px;border:none;padding:5px 14px;font-size:11px;font-weight:700;border-radius:4px;color:#0072BC;background-color:#fff;cursor:pointer;text-decoration:none;font-family:inherit;transition:background-color .2s, color .2s;line-height:1}
+#admin-cc .acc-btn:hover{background-color:#E0F2FE}
 #admin-cc .acc-icon-box{width:50px;height:50px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+/* Pastel icon badge palette (matches the System Dashboard tile color scheme) */
+#admin-cc .bg-light-blue{background-color:#E0F2FE;color:#0284C7}
+#admin-cc .bg-light-green{background-color:#DCFCE7;color:#16A34A}
+#admin-cc .bg-light-yellow{background-color:#FEF3C7;color:#D97706}
+#admin-cc .bg-light-pink{background-color:#FCE7F3;color:#DB2777}
+#admin-cc .bg-light-cyan{background-color:#CCFBF1;color:#0D9488}
+#admin-cc .bg-light-purple{background-color:#E0E7FF;color:#4F46E5}
+#admin-cc .bg-light-orange{background-color:#FFEDD5;color:#EA580C}
+#admin-cc .bg-light-gray{background-color:#F1F5F9;color:#475569}
 </style>
 
 <div class="container-fluid p-3" id="admin-cc" style="background-color:#F8FAFC;min-height:100vh;">
 
-  <!-- TOP TITLE & ROUTING HEADER -->
-  <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-white rounded shadow-sm border">
-    <h5 class="font-weight-bold text-uppercase" style="margin:0;color:#0F2D59;font-size:16px;letter-spacing:.5px;">Administrator Console</h5>
-    <div class="d-flex gap-2">
-      <button type="button" class="acc-btn acc-btn-blue" onclick="admCCHome()">HOME</button>
-      <button type="button" class="acc-btn acc-btn-blue" onclick="admCCBack()">&larr; BACK</button>
-      <button type="button" class="acc-btn acc-btn-info" onclick="admCCPassword()">PASSWORD</button>
+  <!-- TOP HEADER BAR (blue bar + light HOME/BACK/PASSWORD buttons) -->
+  <div class="d-flex justify-content-between align-items-center bg-primary p-2 rounded mb-3 shadow-sm">
+    <div class="d-flex align-items-center gap-2 ps-2">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#fff;">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="8.5" cy="7" r="4"></circle>
+        <polyline points="17 11 19 13 23 9"></polyline>
+      </svg>
+      <h5 class="font-weight-bold text-uppercase mb-0 text-white" style="font-size:15px;letter-spacing:.5px;">Administrator Console</h5>
+    </div>
+    <div class="d-flex gap-2 pe-1">
+      <button type="button" class="acc-btn" onclick="admCCHome()">HOME</button>
+      <button type="button" class="acc-btn" onclick="admCCBack()">&lt; BACK</button>
+      <button type="button" class="acc-btn" onclick="admCCPassword()">PASSWORD</button>
     </div>
   </div>
 
-  <!-- 2-COLUMN SPACIOUS MODULE GRID (matching System Dashboard card style) -->
+  <!-- 2-COLUMN ACTION TILE GRID -->
   <div class="row g-3">
 
-    <!-- CARD 1: USER MANAGEMENT -->
+    <!-- USER MANAGEMENT -->
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm p-3 h-100 bg-white rounded hms-module-card" style="border:1px solid #E2E8F0 !important;cursor:pointer;" onclick="admCCGo('users')">
-        <div class="d-flex align-items-center gap-3">
-          <div class="acc-icon-box" style="background-color:#E0F2FE;color:#0284C7;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      <div class="card border-0 shadow-sm h-100 admin-tile" style="border-radius:8px;border:1px solid #E2E8F0 !important;" onclick="admCCGo('users')">
+        <div class="card-body d-flex align-items-center p-3">
+          <div class="acc-icon-box bg-light-blue me-3 rounded">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
           </div>
-          <div class="flex-grow-1 text-center">
-            <span class="font-weight-bold text-uppercase d-block" style="color:#0F2D59;font-size:13px;letter-spacing:.5px;">USER MANAGEMENT</span>
-          </div>
+          <span class="font-weight-bold text-dark text-uppercase small tracking-wide">USER MANAGEMENT</span>
         </div>
       </div>
     </div>
 
-    <!-- CARD 2: ADD SERVICES & CATALOG -->
+    <!-- ADD SERVICES & CATALOG -->
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm p-3 h-100 bg-white rounded hms-module-card" style="border:1px solid #E2E8F0 !important;cursor:pointer;" onclick="admCCGo('prices')">
-        <div class="d-flex align-items-center gap-3">
-          <div class="acc-icon-box" style="background-color:#DCFCE7;color:#16A34A;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+      <div class="card border-0 shadow-sm h-100 admin-tile" style="border-radius:8px;border:1px solid #E2E8F0 !important;" onclick="admCCGo('prices')">
+        <div class="card-body d-flex align-items-center p-3">
+          <div class="acc-icon-box bg-light-green me-3 rounded">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </div>
-          <div class="flex-grow-1 text-center">
-            <span class="font-weight-bold text-uppercase d-block" style="color:#0F2D59;font-size:13px;letter-spacing:.5px;">ADD SERVICES &amp; CATALOG</span>
-          </div>
+          <span class="font-weight-bold text-dark text-uppercase small tracking-wide">ADD SERVICES &amp; CATALOG</span>
         </div>
       </div>
     </div>
 
-    <!-- CARD 3: PRICE ADJUSTMENT -->
+    <!-- PRICE ADJUSTMENT -->
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm p-3 h-100 bg-white rounded hms-module-card" style="border:1px solid #E2E8F0 !important;cursor:pointer;" onclick="admCCGo('prices')">
-        <div class="d-flex align-items-center gap-3">
-          <div class="acc-icon-box" style="background-color:#FEF3C7;color:#D97706;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+      <div class="card border-0 shadow-sm h-100 admin-tile" style="border-radius:8px;border:1px solid #E2E8F0 !important;" onclick="admCCGo('prices')">
+        <div class="card-body d-flex align-items-center p-3">
+          <div class="acc-icon-box bg-light-yellow me-3 rounded">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
           </div>
-          <div class="flex-grow-1 text-center">
-            <span class="font-weight-bold text-uppercase d-block" style="color:#0F2D59;font-size:13px;letter-spacing:.5px;">PRICE ADJUSTMENT</span>
-          </div>
+          <span class="font-weight-bold text-dark text-uppercase small tracking-wide">PRICE ADJUSTMENT</span>
         </div>
       </div>
     </div>
 
-    <!-- CARD 4: INVENTORY / STOCK ITEM -->
+    <!-- ADD STOCK ITEM -->
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm p-3 h-100 bg-white rounded hms-module-card" style="border:1px solid #E2E8F0 !important;cursor:pointer;" onclick="admCCGo('inventory_management')">
-        <div class="d-flex align-items-center gap-3">
-          <div class="acc-icon-box" style="background-color:#FCE7F3;color:#DB2777;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+      <div class="card border-0 shadow-sm h-100 admin-tile" style="border-radius:8px;border:1px solid #E2E8F0 !important;" onclick="admCCGo('inventory_management')">
+        <div class="card-body d-flex align-items-center p-3">
+          <div class="acc-icon-box bg-light-pink me-3 rounded">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
           </div>
-          <div class="flex-grow-1 text-center">
-            <span class="font-weight-bold text-uppercase d-block" style="color:#0F2D59;font-size:13px;letter-spacing:.5px;">ADD STOCK ITEM</span>
-          </div>
+          <span class="font-weight-bold text-dark text-uppercase small tracking-wide">ADD STOCK ITEM</span>
         </div>
       </div>
     </div>
 
-    <!-- CARD 5: CREATE NEW DEPARTMENT -->
+    <!-- CREATE NEW DEPARTMENT -->
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm p-3 h-100 bg-white rounded hms-module-card" style="border:1px solid #E2E8F0 !important;cursor:pointer;" onclick="admCCGo('departments')">
-        <div class="d-flex align-items-center gap-3">
-          <div class="acc-icon-box" style="background-color:#CCFBF1;color:#0D9488;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path></svg>
+      <div class="card border-0 shadow-sm h-100 admin-tile" style="border-radius:8px;border:1px solid #E2E8F0 !important;" onclick="admCCGo('departments')">
+        <div class="card-body d-flex align-items-center p-3">
+          <div class="acc-icon-box bg-light-cyan me-3 rounded">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
           </div>
-          <div class="flex-grow-1 text-center">
-            <span class="font-weight-bold text-uppercase d-block" style="color:#0F2D59;font-size:13px;letter-spacing:.5px;">CREATE NEW DEPARTMENT</span>
-          </div>
+          <span class="font-weight-bold text-dark text-uppercase small tracking-wide">CREATE NEW DEPARTMENT</span>
         </div>
       </div>
     </div>
 
-    <!-- CARD 6: CREATE NEW WARD / BED -->
+    <!-- CREATE NEW WARD / BED -->
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm p-3 h-100 bg-white rounded hms-module-card" style="border:1px solid #E2E8F0 !important;cursor:pointer;" onclick="admCCGo('wards')">
-        <div class="d-flex align-items-center gap-3">
-          <div class="acc-icon-box" style="background-color:#E0E7FF;color:#4F46E5;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20"></path></svg>
+      <div class="card border-0 shadow-sm h-100 admin-tile" style="border-radius:8px;border:1px solid #E2E8F0 !important;" onclick="admCCGo('wards')">
+        <div class="card-body d-flex align-items-center p-3">
+          <div class="acc-icon-box bg-light-purple me-3 rounded">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"></path><path d="M2 8h18a2 2 0 0 1 2 2v10"></path><path d="M2 17h20"></path><path d="M6 8v9"></path></svg>
           </div>
-          <div class="flex-grow-1 text-center">
-            <span class="font-weight-bold text-uppercase d-block" style="color:#0F2D59;font-size:13px;letter-spacing:.5px;">CREATE NEW WARD / BED</span>
-          </div>
+          <span class="font-weight-bold text-dark text-uppercase small tracking-wide">CREATE NEW WARD / BED</span>
         </div>
       </div>
     </div>
 
-    <!-- CARD 7: ADD BED / ROOM -->
+    <!-- ADD BED / ROOM -->
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm p-3 h-100 bg-white rounded hms-module-card" style="border:1px solid #E2E8F0 !important;cursor:pointer;" onclick="admCCGo('beds')">
-        <div class="d-flex align-items-center gap-3">
-          <div class="acc-icon-box" style="background-color:#FFEDD5;color:#EA580C;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 7V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v2"></path><path d="M3 13h18v4H3z"></path><path d="M3 17v3M21 17v3M7 7h10v6H7z"></path></svg>
+      <div class="card border-0 shadow-sm h-100 admin-tile" style="border-radius:8px;border:1px solid #E2E8F0 !important;" onclick="admCCGo('beds')">
+        <div class="card-body d-flex align-items-center p-3">
+          <div class="acc-icon-box bg-light-orange me-3 rounded">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v2"></path><path d="M3 13h18v4H3z"></path><path d="M3 17v3M21 17v3M7 7h10v6H7z"></path></svg>
           </div>
-          <div class="flex-grow-1 text-center">
-            <span class="font-weight-bold text-uppercase d-block" style="color:#0F2D59;font-size:13px;letter-spacing:.5px;">ADD BED / ROOM</span>
-          </div>
+          <span class="font-weight-bold text-dark text-uppercase small tracking-wide">ADD BED / ROOM</span>
         </div>
       </div>
     </div>
 
-    <!-- CARD 8: SYSTEM ACTIVITIES / AUDIT -->
+    <!-- SYSTEM ACTIVITIES / AUDIT -->
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm p-3 h-100 bg-white rounded hms-module-card" style="border:1px solid #E2E8F0 !important;cursor:pointer;" onclick="admCCGo('system-activities')">
-        <div class="d-flex align-items-center gap-3">
-          <div class="acc-icon-box" style="background-color:#F1F5F9;color:#475569;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path><rect x="9" y="3" width="6" height="4" rx="1"></rect><path d="M9 12h6M9 16h6"></path></svg>
+      <div class="card border-0 shadow-sm h-100 admin-tile" style="border-radius:8px;border:1px solid #E2E8F0 !important;" onclick="admCCGo('system-activities')">
+        <div class="card-body d-flex align-items-center p-3">
+          <div class="acc-icon-box bg-light-gray me-3 rounded">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path><rect x="9" y="3" width="6" height="4" rx="1"></rect><path d="M9 12h6M9 16h6"></path></svg>
           </div>
-          <div class="flex-grow-1 text-center">
-            <span class="font-weight-bold text-uppercase d-block" style="color:#0F2D59;font-size:13px;letter-spacing:.5px;">SYSTEM ACTIVITIES / AUDIT</span>
-          </div>
+          <span class="font-weight-bold text-dark text-uppercase small tracking-wide">SYSTEM ACTIVITIES / AUDIT</span>
         </div>
       </div>
     </div>
