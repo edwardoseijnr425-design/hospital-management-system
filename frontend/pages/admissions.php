@@ -20,6 +20,26 @@
     #adm-bill-table .num{text-align:right;white-space:nowrap}
     #adm-bill-table .ctr{text-align:center}
     #adm-bill-table .empty{text-align:center;padding:14px;color:#8A94A6}
+/* Item category leads the line-item row; the invoice it belongs to is shown
+   underneath the description, since one invoice spans several categories. */
+#adm-bill-table .cat{font-weight:700;font-size:9.5px;text-transform:uppercase;letter-spacing:.3px;color:#0F2D59;white-space:nowrap}
+.adm-bill-sec-label{background:#F1F5F9;color:#475569;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:5px 8px;border-bottom:1px solid #E1E8F0}
+/* ---- Invoice table above the line items ---- */
+#adm-bill-inv-scroll{max-height:170px;overflow-y:auto;border-bottom:1px solid #E1E8F0}
+#adm-bill-inv-table{width:100%;border-collapse:collapse;font-size:11px}
+#adm-bill-inv-table th{background:#E6EEF5;color:#222;font-size:10px;text-transform:uppercase;letter-spacing:.3px;text-align:left;padding:6px 8px;border-bottom:2px solid #b2c8de;position:sticky;top:0}
+#adm-bill-inv-table td{padding:6px 8px;border-bottom:1px solid #E1E8F0}
+#adm-bill-inv-table .num{text-align:right;white-space:nowrap}
+#adm-bill-inv-table .empty{text-align:center;padding:14px;color:#8A94A6}
+.inv-no{font-family:Consolas,'Courier New',monospace;font-weight:700;color:#0F2D59;font-size:10.5px}
+#adm-bill-sublabel{display:block;color:#94A3B8;font-family:Consolas,'Courier New',monospace;font-size:9.5px;margin-top:2px}
+.inv-sub{display:block;color:#94A3B8;font-family:Consolas,'Courier New',monospace;font-size:9.5px;font-weight:400;margin-top:2px}
+.stat{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.stat-paid{background:#DCFCE7;color:#166534}
+.stat-pending{background:#FEF3C7;color:#92400E}
+.stat-partial{background:#FEF3C7;color:#92400E}
+.stat-draft{background:#E2E8F0;color:#475569}
+.stat-cancelled{background:#FEE2E2;color:#991B1B}
     #adm-bill-foot{background:#F8FAFC;border-top:1px solid #E1E8F0;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px;color:#64748B}
     #adm-bill-foot .due{color:#C0392B;font-weight:800;font-size:12.5px}
     #adm-bill-foot .clear{color:#1E7A34;font-weight:800}
@@ -346,6 +366,11 @@
                         </span>
                     </div>
                     <div id="adm-bill-body">
+                        <div class="adm-bill-sec-label">Invoices</div>
+                        <div id="adm-bill-inv-scroll">
+                            <div class="empty" style="padding:14px;text-align:center;color:#8A94A6;font-size:12px;">Loading invoices...</div>
+                        </div>
+                        <div class="adm-bill-sec-label">Itemised Charges</div>
                         <div id="adm-bill-scroll">
                             <div class="empty" style="padding:14px;text-align:center;color:#8A94A6;font-size:12px;">Loading billing summary...</div>
                         </div>
@@ -898,27 +923,29 @@ function renderAdmissionBilling() {
     document.getElementById('adm-bill-count').textContent =
         inv.length ? (inv.length + (inv.length === 1 ? ' invoice' : ' invoices')) : '';
 
+    renderAdmissionInvoices();
+
     if (!inv.length) {
         scroll.innerHTML = '<div class="empty">No invoice has been raised for this patient yet.</div>';
     } else {
-        const statusLabel = { draft: 'Draft', pending: 'Pending', partial: 'Partial', paid: 'Paid', cancelled: 'Cancelled' };
         let html = '<table id="adm-bill-table"><thead><tr>'
-            + '<th>Item</th><th>Description</th><th class="ctr">Qty</th><th class="num">Unit (GHS)</th><th class="num">Total (GHS)</th>'
+            + '<th>Category</th><th>Description</th><th class="ctr">Qty</th><th class="num">Unit (GHS)</th><th class="num">Total (GHS)</th>'
             + '</tr></thead><tbody>';
         let any = false;
         inv.forEach(invoice => {
             const mine = items.filter(it => String(it.invoice_id) === String(invoice.id));
             if (!mine.length) {
-                html += '<tr><td>' + escHtml(invoice.invoice_number) + '</td><td colspan="4" class="empty" style="padding:8px;">'
-                    + 'No line items on this invoice &middot; <strong>' + escHtml(statusLabel[invoice.status] || invoice.status) + '</strong></td></tr>';
+                html += '<tr><td><span class="inv-no">' + escHtml(invoice.invoice_number) + '</span></td><td colspan="4" class="empty" style="padding:8px;">'
+                    + 'No line items on this invoice &middot; <strong>' + escHtml(admStatusLabel(invoice.status)) + '</strong></td></tr>';
                 any = true;
                 return;
             }
             mine.forEach(it => {
                 any = true;
                 html += '<tr>'
-                    + '<td>' + escHtml(invoice.invoice_number) + '</td>'
-                    + '<td>' + escHtml(it.description || it.item_type) + '</td>'
+                    + '<td class="cat">' + escHtml(admCatLabel(it.item_type)) + '</td>'
+                    + '<td>' + escHtml(it.description || it.item_type)
+                    + '<span class="inv-no inv-sub">' + escHtml(invoice.invoice_number) + '</span></td>'
                     + '<td class="ctr">' + Number(it.quantity || 1) + '</td>'
                     + '<td class="num">' + admMoney(it.unit_price) + '</td>'
                     + '<td class="num" style="font-weight:700;">' + admMoney(it.total_price) + '</td>'
@@ -951,12 +978,56 @@ function renderAdmissionBilling() {
     const pick = document.getElementById('adm-charge-invoice');
     const keep = pick.value;
     pick.innerHTML = openInvoices.length
-        ? openInvoices.map(i => '<option value="' + i.id + '">' + escHtml(i.invoice_number) + ' — ' + admMoney(i.net_amount) + ' (' + escHtml(statusLabel[i.status] || i.status) + ')</option>').join('')
+        ? openInvoices.map(i => '<option value="' + i.id + '">' + escHtml(i.invoice_number) + ' — ' + admMoney(i.net_amount) + ' (' + escHtml(admStatusLabel(i.status)) + ')</option>').join('')
         : '<option value="">-- No open invoice to add to --</option>';
     if (keep && openInvoices.some(i => String(i.id) === String(keep))) pick.value = keep;
     document.getElementById('adm-open-charge').disabled = !openInvoices.length;
     document.getElementById('adm-open-charge').style.opacity = openInvoices.length ? '1' : '.5';
     document.getElementById('adm-open-charge').style.cursor = openInvoices.length ? 'pointer' : 'not-allowed';
+}
+
+/* Invoice status, shown as a pill on each invoice row. */
+function admStatusLabel(status) {
+    return { draft: 'Draft', pending: 'Pending', partial: 'Partial', paid: 'Paid', cancelled: 'Cancelled' }[status] || status || '';
+}
+
+/* billing_items.item_type is an enum in the database; show it as the plain
+   word the mockup used rather than the raw underscore value. */
+function admCatLabel(type) {
+    return {
+        consultation: 'Consultation', procedure: 'Procedure', drug: 'Drug',
+        lab_test: 'Lab Test', radiology: 'Radiology', bed: 'Bed', other: 'Other'
+    }[type] || type || 'Other';
+}
+
+/* The invoice table above the line items. Every figure comes straight from
+   the invoices row - net_amount is what the patient owes on that invoice,
+   not a sum of its line items, so an invoice with a discount still reads
+   correctly. */
+function renderAdmissionInvoices() {
+    const box = document.getElementById('adm-bill-inv-scroll');
+    const inv = admBilling.invoices;
+    if (!box) return;
+
+    if (!inv.length) {
+        box.innerHTML = '<div class="empty">No invoice has been raised for this patient yet.</div>';
+        return;
+    }
+
+    let html = '<table id="adm-bill-inv-table"><thead><tr>'
+        + '<th>Invoice No</th><th>Date</th><th>Status</th><th class="num">Net (GHS)</th>'
+        + '</tr></thead><tbody>';
+    inv.forEach(invoice => {
+        const key = String(invoice.status || '').toLowerCase();
+        html += '<tr>'
+            + '<td><span class="inv-no">' + escHtml(invoice.invoice_number) + '</span></td>'
+            + '<td>' + escHtml(fmtDateTime(invoice.created_at)) + '</td>'
+            + '<td><span class="stat stat-' + escHtml(key) + '">' + escHtml(admStatusLabel(invoice.status)) + '</span></td>'
+            + '<td class="num" style="font-weight:700;">' + admMoney(invoice.net_amount) + '</td>'
+            + '</tr>';
+    });
+    html += '</tbody></table>';
+    box.innerHTML = html;
 }
 
 function admMoney(v) {
