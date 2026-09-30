@@ -187,36 +187,47 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
   </div>
 
   <!-- CURRENT PATIENT ACCESS CLICKABLE CARD -->
-  <div class="current-patient-card" id="currentPatientCard" onclick="toggleCurrentPatients()" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 12px;">
-    <div style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px; background: #f8fafc;">
-      <!-- Patient Icon -->
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+  <div class="current-patient-card" id="currentPatientCard" onclick="toggleCurrentPatients()" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #0dcaf0; border: 1px solid #0bb5d6; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 12px;">
+    <div style="border: 1px solid rgba(255,255,255,.6); border-radius: 4px; padding: 8px; background: rgba(255,255,255,.18);">
+      <!-- User icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
     </div>
     <div style="display: flex; flex-direction: column;">
-      <span style="font-weight: 700; color: #1e3a8a; font-size: 13px; letter-spacing: 0.5px;">CURRENT PATIENT ACCESS</span>
-      <span style="font-size: 10.5px; color: #64748b;">Click to view currently admitted/active patients</span>
+      <span style="font-weight: 700; color: #FFFFFF; font-size: 13px; letter-spacing: 0.5px;">CURRENT PATIENT ACCESS</span>
+      <span style="font-size: 10.5px; color: rgba(255,255,255,.92);">Click to view currently admitted/active patients</span>
     </div>
+    <span style="margin-left: auto; color: #FFFFFF; font-weight: 700; font-size: 16px; transform: rotate(90deg);" id="cpa-chevron">&#8250;</span>
   </div>
 
   <!-- Expandable / Modal View for Current Patients (Hidden by default) -->
   <div id="currentPatientsPanel" style="display: none; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; margin-bottom: 16px;">
     <div style="font-weight: 700; color: #1e3a8a; font-size: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-      <span>ACTIVE PATIENTS LIST</span>
+      <span>ACTIVE &amp; NEWLY ADMITTED PATIENTS</span>
       <span style="font-size: 10px; color: #64748b; cursor: pointer;" onclick="toggleCurrentPatients()">[ Close ]</span>
     </div>
+
+    <!-- SEARCH BAR -->
+    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+      <input type="text" id="cpaSearchInput" class="form-control form-control-sm" placeholder="Search by Patient Name, Patient No, or Admission No..." style="flex: 1;" onkeydown="if(event.key==='Enter'){ event.preventDefault(); loadCurrentPatients(); }">
+      <button type="button" class="btn btn-sm font-weight-bold" style="background-color:#0EA5E9; border:none; color:#fff; border-radius:4px; white-space:nowrap;" onclick="loadCurrentPatients()">SEARCH</button>
+      <button type="button" class="btn btn-sm font-weight-bold" style="background:#fff; color:#475569; border:1px solid #CBD5E1; border-radius:4px; white-space:nowrap;" onclick="document.getElementById('cpaSearchInput').value=''; loadCurrentPatients();">CLEAR</button>
+    </div>
+
     <div style="overflow-x:auto;">
       <table style="width: 100%; font-size: 11.5px; border-collapse: collapse;">
         <thead>
-          <tr style="background: #f8fafc; color: #1e3a8a; text-align: left; border-bottom: 1px solid #e2e8f0;">
-            <th style="padding: 6px;">PATIENT NAME</th>
-            <th style="padding: 6px;">FOLDER NO</th>
-            <th style="padding: 6px;">WARD / BED</th>
-            <th style="padding: 6px;">ADMISSION TIME</th>
+          <tr style="background: #212529; color: #fff; text-align: left; border-bottom: 2px solid #343A40;">
+            <th style="padding: 8px;">ADMISSION NO</th>
+            <th style="padding: 8px;">ADMISSION DATE</th>
+            <th style="padding: 8px;">PATIENT DETAILS</th>
+            <th style="padding: 8px;">WARD / BED</th>
+            <th style="padding: 8px;">STATUS</th>
+            <th style="padding: 8px; text-align: center;">PATIENT ACCESS</th>
           </tr>
         </thead>
         <tbody id="currentPatientsTableBody">
           <tr style="border-bottom: 1px solid #f1f5f9;">
-            <td style="padding: 6px; color:#94A3B8;">Loading active patients...</td>
+            <td colspan="6" style="padding: 10px; color:#94A3B8;">Loading active patients...</td>
           </tr>
         </tbody>
       </table>
@@ -585,25 +596,41 @@ function toggleCurrentPatients() {
 async function loadCurrentPatients() {
     const tbody = document.getElementById('currentPatientsTableBody');
     if (!tbody) return;
+    const q = (document.getElementById('cpaSearchInput') ? document.getElementById('cpaSearchInput').value.trim() : '');
     try {
-        const response = await fetch('/hms/backend/api/admissions.php?status=Admitted');
+        let url = '/hms/backend/api/admissions.php?status=Admitted';
+        if (q) url += '&q=' + encodeURIComponent(q);
+        const response = await fetch(url);
         const data = await response.json();
         const admissions = (data.success && data.admissions) ? data.admissions : [];
         currentPatientsLoaded = true;
         if (!admissions.length) {
-            tbody.innerHTML = '<tr style="border-bottom:1px solid #f1f5f9;"><td colspan="4" style="padding:10px;text-align:center;color:#94A3B8;">No patients currently admitted.</td></tr>';
+            tbody.innerHTML = '<tr style="border-bottom:1px solid #f1f5f9;"><td colspan="6" style="padding:10px;text-align:center;color:#94A3B8;">' + (q ? 'No patients match “' + escHtml(q) + '”.' : 'No patients currently admitted.') + '</td></tr>';
             return;
         }
         tbody.innerHTML = admissions.map(a => `
             <tr style="border-bottom: 1px solid #f1f5f9;">
-                <td style="padding: 6px; font-weight: 600;">${escHtml(a.patient_name || '-')}</td>
-                <td style="padding: 6px;">${escHtml(a.hospital_number || '-')}</td>
-                <td style="padding: 6px;">${escHtml(a.ward_name || '-')} / Bed ${escHtml(a.bed_number || '-')}</td>
-                <td style="padding: 6px;">${fmtDateTime(a.admission_date)}</td>
+                <td style="padding: 6px; font-weight: 600;">${escHtml(a.admission_code || '-')}</td>
+                <td style="padding: 6px; white-space: nowrap;">${escHtml(fmtDateTime(a.admission_date))}</td>
+                <td style="padding: 6px;">
+                    <strong style="color:#0072BC;">${escHtml(a.patient_name || '-')}</strong><br>
+                    <small style="color:#64748B;">No: ${escHtml(a.hospital_number || '-')}${a.gender ? ' | ' + escHtml(a.gender.charAt(0).toUpperCase() + a.gender.slice(1)) : ''}${a.age != null ? ', ' + escHtml(a.age) + ' yrs' : ''}</small>
+                </td>
+                <td style="padding: 6px;">
+                    <span style="display:inline-block;padding:2px 8px;border:1px solid #E2E8F0;border-radius:4px;background:#f8fafc;white-space:nowrap;">${escHtml(a.ward_name || '-')} - Bed ${escHtml(a.bed_number || '-')}</span>
+                </td>
+                <td style="padding: 6px;">
+                    <span class="badge" style="background:#198754;color:#fff;">${escHtml(a.status || 'Admitted')}</span>
+                </td>
+                <td style="padding: 6px; text-align: center; white-space: nowrap;">
+                    <button class="btn btn-sm btn-outline-primary font-weight-bold px-2 py-1" style="font-size:10px;" onclick="navigateTo('records')">Profile &amp; EMR</button>
+                    <button class="btn btn-sm font-weight-bold px-2 py-1" style="font-size:10px;background:#fff;color:#B9770E;border:1px solid #F39C12;border-radius:4px;" onclick="openRecordVitalsModal(${a.patient_id})">Vitals</button>
+                    <button class="btn btn-sm btn-outline-secondary font-weight-bold px-2 py-1" style="font-size:10px;" onclick="navigateTo('visits')">History</button>
+                </td>
             </tr>`).join('');
     } catch (error) {
         console.error('Current patients load error:', error);
-        tbody.innerHTML = '<tr style="border-bottom:1px solid #f1f5f9;"><td colspan="4" style="padding:10px;text-align:center;color:#C0392B;">Failed to load active patients.</td></tr>';
+        tbody.innerHTML = '<tr style="border-bottom:1px solid #f1f5f9;"><td colspan="6" style="padding:10px;text-align:center;color:#C0392B;">Failed to load active patients.</td></tr>';
     }
 }
 

@@ -1,62 +1,160 @@
-<div class="card">
-    <div class="card-header">
-        <h2>Appointment Calendar</h2>
-        <button class="btn btn-primary btn-sm" id="new-appointment-btn">Schedule Appointment</button>
-    </div>
-    <div class="card-body">
-        <div class="stats-grid" style="margin-bottom:18px;">
-            <div class="stat-card">
-                <div class="stat-icon primary">&#128197;</div>
-                <div class="stat-info"><h3 id="stat-today">0</h3><p>Today</p></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon success">&#9201;</div>
-                <div class="stat-info"><h3 id="stat-upcoming">0</h3><p>Upcoming</p></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon warning">&#9989;</div>
-                <div class="stat-info"><h3 id="stat-completed">0</h3><p>Completed</p></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon danger">&#10060;</div>
-                <div class="stat-info"><h3 id="stat-cancelled">0</h3><p>Cancelled</p></div>
-            </div>
-        </div>
+<style>
+/* ============ OPERATION THEATRE CALENDAR : PASTED DESIGN ============
+   Scoped under #otc-page. The shell has no Bootstrap, so the pasted
+   bg-* / dark-thead / badge utilities are declared here locally. */
+#otc-page .d-flex{display:flex}
+#otc-page .align-items-center{align-items:center}
+#otc-page .justify-content-between{justify-content:space-between}
+#otc-page .gap-2{gap:.5rem}
+#otc-page .ps-2{padding-left:.5rem}
+#otc-page .p-2{padding:.5rem}
+#otc-page .rounded{border-radius:8px}
+#otc-page .mb-3{margin-bottom:1rem}
+#otc-page .mb-0{margin:0}
+#otc-page .fw-bold{font-weight:700}
+#otc-page .text-uppercase{text-transform:uppercase}
+#otc-page .text-white{color:#fff}
+#otc-page .text-dark{color:#212529}
+#otc-page .text-muted{color:#6c757d}
+#otc-page .text-center{text-align:center}
+#otc-page .py-4{padding-top:1.5rem;padding-bottom:1.5rem}
 
-        <div class="form-row">
-            <div class="form-group">
-                <select id="filter-appt-status">
-                    <option value="">All Statuses</option>
-                    <option value="scheduled">Scheduled</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                    <option value="no_show">No Show</option>
-                </select>
-            </div>
-        </div>
+/* Top header banner (matches the pasted blue bar) */
+#otc-page .otc-banner{
+    background-color:#0d6efd;color:#fff;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:.5rem .5rem .5rem .75rem;border-radius:8px;
+    box-shadow:0 .125rem .25rem rgba(0,0,0,.075);margin-bottom:1rem;
+}
+#otc-page .otc-banner h5{margin:0;color:#fff;font-weight:700;text-transform:uppercase;font-size:15px;letter-spacing:.5px}
+#otc-page .btn-light{background:#fff;color:#0d6efd;border:1px solid #fff}
+#otc-page .btn-light:hover{background:#E9ECEF}
+#otc-page .btn-success{background:#198754;color:#fff;border:none}
+#otc-page .btn-success:hover{filter:brightness(1.08)}
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Appointment Date</th>
-                        <th>Patient</th>
-                        <th>Hospital No.</th>
-                        <th>Doctor</th>
-                        <th>Consultation</th>
-                        <th>Visit</th>
-                        <th>Reason</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="appointments-table">
-                    <tr><td colspan="9" style="text-align: center;">Loading...</td></tr>
-                </tbody>
-            </table>
-        </div>
+/* Main card (blue header strip + white body) */
+#otc-page .otc-card{
+    background:#fff;border:1px solid #E2E8F0;border-radius:8px;
+    box-shadow:0 .125rem .25rem rgba(0,0,0,.075);overflow:hidden;
+}
+#otc-page .otc-card-head{
+    background-color:#0d6efd;color:#fff;font-weight:700;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    padding:12px 16px;
+}
+#otc-page .otc-card-body{padding:1rem}
+
+/* Stats strip (kept real — same statistical backend as before) */
+#otc-page .otc-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
+#otc-page .otc-stat{background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:12px}
+#otc-page .otc-stat b{font-size:22px;color:#0F2D59}
+#otc-page .otc-stat span{font-size:10px;font-weight:700;letter-spacing:.4px;color:#64748B;text-transform:uppercase}
+
+/* Filter row */
+#otc-page .otc-filterrow{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+#otc-page .otc-filterrow select{padding:8px 12px;border:1px solid #CBD5E1;border-radius:6px;font-size:12.5px;font-family:inherit;color:#334155;background:#fff}
+
+/* Dark-thead table (matches the pasted thead class="table-dark") */
+#otc-page .otc-table{width:100%;border-collapse:collapse;font-size:13px}
+#otc-page .otc-table thead th{
+    background:#212529;color:#fff;font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.5px;text-align:left;
+    padding:10px 12px;border-bottom:2px solid #343A40;white-space:nowrap;
+}
+#otc-page .otc-table tbody td{padding:9px 12px;border-bottom:1px solid #E2E8F0;vertical-align:middle}
+#otc-page .otc-table tbody tr:hover{background:#F5F9FD}
+#otc-page .otc-table tbody tr:last-child td{border-bottom:none}
+
+/* Bootstrap-style badges (bg-*) used in the pasted status column */
+#otc-page .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap}
+#otc-page .bg-warning{background:#ffc107;color:#212529}
+#otc-page .bg-info{background:#0dcaf0;color:#212529}
+#otc-page .bg-success{background:#198754;color:#fff}
+#otc-page .bg-danger{background:#dc3545;color:#fff}
+#otc-page .bg-secondary{background:#6c757d;color:#fff}
+
+/* Small action buttons (btn-sm equivalents) */
+#otc-page .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:5px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:6px 12px;cursor:pointer;line-height:1;transition:background .15s,filter .15s;text-decoration:none;white-space:nowrap}
+#otc-page .btn-secondary{background:#F1F5F9;color:#34495E;border:1px solid #C0C0C0}
+#otc-page .btn-secondary:hover{background:#E4EAF1}
+#otc-page .btn-warning{background:#ffc107;color:#212529}
+#otc-page .btn-danger{background:#dc3545;color:#fff}
+#otc-page .btn-outline-primary{background:#fff;color:#0d6efd;border:1px solid #0d6efd}
+#otc-page .btn-outline-primary:hover{background:#F0F6FF}
+#otc-page .btn-outline-info{background:#fff;color:#0dcaf0;border:1px solid #0dcaf0}
+#otc-page .btn-outline-info:hover{background:#F0FBFF}
+</style>
+<div id="otc-page">
+
+  <!-- TOP HEADER BANNER -->
+  <div class="otc-banner">
+    <div class="d-flex align-items-center gap-2 ps-2">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+      <h5>OPERATION THEATRE CALENDAR</h5>
     </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="#" class="btn btn-light fw-bold" onclick="otcNavHome(event)">HOME</a>
+      <button class="btn btn-light fw-bold" onclick="otcGoBack(event)">&lt; BACK</button>
+    </div>
+  </div>
+
+  <!-- MAIN CARD -->
+  <div class="otc-card">
+    <div class="otc-card-head">
+      <span>BOOKED OPERATIONS &amp; PATIENT SCHEDULES</span>
+      <button class="btn btn-success fw-bold" id="new-appointment-btn">+ BOOK NEW OPERATION</button>
+    </div>
+    <div class="otc-card-body">
+
+      <!-- Real stats strip -->
+      <div class="otc-stats">
+        <div class="otc-stat"><b id="stat-today">0</b><span>Today</span></div>
+        <div class="otc-stat"><b id="stat-upcoming">0</b><span>Upcoming</span></div>
+        <div class="otc-stat"><b id="stat-completed">0</b><span>Completed</span></div>
+        <div class="otc-stat"><b id="stat-cancelled">0</b><span>Cancelled</span></div>
+      </div>
+
+      <!-- Status filter -->
+      <div class="otc-filterrow">
+        <select id="filter-appt-status">
+          <option value="">All Statuses</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="no_show">No Show</option>
+        </select>
+      </div>
+
+      <!-- Booked operations / patient schedules table -->
+      <div style="overflow-x:auto;">
+        <table class="otc-table">
+          <thead>
+            <tr>
+              <th>Date &amp; Time</th>
+              <th>Patient No</th>
+              <th>Patient Name</th>
+              <th>Doctor</th>
+              <th>Consultation</th>
+              <th>Visit</th>
+              <th>Status</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="appointments-table">
+            <tr><td colspan="8" class="text-center" style="padding:18px;color:#64748B;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
 </div>
 
 <!-- Schedule Appointment Modal -->
@@ -131,6 +229,8 @@
 let appointmentsData = [];
 let patientsCache = [];
 let doctorsCache = [];
+function otcNavHome(e){ if(e) e.preventDefault(); if(window.navigateTo) window.navigateTo('dashboard'); else if(window.loadPage) window.loadPage('dashboard'); }
+function otcGoBack(e){ if(e) e.preventDefault(); if(window.goBackPage && typeof window.goBackPage==='function') window.goBackPage(); else if(window.navigateTo) window.navigateTo('dashboard'); }
 async function initAppointmentCalendar() {
     setupEventListeners();
     await Promise.all([loadPatients(), loadDoctors(), loadAppointments(), loadStats()]);
@@ -183,7 +283,7 @@ async function loadAppointments() {
         }
     } catch (error) {
         console.error('Appointments load error:', error);
-        document.getElementById('appointments-table').innerHTML = '<tr><td colspan="9" style="text-align:center;">Failed to load appointments</td></tr>';
+        document.getElementById('appointments-table').innerHTML = '<tr><td colspan="8" class="text-center" style="padding:18px;color:#C0392B;">Failed to load appointments</td></tr>';
     }
 }
 
@@ -203,34 +303,44 @@ async function loadStats() {
 function renderTable() {
     const tbody = document.getElementById('appointments-table');
     if (!appointmentsData.length) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No appointments found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center" style="padding:18px;color:#94A3B8;">No booked operations / appointments found.</td></tr>';
         return;
     }
     tbody.innerHTML = appointmentsData.map(a => {
-        const badge = a.status === 'completed' ? 'badge-success'
-            : a.status === 'cancelled' || a.status === 'no_show' ? 'badge-danger'
-            : a.status === 'confirmed' ? 'badge-info' : 'badge-warning';
-        const consultClass = a.consultation_type === 'EMERGENCY' ? 'badge-danger'
-            : a.consultation_type === 'ENT' ? 'badge-warning'
-            : a.consultation_type === 'EYE' ? 'badge-info' : 'badge-success';
-        const visitClass = a.visit_type === 'Review' ? 'badge-secondary' : 'badge-info';
+        const badge = a.status === 'completed' ? 'bg-success'
+            : a.status === 'cancelled' || a.status === 'no_show' ? 'bg-danger'
+            : a.status === 'confirmed' ? 'bg-info'
+            : a.status === 'scheduled' ? 'bg-warning' : 'bg-secondary';
+        const consultBadge = a.consultation_type === 'EMERGENCY' ? 'bg-danger'
+            : a.consultation_type === 'ENT' ? 'bg-warning'
+            : a.consultation_type === 'EYE' ? 'bg-info' : 'bg-success';
+        const visitBadge = a.visit_type === 'Review' ? 'bg-secondary' : 'bg-info';
+        const dtText = fmtDateTime(a.appointment_date);
+        const dtParts = String(dtText).split(' ');
+        const datePart = dtParts[0] || '-';
+        const timePart = dtParts.length > 1 ? dtParts.slice(1).join(' ') : '';
         return `
         <tr>
-            <td>${fmtDateTime(a.appointment_date)}</td>
-            <td><strong>${a.patient_name || '-'}</strong></td>
-            <td>${a.hospital_number || '-'}</td>
-            <td>${a.doctor_name || '-'}</td>
-            <td><span class="badge ${consultClass}">${a.consultation_type || 'OPD'}</span></td>
-            <td><span class="badge ${visitClass}">${a.visit_type || 'New'}</span></td>
-            <td>${a.reason || '-'}</td>
-            <td><span class="badge ${badge}">${(a.status || '').replace('_', ' ')}</span></td>
-            <td style="white-space:nowrap;">
-                <button class="btn btn-sm btn-secondary" onclick="openEditAppointment(${a.id})">Edit</button>
+            <td>
+                <strong>${escHtml(datePart)}</strong><br>
+                <small class="text-muted">${escHtml(timePart)}</small>
+            </td>
+            <td><span class="badge bg-secondary">${escHtml(a.hospital_number || '-')}</span></td>
+            <td>
+                <strong>${escHtml(a.patient_name || '-')}</strong><br>
+                <small class="text-muted">${escHtml((a.reason || '') || '-')}</small>
+            </td>
+            <td>${escHtml(a.doctor_name || '-')}</td>
+            <td><span class="badge ${consultBadge}">${escHtml(a.consultation_type || 'OPD')}</span></td>
+            <td><span class="badge ${visitBadge}">${escHtml(a.visit_type || 'New')}</span></td>
+            <td><span class="badge ${badge}">${escHtml((a.status || '').replace('_', ' '))}</span></td>
+            <td class="text-center" style="white-space:nowrap;">
+                <button class="btn btn-outline-primary" onclick="openEditAppointment(${a.id})">Edit</button>
                 ${a.status === 'scheduled' || a.status === 'confirmed'
-                    ? `<button class="btn btn-sm btn-success" onclick="setApptStatus(${a.id}, 'completed')">Complete</button>
-                       <button class="btn btn-sm btn-warning" onclick="setApptStatus(${a.id}, 'cancelled')">Cancel</button>`
+                    ? `<button class="btn btn-success" onclick="setApptStatus(${a.id}, 'completed')">Complete</button>
+                       <button class="btn btn-warning" onclick="setApptStatus(${a.id}, 'cancelled')">Cancel</button>`
                     : ''}
-                <button class="btn btn-sm btn-danger" onclick="deleteAppointment(${a.id})">Delete</button>
+                <button class="btn btn-danger" onclick="deleteAppointment(${a.id})">Delete</button>
             </td>
         </tr>`;
     }).join('');

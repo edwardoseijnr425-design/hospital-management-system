@@ -226,6 +226,8 @@ function listAdmissions() {
     $sql = "SELECT a.*,
                    CONCAT_WS(' ', p.first_name, NULLIF(p.middle_name, ''), p.last_name) AS patient_name,
                    p.hospital_number,
+                   p.gender,
+                   TIMESTAMPDIFF(YEAR, p.date_of_birth, CURDATE()) AS age,
                    w.ward_name,
                    b.bed_number,
                    r.room_type AS bed_type,
