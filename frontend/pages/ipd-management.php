@@ -1,175 +1,173 @@
 <style>
-/* Container: Stretch full width of parent with relaxed padding */
-.ipd-dashboard-wrapper,
-.lab-dashboard-wrapper {
-  width: 100%;
-  padding: 24px;
-  background-color: #f0f4f8;
-  border-radius: 6px;
-  box-sizing: border-box;
+/* ============ IPD MANAGEMENT DASHBOARD : SYSTEM DASHBOARD-STYLE GRID ============
+   Scoped under #ipd-page. The shell already provides card/card-body/row/
+   col-md-6/font-weight-bold/text-uppercase and auto-appends the contact banner
+   below every module page. Tile look follows the pasted IPD main-grid design
+   (soft pastel icon badges, hover lift) matching the System Dashboard tiles. */
+#ipd-page .mb-3{margin-bottom:1rem}
+#ipd-page .mb-0{margin:0}
+#ipd-page .p-2{padding:.5rem}
+#ipd-page .p-3{padding:1rem}
+#ipd-page .gap-3{gap:1rem}
+#ipd-page .rounded{border-radius:8px}
+#ipd-page .text-dark{color:#0F2D59}
+#ipd-page .text-primary{color:#0d6efd}
+#ipd-page .text-muted{color:#64748B}
+#ipd-page .align-items-center{align-items:center}
+#ipd-page .d-flex{display:flex}
+
+/* Tile hover animation + border matching the pasted design */
+#ipd-page .ipd-tile{
+    background-color:#ffffff;
+    transition:transform .15s ease-in-out, box-shadow .15s ease-in-out;
+    border:1px solid #e3e6f0 !important;
+    cursor:pointer;
+    text-decoration:none;
+}
+#ipd-page .ipd-tile:hover{
+    transform:translateY(-2px);
+    box-shadow:0 .5rem 1rem rgba(0,0,0,.08) !important;
 }
 
-/* 2-Column Grid: Expands to full available width */
-.ipd-grid-container,
-.lab-grid-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px 24px; /* Generous gap between cards */
-  width: 100%;
+/* Soft color background badges matching System Dashboard */
+#ipd-page .icon-box{
+    width:50px;
+    height:50px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 auto;
+}
+#ipd-page .bg-primary-subtle{background-color:#e8f1ff !important;color:#0d6efd}
+#ipd-page .bg-info-subtle{background-color:#e0f8ff !important;color:#0891b2}
+#ipd-page .bg-success-subtle{background-color:#e6f9ed !important;color:#16a34a}
+#ipd-page .bg-secondary-subtle{background-color:#f1f3f5 !important;color:#475569}
+#ipd-page .bg-warning-subtle{background-color:#fef7e0 !important;color:#d97706}
+#ipd-page .bg-danger-subtle{background-color:#fde8e8 !important;color:#dc2626}
+
+/* Active (shown) state for the WARDS, ROOMS & BED STATUS tile */
+#ipd-page .ipd-tile.active{
+    border-color:#0072BC !important;
+    box-shadow:0 0 0 2px rgba(0,114,188,.22) !important;
 }
 
-/* Cards: Increased height, padding, and flex alignment */
-.ipd-card,
-.lab-card {
-  display: flex;
-  align-items: center;
-  background-color: #ffffff;
-  border: 1px solid #d0dbe5;
-  border-radius: 6px;
-  height: 85px; /* Increased card height from 70px to 85px */
-  padding: 0 24px;
-  text-decoration: none;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease-in-out;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.ipd-card:hover,
-.lab-card:hover {
-  background-color: #f8fafc;
-  border-color: #0b3c5d;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-}
-
-.ipd-card.active {
-  border-color: #0072BC;
-  box-shadow: 0 0 0 2px rgba(0, 114, 188, 0.22);
-}
-
-/* Icon Box: Scaled up to match larger card proportions */
-.ipd-card-icon,
-.lab-card-icon {
-  width: 58px; /* Increased from 48px */
-  height: 58px; /* Increased from 48px */
-  border: 1px solid #b2c4d4;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px; /* Scaled icon size */
-  color: #102a43;
-  background-color: #ffffff;
-  flex-shrink: 0;
-}
-
-/* Card Title: Larger typography for better visual balance */
-.ipd-card-title,
-.lab-card-title {
-  color: #0b3c5d; /* Dark blue matching main menu */
-  font-size: 15px; /* Increased font size */
-  font-weight: 700;
-  font-family: Arial, sans-serif;
-  line-height: 1.3;
-  text-transform: uppercase;
-  margin-left: 20px;
-  text-align: left;
-}
+/* Bed status panel mini-stats */
 .stat-mini{border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;background:#fff;}
 .stat-mini .stat-mini-label{font-size:10px;font-weight:800;letter-spacing:.4px;color:#64748B;text-transform:uppercase;}
 .stat-mini .stat-mini-value{font-size:20px;font-weight:800;color:#0F2D59;margin-top:2px;}
-</style>
+</style><div id="ipd-page">
 
-<!-- ============ IPD MANAGEMENT DASHBOARD ============ -->
-<div class="card">
+  <!-- ============ IPD MANAGEMENT DASHBOARD ============ -->
+  <div class="card">
     <div class="card-header">
-        <div>
-            <h2 style="margin:0;color:#0072BC;font-weight:800;">IPD MANAGEMENT DASHBOARD</h2>
-            <p style="margin:3px 0 0;font-size:12px;color:#4A7A9E;">Quick access to every in-patient module — click a tile to open that section, or click WARDS, ROOMS &amp; BED STATUS to view the bed status panel below.</p>
-        </div>
+      <div>
+        <h2 style="margin:0;color:#0072BC;font-weight:800;">IPD MANAGEMENT DASHBOARD</h2>
+        <p style="margin:3px 0 0;font-size:12px;color:#4A7A9E;">Quick access to every in-patient module — click a tile to open that section, or click WARDS, ROOMS &amp; BED STATUS to view the bed status panel below.</p>
+      </div>
     </div>
     <div class="card-body">
-        <div class="ipd-dashboard-wrapper">
-            <div class="ipd-grid-container" id="ipd-grid">
-                <div style="grid-column:1/-1;text-align:center;color:#94A3B8;padding:18px 0;">Loading IPD modules...</div>
-            </div>
-        </div>
+      <!-- 2-COLUMN MODULE GRID (matches the pasted IPD main grid) -->
+      <div class="row row-cols-1 row-cols-md-2 g-3 mb-3" id="ipd-grid">
+        <div class="col-12" style="grid-column:1/-1;text-align:center;color:#94A3B8;padding:18px 0;">Loading IPD modules...</div>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- ============ WARD / BED / STATUS (shown when the WARDS, ROOMS & BED STATUS tile is clicked) ============ -->
-<div class="card" id="bed-status-section" style="display:none;">
+  <!-- ============ WARD / BED / STATUS (shown when the WARDS, ROOMS & BED STATUS tile is clicked) ============ -->
+  <div class="card" id="bed-status-section" style="display:none;">
     <div class="card-header">
-        <div>
-            <h2 style="margin:0;color:#0072BC;font-weight:800;"><i class="fa-solid fa-bed" style="margin-right:8px;"></i>WARD · BED · STATUS</h2>
-            <p style="margin:3px 0 0;font-size:12px;color:#64748B;">Bed occupancy across all wards — click “WARDS, ROOMS &amp; BED STATUS” above to toggle this panel.</p>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-            <select id="filter-ward-admission" style="min-width:170px;">
-                <option value="">All Wards</option>
-            </select>
-            <button class="btn btn-secondary btn-sm" id="refresh-beds-btn">Refresh</button>
-        </div>
+      <div>
+        <h2 style="margin:0;color:#0072BC;font-weight:800;"><i class="fa-solid fa-bed" style="margin-right:8px;"></i>WARD · BED · STATUS</h2>
+        <p style="margin:3px 0 0;font-size:12px;color:#64748B;">Bed occupancy across all wards — click “WARDS, ROOMS &amp; BED STATUS” above to toggle this panel.</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="filter-ward-admission" style="min-width:170px;">
+          <option value="">All Wards</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" id="refresh-beds-btn">Refresh</button>
+      </div>
     </div>
     <div class="card-body">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;">
-            <div class="stat-mini"><div class="stat-mini-label">Total Beds</div><div class="stat-mini-value" id="statBedsTotal">0</div></div>
-            <div class="stat-mini"><div class="stat-mini-label">Occupied</div><div class="stat-mini-value" id="statBedsOccupied" style="color:#E53E3E;">0</div></div>
-            <div class="stat-mini"><div class="stat-mini-label">Available</div><div class="stat-mini-value" id="statBedsAvailable" style="color:#2E7D32;">0</div></div>
-        </div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Ward</th>
-                        <th>Bed No.</th>
-                        <th>Room</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                        <th>Current Patient</th>
-                    </tr>
-                </thead>
-                <tbody id="beds-table">
-                    <tr><td colspan="6" style="text-align:center;">Loading...</td></tr>
-                </tbody>
-            </table>
-        </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;">
+        <div class="stat-mini"><div class="stat-mini-label">Total Beds</div><div class="stat-mini-value" id="statBedsTotal">0</div></div>
+        <div class="stat-mini"><div class="stat-mini-label">Occupied</div><div class="stat-mini-value" id="statBedsOccupied" style="color:#E53E3E;">0</div></div>
+        <div class="stat-mini"><div class="stat-mini-label">Available</div><div class="stat-mini-value" id="statBedsAvailable" style="color:#2E7D32;">0</div></div>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Ward</th>
+              <th>Bed No.</th>
+              <th>Room</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Current Patient</th>
+            </tr>
+          </thead>
+          <tbody id="beds-table">
+            <tr><td colspan="6" style="text-align:center;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
+
 </div>
 
 <script>
 let bedsData = [];
 
-const IPD_CARDS = [
-    { fa: 'fa-solid fa-bed', label: 'WARDS, ROOMS & BED STATUS', page: 'wards' },
-    { fa: 'fa-solid fa-clipboard-user', label: 'CURRENT PATIENT ACCESS', page: 'patients' },
-    { fa: 'fa-solid fa-address-card', label: 'ADMIT PATIENT', page: 'admissions' },
-    { fa: 'fa-solid fa-file-lines', label: 'DRAFT ADMISSIONS', page: 'records' },
-    { fa: 'fa-solid fa-user-nurse', label: 'NURSING STATION', page: 'vitals' },
-    { fa: 'fa-solid fa-user-doctor', label: 'DOCTOR STATION', page: 'consultations' },
-    { fa: 'fa-solid fa-cash-register', label: 'BILLING MANAGEMENT', page: 'account-management' },
-    { fa: 'fa-solid fa-chart-pie', label: 'REPORTS', page: 'reports' },
-    { fa: 'fa-solid fa-users', label: 'SHIFT PLAN', page: 'users' },
-    { fa: 'fa-solid fa-laptop-medical', label: 'MIS', page: 'system-activities' },
-    { fa: 'fa-solid fa-folder-open', label: 'REGISTERS', page: 'records' },
-    { fa: 'fa-solid fa-calendar-check', label: 'OPERATION THEATRE CALENDAR', page: 'appointment-calendar' }
+/* IPD module grid: real SPA routing keys (WARDS tile toggles the bed-status
+   panel instead of navigating; the rest call loadPage). */
+const IPD_TILES = [
+    { label: 'WARDS, ROOMS & BED STATUS', sub: '',        icon: 'bed',   color: 'bg-primary-subtle text-primary',   page: 'wards' },
+    { label: 'CURRENT PATIENT ACCESS',    sub: 'Click to view currently admitted/active patients', icon: 'user', color: 'bg-info-subtle text-info', page: 'patients' },
+    { label: 'ADMIT PATIENT',             sub: '',        icon: 'user-plus', color: 'bg-success-subtle text-success', page: 'admissions' },
+    { label: 'DRAFT ADMISSIONS',          sub: 'In-progress admissions pending finalization', icon: 'file', color: 'bg-secondary-subtle text-secondary', page: 'records' },
+    { label: 'NURSING STATION',           sub: '',        icon: 'activity', color: 'bg-warning-subtle text-warning', page: 'vitals' },
+    { label: 'DOCTOR STATION',            sub: '',        icon: 'doctor', color: 'bg-danger-subtle text-danger', page: 'consultations' },
+    { label: 'BILLING MANAGEMENT',        sub: '',        icon: 'card',  color: 'bg-success-subtle text-success', page: 'account-management' },
+    { label: 'REPORTS',                   sub: '',        icon: 'chart', color: 'bg-info-subtle text-info',        page: 'reports' },
+    { label: 'SHIFT PLAN',                sub: '',        icon: 'users', color: 'bg-secondary-subtle text-secondary', page: 'users' }
 ];
+
+const IPD_ICONS = {
+    'bed': '<path d="M2 4v16"></path><path d="M2 8h18a2 2 0 0 1 2 2v10"></path><path d="M2 17h20"></path><path d="M6 8v9"></path>',
+    'user': '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>',
+    'user-plus': '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="17" y1="11" x2="23" y2="11"></line>',
+    'file': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line>',
+    'activity': '<path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>',
+    'doctor': '<path d="M19 14c1.49 0 2.81.47 3.6 1.23a2 2 0 0 1 .4 2.37A7 7 0 0 1 14 22h-4a7 7 0 0 1-9-4.4 2 2 0 0 1 .4-2.37C2.19 14.47 3.51 14 5 14"></path><circle cx="12" cy="7" r="4"></circle>',
+    'card': '<rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line>',
+    'chart': '<line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line>',
+    'users': '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>'
+};
 
 async function initIpdManagement() {
     setupEventListeners();
-    await Promise.all([loadWards(), loadBeds(''), loadIpdCards()]);
+    await Promise.all([loadWards(), loadBeds(''), loadIpdTiles()]);
 }
 
-function loadIpdCards() {
+function loadIpdTiles() {
     const grid = document.getElementById('ipd-grid');
     if (!grid) return;
-    if (!grid.classList.contains('ipd-grid-container')) grid.classList.add('ipd-grid-container');
-    grid.innerHTML = IPD_CARDS.map(c => `
-        <a href="#" class="ipd-card" data-page="${c.page}">
-            <div class="ipd-card-icon"><i class="${c.fa}"></i></div>
-            <div class="ipd-card-title">${c.label}</div>
-        </a>`).join('');
-    grid.querySelectorAll('.ipd-card').forEach(card => {
+    grid.innerHTML = IPD_TILES.map(c => `
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm h-100 p-2 ipd-tile" data-page="${c.page}">
+            <div class="card-body d-flex align-items-center gap-3 p-2">
+              <div class="icon-box ${c.color} p-3 rounded">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IPD_ICONS[c.icon] || ''}</svg>
+              </div>
+              <div>
+                <h6 class="font-weight-bold text-uppercase mb-0" style="${c.page === 'patients' ? 'color:#0d6efd;' : 'color:#0F2D59;'}font-size:.9rem;letter-spacing:.5px;">${c.label}</h6>
+                ${c.sub ? '<small class="text-muted" style="font-size:.78rem;">' + c.sub + '</small>' : ''}
+              </div>
+            </div>
+          </div>
+        </div>`).join('');
+    grid.querySelectorAll('.ipd-tile').forEach(card => {
         card.addEventListener('click', (e) => {
             e.preventDefault();
             if (card.dataset.page === 'wards') {
@@ -186,7 +184,7 @@ function toggleBedStatusSection() {
     if (!section) return;
     const isHidden = section.style.display === 'none' || !section.style.display;
     section.style.display = isHidden ? 'block' : 'none';
-    const tile = document.querySelector('.ipd-card[data-page="wards"]');
+    const tile = document.querySelector('.ipd-tile[data-page="wards"]');
     if (tile) tile.classList.toggle('active', isHidden);
     if (isHidden) {
         loadBeds(document.getElementById('filter-ward-admission').value);
