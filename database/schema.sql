@@ -432,6 +432,58 @@ CREATE TABLE admissions (
     FOREIGN KEY (department_id) REFERENCES departments(id)
 );
 
+-- Draft Admissions
+-- An admission being filled in but not yet committed. A draft holds the
+-- intended ward/bed and admitting details so the bed is NOT occupied until the
+-- draft is finalized; finalize promotes it into a real admissions row and
+-- occupies the bed in the same transaction.
+CREATE TABLE draft_admissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    draft_number VARCHAR(40) UNIQUE NOT NULL,
+    patient_id INT NOT NULL,
+    ward_id INT,
+    bed_id INT,
+    admission_date DATETIME DEFAULT NULL,
+    admission_type ENUM('Emergency', 'Routine', 'Elective', 'Transfer', 'Maternity') DEFAULT 'Routine',
+    admitting_doctor VARCHAR(100) DEFAULT '',
+    department_id INT DEFAULT NULL,
+    diagnosis VARCHAR(255) DEFAULT '',
+    notes TEXT,
+    status ENUM('DRAFT', 'FINALIZED', 'CANCELLED') DEFAULT 'DRAFT',
+    finalized_admission_id INT DEFAULT NULL,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patient_registrations(id),
+    FOREIGN KEY (ward_id) REFERENCES wards(id),
+    FOREIGN KEY (bed_id) REFERENCES beds(id),
+    FOREIGN KEY (department_id) REFERENCES departments(id),
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    INDEX idx_draft_admissions_status (status)
+);
+
+-- Clinical Notes (Doctor Station)
+-- Doctors' clinical entries for a stay: OPD consultation note, IPD daily round
+-- note, or the discharge summary. Keyed on the admission so a stay's whole
+-- clinical record sits in one place; a visit_id is kept when the note belongs
+-- to an OPD episode rather than an admission.
+CREATE TABLE clinical_notes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admission_id INT DEFAULT NULL,
+    visit_id INT DEFAULT NULL,
+    patient_id INT NOT NULL,
+    note_type ENUM('OPD_NOTE', 'IPD_NOTE', 'DISCHARGE_SUMMARY') NOT NULL,
+    clinical_note TEXT NOT NULL,
+    doctor_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admission_id) REFERENCES admissions(id),
+    FOREIGN KEY (visit_id) REFERENCES patient_visits(id),
+    FOREIGN KEY (patient_id) REFERENCES patient_registrations(id),
+    FOREIGN KEY (doctor_id) REFERENCES users(id),
+    INDEX idx_clinical_notes_admission (admission_id),
+    INDEX idx_clinical_notes_patient (patient_id)
+);
+
 -- Bed transfer history
 -- Bed occupancy itself lives on beds.current_patient_id, so nothing records
 -- where a patient has been during a stay. This table is that history: one row
@@ -491,6 +543,27 @@ CREATE TABLE billing_items (
     total_price DECIMAL(10, 2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (invoice_id) REFERENCES invoices(id)
+);
+
+-- Admission Payments (in-patient deposits & final clearance)
+-- Money actually received against an admission's bill. invoices holds what is
+-- owed; this holds what was paid — a running deposit, or the final clearance
+-- payment that settles the account. recorded_by keeps an audit trail.
+CREATE TABLE admission_payments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admission_id INT NOT NULL,
+    invoice_id INT DEFAULT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    currency VARCHAR(3) NOT NULL DEFAULT 'GHS',
+    payment_type ENUM('DEPOSIT', 'CLEARANCE_PAYMENT') NOT NULL DEFAULT 'DEPOSIT',
+    payment_method VARCHAR(40) DEFAULT NULL,
+    notes VARCHAR(255) DEFAULT NULL,
+    recorded_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admission_id) REFERENCES admissions(id),
+    FOREIGN KEY (invoice_id) REFERENCES invoices(id),
+    FOREIGN KEY (recorded_by) REFERENCES users(id),
+    INDEX idx_admission_payments_admission (admission_id)
 );
 
 -- Messages & Alerts (staff -> staff / patients)

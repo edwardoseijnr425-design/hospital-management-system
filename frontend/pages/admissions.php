@@ -133,6 +133,35 @@
         #transfer-grid{grid-template-columns:1fr}
         #transfer-grid .full{grid-column:span 1}
     }
+
+    /* ---- DRAFT ADMISSIONS (in-progress admissions pending finalization) ---- */
+    #draft-banner{background:#E2E8F0;border:1px solid #CBD5E1;border-left:4px solid #64748B;color:#334155;border-radius:5px;padding:11px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    #draft-banner .ttl{font-weight:800;font-size:12.5px;letter-spacing:.3px;text-transform:uppercase;color:#334155}
+    #draft-banner .sub{font-size:11.5px;color:#64748B;margin-top:2px}
+    #draft-banner button{background:#334155;color:#fff;border:none;border-radius:4px;padding:7px 13px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+    #draft-banner button:hover{background:#1E293B}
+    #draft-table td .dr-code{font-family:Consolas,'Courier New',monospace;font-weight:700;color:#334155;font-size:11px}
+    #draft-table .draft-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+    .draft-tag.pending{background:#F1F5F9;color:#475569}
+    .draft-tag.finalized{background:#DCFCE7;color:#166534}
+    .draft-tag.cancelled{background:#FEE2E2;color:#991B1B}
+    #draft-table .dr-actions{display:flex;gap:5px;flex-wrap:wrap}
+    #draft-table .dr-actions button{font-size:10px;padding:4px 8px;border-radius:3px;border:1px solid #CBD5E1;background:#fff;color:#334155;cursor:pointer;font-family:inherit;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+    #draft-table .dr-actions button.fin{background:#0b5fa5;border-color:#0b5fa5;color:#fff}
+    #draft-table .dr-actions button.fin:hover{background:#094c85}
+    #draft-table .dr-actions button.ed:hover{background:#F1F5F9}
+    #draft-table .dr-actions button.del{color:#C0392B;border-color:#F0B7B2}
+    #draft-table .dr-actions button.del:hover{background:#FDECEA}
+    #draft-modal .modal-content{max-width:640px !important}
+    #draft-patient-results{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #C9D4E0;border-top:none;border-radius:0 0 6px 6px;box-shadow:0 6px 14px rgba(15,45,89,.12);max-height:220px;overflow-y:auto;z-index:50}
+    #draft-patient-results div{padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #EEF2F7;color:#1E293B}
+    #draft-patient-results div:hover{background:#E7F3FC;color:#0F2D59}
+    #draft-patient-results .hpno{color:#0072BC;font-weight:700}
+    #draft-patient-results .empty{padding:10px 12px;color:#64748B;cursor:default}
+    #draft-patient-results .empty:hover{background:#fff;color:#64748B}
+    #draft-current{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#F1F5F9;border:1px solid #C9D4E0;border-radius:4px;padding:9px 12px;margin-bottom:14px;font-size:12px;color:#334155}
+    #draft-current b{color:#0072BC}
+    #draft-current .no-bed{color:#8A5A00;font-size:11px}
 </style>
 
 <!-- ================= WARD OCCUPANCY ================= -->
@@ -202,6 +231,128 @@
                     <tr><td colspan="11" style="text-align:center;">Loading...</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- ================= DRAFT ADMISSIONS ================= -->
+<div id="draft-banner">
+    <div>
+        <div class="ttl"><i class="fa-solid fa-file-pen"></i> Draft Admissions &mdash; In-Progress Admissions Pending Finalization</div>
+        <div class="sub">A draft does not occupy a bed. Finalizing it creates the real admission and occupies the bed.</div>
+    </div>
+    <button type="button" id="new-draft-btn"><i class="fa-solid fa-plus"></i> Create New Draft</button>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fa-solid fa-file-lines"></i> Pending Draft Admissions</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <select id="filter-draft-status" style="padding:6px 9px;border:1px solid #C9D4E0;border-radius:4px;font-size:12px;font-family:inherit;background:#fff;">
+                <option value="DRAFT">Pending Drafts</option>
+                <option value="FINALIZED">Finalized</option>
+                <option value="CANCELLED">Discarded</option>
+                <option value="ALL">All Drafts</option>
+            </select>
+            <input type="text" id="filter-draft-q" placeholder="Search patient, hospital no. or draft no..." style="padding:6px 9px;border:1px solid #C9D4E0;border-radius:4px;font-size:12px;font-family:inherit;background:#fff;width:250px;">
+            <button class="btn btn-secondary btn-sm" id="refresh-drafts-btn"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-container">
+            <table id="draft-table">
+                <thead>
+                    <tr>
+                        <th>Draft No</th>
+                        <th>Patient</th>
+                        <th>Hospital No.</th>
+                        <th>Ward / Bed</th>
+                        <th>Admission Date</th>
+                        <th>Admitting Doctor</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="drafts-table">
+                    <tr><td colspan="7" style="text-align:center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Draft Admission Modal: create a new draft, or edit a pending one -->
+<div class="modal" id="draft-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-file-pen"></i> <span id="draft-modal-title">Create Draft Admission</span></h3>
+            <button class="modal-close" id="close-draft-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="draft-form">
+                <div id="draft-current" style="display:none;">
+                    <span id="draft-current-text"></span>
+                    <span class="no-bed" id="draft-current-note"></span>
+                </div>
+
+                <div class="form-group" style="position:relative;">
+                    <label for="draft-patient">Patient *</label>
+                    <input type="text" id="draft-patient" placeholder="Type name or hospital number..." autocomplete="off" disabled>
+                    <input type="hidden" id="draft-patient-id">
+                    <div id="draft-patient-results" style="display:none;"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="draft-ward">Ward</label>
+                        <select id="draft-ward">
+                            <option value="">Select Ward</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="draft-bed">Bed</label>
+                        <select id="draft-bed">
+                            <option value="">Select Ward first</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="draft-date">Admission Date &amp; Time</label>
+                        <input type="datetime-local" id="draft-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="draft-type">Admission Type</label>
+                        <select id="draft-type">
+                            <option value="Routine">Routine</option>
+                            <option value="Emergency">Emergency</option>
+                            <option value="Elective">Elective</option>
+                            <option value="Transfer">Transfer</option>
+                            <option value="Maternity">Maternity</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="draft-doctor">Admitting Doctor</label>
+                        <input type="text" id="draft-doctor" placeholder="e.g. Dr. K. Mensah">
+                    </div>
+                    <div class="form-group">
+                        <label for="draft-diagnosis">Provisional Diagnosis</label>
+                        <input type="text" id="draft-diagnosis" placeholder="Reason for admission (optional)">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="draft-notes">Admission Notes</label>
+                    <textarea id="draft-notes" placeholder="Additional clinical notes (optional)"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancel-draft">Cancel</button>
+            <button class="btn btn-primary" id="save-draft"><i class="fa-solid fa-check"></i> Save Draft</button>
         </div>
     </div>
 </div>
@@ -520,6 +671,10 @@ async function initAdmissions() {
     setupAdmissionListeners();
     await Promise.all([loadAdmissionWards(), loadAdmissions()]);
     await loadWardOccupancy();
+    // Draft admissions sit alongside the register on this page. Listeners are
+    // attached before the load so the section is usable as soon as it renders.
+    setupDraftListeners();
+    await loadDrafts();
 }
 
 async function loadAdmissionWards() {
@@ -1358,6 +1513,323 @@ async function submitTransfer() {
         showAlert(error.message, 'error');
     } finally {
         btn.disabled = false;
+    }
+}
+
+/* ===================== DRAFT ADMISSIONS ===================== */
+let draftsData = [];
+let draftEditingId = null;
+let draftSearchTimer = null;
+
+function setupDraftListeners() {
+    document.getElementById('new-draft-btn').addEventListener('click', () => openDraftModal());
+    document.getElementById('close-draft-modal').addEventListener('click', closeDraftModal);
+    document.getElementById('cancel-draft').addEventListener('click', closeDraftModal);
+    document.getElementById('save-draft').addEventListener('click', submitDraft);
+
+    const statusSel = document.getElementById('filter-draft-status');
+    if (statusSel) statusSel.addEventListener('change', loadDrafts);
+
+    const search = document.getElementById('filter-draft-q');
+    if (search) {
+        search.addEventListener('input', () => {
+            clearTimeout(draftSearchTimer);
+            draftSearchTimer = setTimeout(loadDrafts, 300);
+        });
+    }
+
+    document.getElementById('refresh-drafts-btn').addEventListener('click', loadDrafts);
+
+    const wardSel = document.getElementById('draft-ward');
+    if (wardSel) wardSel.addEventListener('change', loadDraftBeds);
+
+    const patientInput = document.getElementById('draft-patient');
+    if (patientInput) {
+        patientInput.addEventListener('input', () => {
+            clearTimeout(draftSearchTimer);
+            draftSearchTimer = setTimeout(searchDraftPatients, 250);
+        });
+    }
+}
+
+async function loadDrafts() {
+    const tbody = document.getElementById('drafts-table');
+    const status = document.getElementById('filter-draft-status').value;
+    const q = document.getElementById('filter-draft-q').value.trim();
+
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (q) params.set('q', q);
+
+    try {
+        const response = await fetch('/hms/backend/api/draft_admissions.php?' + params.toString());
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || 'Failed to load draft admissions');
+        draftsData = data.drafts || [];
+        renderDrafts(tbody);
+    } catch (error) {
+        console.error('Draft admissions load error:', error);
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Failed to load draft admissions</td></tr>';
+    }
+}
+
+function renderDrafts(tbody) {
+    if (!tbody) return;
+    if (!draftsData.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No draft admissions found</td></tr>';
+        return;
+    }
+    tbody.innerHTML = draftsData.map(d => {
+        const isPending = d.status === 'DRAFT';
+        const tagClass = isPending ? 'pending' : (d.status === 'FINALIZED' ? 'finalized' : 'cancelled');
+        const wardBed = d.ward_name
+            ? escHtml(d.ward_name) + ' &middot; Bed ' + escHtml(d.bed_number || '-')
+            : '<span style="color:#8A5A00;">No ward / bed chosen yet</span>';
+
+        let actions;
+        if (isPending) {
+            actions = '<button class="fin" data-draft-finalize="' + d.id + '" title="Create the real admission and occupy the bed"><i class="fa-solid fa-check"></i> Finalize</button>'
+                    + '<button class="ed" data-draft-edit="' + d.id + '"><i class="fa-solid fa-pen"></i> Edit</button>'
+                    + '<button class="del" data-draft-cancel="' + d.id + '"><i class="fa-solid fa-trash"></i> Discard</button>';
+        } else if (d.status === 'FINALIZED' && d.finalized_admission_code) {
+            actions = '<span class="draft-tag finalized">Admitted as ' + escHtml(d.finalized_admission_code) + '</span>';
+        } else {
+            actions = '<span style="color:#95A5A6;">&mdash;</span>';
+        }
+
+        return '<tr>'
+            + '<td><span class="dr-code">' + escHtml(d.draft_number) + '</span><br><span class="draft-tag ' + tagClass + '">' + escHtml(d.status) + '</span></td>'
+            + '<td><strong>' + escHtml(d.patient_name || '-') + '</strong></td>'
+            + '<td>' + escHtml(d.hospital_number || '-') + '</td>'
+            + '<td>' + wardBed + '</td>'
+            + '<td>' + (d.admission_date ? fmtDateTime(d.admission_date) : '<span style="color:#95A5A6;">&mdash;</span>') + '</td>'
+            + '<td>' + escHtml(d.admitting_doctor || '-') + '</td>'
+            + '<td><div class="dr-actions">' + actions + '</div></td>'
+            + '</tr>';
+    }).join('');
+}
+
+// Delegated clicks on the draft table, so re-rendering keeps the handlers live.
+document.addEventListener('click', function (e) {
+    const finalizeBtn = e.target.closest('[data-draft-finalize]');
+    if (finalizeBtn) { finalizeDraft(finalizeBtn.getAttribute('data-draft-finalize')); return; }
+
+    const editBtn = e.target.closest('[data-draft-edit]');
+    if (editBtn) { openDraftModal(editBtn.getAttribute('data-draft-edit')); return; }
+
+    const cancelBtn = e.target.closest('[data-draft-cancel]');
+    if (cancelBtn) { discardDraft(cancelBtn.getAttribute('data-draft-cancel')); }
+});
+
+function patientDisplayName(p) {
+    return [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(' ').trim();
+}
+
+async function searchDraftPatients() {
+    const input = document.getElementById('draft-patient');
+    const results = document.getElementById('draft-patient-results');
+    const term = input.value.trim();
+    if (term.length < 2) { results.style.display = 'none'; return; }
+
+    try {
+        const response = await fetch('/hms/backend/api/patients.php?action=search&q=' + encodeURIComponent(term));
+        const data = await response.json();
+        const patients = data.patients || [];
+        if (!patients.length) {
+            results.innerHTML = '<div class="empty">No patient found</div>';
+            results.style.display = 'block';
+            return;
+        }
+        results.innerHTML = patients.map(p =>
+            '<div data-draft-pick="' + p.id + '"><span class="hpno">' + escHtml(p.hospital_number)
+            + '</span> &mdash; ' + escHtml(patientDisplayName(p)) + '</div>'
+        ).join('');
+        results.style.display = 'block';
+        results.querySelectorAll('[data-draft-pick]').forEach(el => {
+            el.addEventListener('click', () => {
+                document.getElementById('draft-patient-id').value = el.getAttribute('data-draft-pick');
+                input.value = el.textContent.trim();
+                results.style.display = 'none';
+            });
+        });
+    } catch (error) {
+        console.error('Draft patient search error:', error);
+    }
+}
+
+async function loadDraftBeds() {
+    const wardId = document.getElementById('draft-ward').value;
+    const bedSel = document.getElementById('draft-bed');
+    if (!wardId) { bedSel.innerHTML = '<option value="">No bed selected (draft)</option>'; return; }
+
+    try {
+        const response = await fetch('/hms/backend/api/admissions.php?action=available_beds&ward_id=' + wardId);
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || 'Failed to load beds');
+        const beds = data.beds || [];
+        bedSel.innerHTML = '<option value="">No bed selected (draft)</option>'
+            + beds.map(b => '<option value="' + b.id + '">' + escHtml(b.bed_number)
+                + (b.bed_type ? ' (' + escHtml(b.bed_type) + ')' : '') + '</option>').join('');
+    } catch (error) {
+        console.error('Draft beds load error:', error);
+        bedSel.innerHTML = '<option value="">Could not load beds</option>';
+    }
+}
+
+function openDraftModal(draftId) {
+    document.getElementById('draft-form').reset();
+    document.getElementById('draft-patient-results').style.display = 'none';
+    document.getElementById('draft-current').style.display = 'none';
+    document.getElementById('draft-date').value = nowLocal();
+
+    document.getElementById('draft-ward').innerHTML = '<option value="">Select Ward</option>'
+        + wardsList.map(w => '<option value="' + w.id + '">' + escHtml(w.ward_name) + '</option>').join('');
+    document.getElementById('draft-bed').innerHTML = '<option value="">No bed selected (draft)</option>';
+
+    if (draftId) {
+        // Editing: the patient cannot be swapped on an existing draft, and the
+        // saved values are loaded into the same form the create path uses.
+        const draft = draftsData.find(d => String(d.id) === String(draftId));
+        if (!draft) return;
+
+        draftEditingId = draft.id;
+        document.getElementById('draft-modal-title').textContent = 'Edit Draft Admission';
+        document.getElementById('save-draft').innerHTML = '<i class="fa-solid fa-check"></i> Update Draft';
+
+        document.getElementById('draft-current').style.display = 'flex';
+        document.getElementById('draft-current-text').innerHTML = '<b>' + escHtml(draft.draft_number)
+            + '</b> &middot; ' + escHtml(draft.patient_name || '') + ' (' + escHtml(draft.hospital_number || '') + ')';
+        document.getElementById('draft-current-note').textContent = draft.bed_id ? '' : 'No bed chosen yet';
+
+        document.getElementById('draft-patient-id').value = draft.patient_id;
+        const patientInput = document.getElementById('draft-patient');
+        patientInput.value = (draft.patient_name || '') + ' (' + (draft.hospital_number || '') + ')';
+        patientInput.disabled = true;
+
+        document.getElementById('draft-ward').value = draft.ward_id || '';
+        document.getElementById('draft-date').value = (draft.admission_date || '').replace(' ', 'T').slice(0, 16);
+        document.getElementById('draft-type').value = draft.admission_type || 'Routine';
+        document.getElementById('draft-doctor').value = draft.admitting_doctor || '';
+        document.getElementById('draft-diagnosis').value = draft.diagnosis || '';
+        document.getElementById('draft-notes').value = draft.notes || '';
+
+        loadDraftBeds().then(() => {
+            if (!draft.bed_id) return;
+            const bedSel = document.getElementById('draft-bed');
+            // The draft's bed may since have been taken by an admitted patient,
+            // so it is re-inserted as a labelled option rather than silently
+            // dropped — the finalize step is what rejects a taken bed.
+            if (!bedSel.querySelector('option[value="' + draft.bed_id + '"]')) {
+                bedSel.insertAdjacentHTML('afterbegin', '<option value="' + draft.bed_id + '">'
+                    + escHtml(draft.bed_number || 'Bed') + ' (current draft bed)</option>');
+            }
+            bedSel.value = draft.bed_id;
+        });
+    } else {
+        draftEditingId = null;
+        document.getElementById('draft-modal-title').textContent = 'Create Draft Admission';
+        document.getElementById('save-draft').innerHTML = '<i class="fa-solid fa-check"></i> Save Draft';
+        const patientInput = document.getElementById('draft-patient');
+        patientInput.disabled = false;
+        patientInput.value = '';
+        document.getElementById('draft-patient-id').value = '';
+    }
+
+    document.getElementById('draft-modal').classList.add('show');
+}
+
+function closeDraftModal() {
+    document.getElementById('draft-modal').classList.remove('show');
+    draftEditingId = null;
+}
+
+async function submitDraft() {
+    const patientId = document.getElementById('draft-patient-id').value;
+    if (!patientId) { showAlert('Please select a patient first', 'error'); return; }
+
+    const payload = {
+        patient_id: patientId,
+        ward_id: document.getElementById('draft-ward').value || null,
+        bed_id: document.getElementById('draft-bed').value || null,
+        admission_date: document.getElementById('draft-date').value || null,
+        admission_type: document.getElementById('draft-type').value,
+        admitting_doctor: document.getElementById('draft-doctor').value.trim(),
+        diagnosis: document.getElementById('draft-diagnosis').value.trim(),
+        notes: document.getElementById('draft-notes').value.trim()
+    };
+
+    const btn = document.getElementById('save-draft');
+    btn.disabled = true;
+    try {
+        const action = draftEditingId ? 'update&id=' + draftEditingId : 'create';
+        const res = await fetch('/hms/backend/api/draft_admissions.php?action=' + action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Could not save the draft');
+
+        showAlert(draftEditingId ? 'Draft admission updated' : 'Draft admission ' + data.draft_number + ' saved', 'success');
+        closeDraftModal();
+        await loadDrafts();
+    } catch (error) {
+        showAlert(error.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function finalizeDraft(id) {
+    const draft = draftsData.find(d => String(d.id) === String(id));
+    if (!draft) return;
+
+    if (!draft.ward_id || !draft.bed_id) {
+        showAlert('Choose a ward and bed on this draft before finalizing', 'error');
+        openDraftModal(id);
+        return;
+    }
+    if (!confirm('Finalize draft ' + draft.draft_number + '?\n\nThis admits '
+        + (draft.patient_name || 'the patient') + ' to ' + draft.ward_name + ' / Bed ' + draft.bed_number
+        + ' and occupies the bed.')) return;
+
+    try {
+        const res = await fetch('/hms/backend/api/draft_admissions.php?action=finalize&id=' + id, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Could not finalize the draft');
+
+        showAlert('Draft finalized — admission ' + data.admission_code + ' created', 'success');
+        await loadDrafts();
+        await loadAdmissions();
+        await loadWardOccupancy();
+    } catch (error) {
+        showAlert(error.message, 'error');
+    }
+}
+
+async function discardDraft(id) {
+    const draft = draftsData.find(d => String(d.id) === String(id));
+    if (!draft) return;
+    if (!confirm('Discard draft ' + draft.draft_number + ' for ' + (draft.patient_name || 'this patient')
+        + '?\n\nThis cannot be undone.')) return;
+
+    try {
+        const res = await fetch('/hms/backend/api/draft_admissions.php?action=cancel&id=' + id, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Could not discard the draft');
+
+        showAlert('Draft admission discarded', 'success');
+        await loadDrafts();
+    } catch (error) {
+        showAlert(error.message, 'error');
     }
 }
 </script>

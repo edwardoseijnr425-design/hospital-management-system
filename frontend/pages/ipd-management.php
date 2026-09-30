@@ -120,16 +120,19 @@
 let bedsData = [];
 
 /* IPD module grid: real SPA routing keys (WARDS tile toggles the bed-status
-   panel instead of navigating; the rest call loadPage). */
+   panel instead of navigating; the rest call loadPage). DRAFT ADMISSIONS and
+   REPORTS both land on the Admissions page — the draft section and the
+   admissions/discharge history respectively — while DOCTOR STATION and BILLING
+   MANAGEMENT have pages of their own. */
 const IPD_TILES = [
     { label: 'WARDS, ROOMS & BED STATUS', sub: 'Real-time occupancy and bed allocation status', icon: 'bed',    color: 'bg-primary-subtle text-primary',   page: 'wards' },
     { label: 'CURRENT PATIENT ACCESS',    sub: 'Access newly admitted or active in-patients',   icon: 'user',    color: 'bg-info-subtle text-info',        page: 'patients' },
     { label: 'ADMIT PATIENT',             sub: 'Admit patient directly to a ward and bed',      icon: 'user-plus', color: 'bg-success-subtle text-success', page: 'admissions' },
-    { label: 'DRAFT ADMISSIONS',          sub: 'In-progress admissions pending finalization',   icon: 'file',    color: 'bg-secondary-subtle text-secondary', page: 'records' },
-    { label: 'NURSING STATION',           sub: 'Record nursing notes, clinical activities & ward discharges', icon: 'activity', color: 'bg-warning-subtle text-warning', page: 'vitals' },
-    { label: 'DOCTOR STATION',            sub: 'OPD/IPD doctor notes, clinical entries & discharge summary', icon: 'doctor',  color: 'bg-danger-subtle text-danger',      page: 'consultations' },
-    { label: 'BILLING MANAGEMENT',        sub: 'In-patient billing, deposits, & clearance',     icon: 'card',    color: 'bg-success-subtle text-success', page: 'account-management' },
-    { label: 'REPORTS',                   sub: 'All IPD management records & ward admission history', icon: 'chart',  color: 'bg-info-subtle text-info',        page: 'reports' }
+    { label: 'DRAFT ADMISSIONS',          sub: 'In-progress admissions pending finalization',   icon: 'file',    color: 'bg-secondary-subtle text-secondary', page: 'admissions' },
+    { label: 'NURSING STATION',           sub: 'Admit patient directly to a ward & bed only', icon: 'activity', color: 'bg-warning-subtle text-warning', page: 'vitals' },
+    { label: 'DOCTOR STATION',            sub: 'OPD/IPD doctor notes, clinical entries & discharge summary', icon: 'doctor',  color: 'bg-danger-subtle text-danger',      page: 'doctor-station' },
+    { label: 'BILLING MANAGEMENT',        sub: 'In-patient billing, deposits, & clearance',     icon: 'card',    color: 'bg-success-subtle text-success', page: 'ipd-billing' },
+    { label: 'REPORTS',                   sub: 'All IPD management records, ward admission history & discharges', icon: 'chart',  color: 'bg-info-subtle text-info',        page: 'admissions' }
 ];
 
 const IPD_ICONS = {
@@ -138,7 +141,7 @@ const IPD_ICONS = {
     'user-plus': '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="17" y1="11" x2="23" y2="11"></line>',
     'file': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line>',
     'activity': '<path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>',
-    'doctor': '<path d="M19 14c1.49 0 2.81.47 3.6 1.23a2 2 0 0 1 .4 2.37A7 7 0 0 1 14 22h-4a7 7 0 0 1-9-4.4 2 2 0 0 1 .4-2.37C2.19 14.47 3.51 14 5 14"></path><circle cx="12" cy="7" r="4"></circle>',
+    'doctor': '<circle cx="12" cy="7" r="4"></circle><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"></path>',
     'card': '<rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line>',
     'chart': '<line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line>'
 };
