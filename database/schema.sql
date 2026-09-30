@@ -160,6 +160,11 @@ CREATE TABLE patient_registrations (
     emergency_contact_name VARCHAR(100),
     emergency_contact_phone VARCHAR(20),
     blood_group ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'),
+    -- Known allergies, free text and comma separated ("Penicillin, Sulfa drugs").
+    -- Free text rather than a child table because the only thing that reads it is
+    -- the clinical alert badge on the Doctor Station patient header, and the
+    -- clinicians recording it treat it as a single running list.
+    allergies TEXT,
     sponsor_id INT,
     nhia_number VARCHAR(50),
     registration_date DATE NOT NULL,
