@@ -853,15 +853,25 @@ function latestVitalTiles(readings) {
     const sys = plausibleVital(v, 'blood_pressure_systolic');
     const dia = plausibleVital(v, 'blood_pressure_diastolic');
 
+    // Both halves must be present AND ordered. A pair of 100/100 is inside every
+    // individual bound yet has a pulse pressure of zero, so it is not a reading
+    // and must not be shown as one. This mirrors the write-side check in
+    // backend/api/vitals.php for rows recorded before it existed.
+    const bp = (sys !== null && dia !== null && dia < sys) ? sys + '/' + dia : '';
+
     const tile = (k, text) =>
         '<div class="vs-tile"><span class="k">' + escHtml(k) + '</span>' +
         '<span class="v' + (text ? '' : ' none') + '">' + escHtml(text || 'Not recorded') + '</span></div>';
 
+    const pulse = plausibleVital(v, 'heart_rate');
+    const temp = plausibleVital(v, 'temperature');
+    const spo2 = plausibleVital(v, 'oxygen_saturation');
+
     return '<div class="vs-tiles">'
-        + tile('Blood Pressure', (sys !== null && dia !== null) ? sys + '/' + dia : '')
-        + tile('Pulse Rate', plausibleVital(v, 'heart_rate') !== null ? plausibleVital(v, 'heart_rate') + ' bpm' : '')
-        + tile('Temperature', plausibleVital(v, 'temperature') !== null ? plausibleVital(v, 'temperature') + ' \u00B0C' : '')
-        + tile('SpO2', plausibleVital(v, 'oxygen_saturation') !== null ? plausibleVital(v, 'oxygen_saturation') + '%' : '')
+        + tile('Blood Pressure', bp)
+        + tile('Pulse Rate', pulse !== null ? pulse + ' bpm' : '')
+        + tile('Temperature', temp !== null ? temp + ' \u00B0C' : '')
+        + tile('SpO2', spo2 !== null ? spo2 + '%' : '')
         + '</div>';
 }
 
