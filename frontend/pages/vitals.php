@@ -12,6 +12,27 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
 #vitals-page .container-fluid{width:100%;padding-right:calc(1rem*.5);padding-left:calc(1rem*.5);margin-right:auto;margin-left:auto;box-sizing:border-box}
 #vitals-page .p-3{padding:1rem !important}
 #vitals-page .card{position:relative;display:flex;flex-direction:column;min-width:0;word-wrap:break-word;background-color:#fff;background-clip:border-box;border:1px solid rgba(15,45,89,.08);border-radius:8px}
+/* ---------- Discharge / finalisation status badge ---------- */
+#vitals-page .discharge-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:11px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid;white-space:nowrap;line-height:1.4}
+#vitals-page .discharge-badge svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.4;flex:0 0 auto}
+#vitals-page .discharge-active{background:#F1F5F9;color:#475569;border-color:#CBD5E1}
+#vitals-page .discharge-discharged{background:#DCFCE7;color:#15803D;border-color:#86EFAC}
+#vitals-page .discharge-died{background:#FEE2E2;color:#B91C1C;border-color:#FCA5A5}
+#vitals-page .discharge-absconded{background:#FEF3C7;color:#B45309;border-color:#FCD34D}
+#vitals-page .discharge-meta{margin-left:8px;font-size:10px;color:#64748B;font-weight:600}
+/* ---------- Billing category rollup ---------- */
+#vitals-page .bill-rollup{margin-top:8px;border:1px solid #E2E8F0;border-radius:6px;overflow:hidden}
+#vitals-page .bill-rollup-head{display:flex;align-items:center;gap:6px;padding:6px 10px;background-color:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#0F2D59}
+#vitals-page .bill-rollup-head svg{width:13px;height:13px;fill:none;stroke:#B45309;stroke-width:2}
+#vitals-page .bill-rollup-list{display:flex;flex-direction:column}
+#vitals-page .bill-rollup-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 10px;font-size:11.5px;border-bottom:1px solid #F1F5F9}
+#vitals-page .bill-rollup-row:last-child{border-bottom:0}
+#vitals-page .bill-rollup-row .br-label{color:#475569;display:flex;align-items:center;gap:6px;min-width:0}
+#vitals-page .bill-rollup-row .br-dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+#vitals-page .bill-rollup-row .br-amt{font-weight:700;color:#0F2D59;white-space:nowrap;font-variant-numeric:tabular-nums}
+#vitals-page .bill-rollup-total{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 10px;background-color:#E0F2FE;border-top:1px solid #BAE6FD;font-size:12.5px;font-weight:800;color:#0F2D59}
+#vitals-page .bill-rollup-total .br-amt{font-weight:800;color:#0F2D59}
+#vitals-page .bill-rollup-empty{padding:9px 10px;font-size:11.5px;color:#94A3B8;font-style:italic}
 #vitals-page .card-header{padding:10px 16px;background-color:#fff;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 #vitals-page .card-body{flex:1 1 auto;padding:1rem 1rem 1.25rem}
 #vitals-page .card-footer{padding:.75rem 1rem;background-color:#fff;border-top:1px solid #E2E8F0;display:flex;align-items:center}
@@ -722,6 +743,46 @@ async function buildPatientContext(bed) {
     return { bed: bed, summary: summary, visits: visits, latestVisit: latestVisit, vitals: vitalsList };
 }
 
+/* Colour-coded discharge / finalisation badge.
+   Driven by the latest admission row: status (Admitted|Discharged) plus the
+   free-text discharge_outcome recorded at finalisation (Discharged, Died,
+   Absconded, ...). Outcome text is matched leniently because it is free text,
+   then normalised for display. */
+const DISCHARGE_TICK = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+const DISCHARGE_DOT = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle></svg>';
+
+function dischargeBadgeHtml(adm) {
+    if (!adm) {
+        return '<span class="discharge-badge discharge-active">' + DISCHARGE_DOT +
+            'No Admission Record</span>';
+    }
+    const outcome = String(adm.discharge_outcome || '').trim();
+    const status = String(adm.status || '').trim();
+    const isDischarged = status.toLowerCase() === 'discharged' || !!outcome;
+
+    let cls = 'discharge-active';
+    let label = 'Active Admission';
+    let icon = DISCHARGE_DOT;
+
+    if (isDischarged) {
+        const o = outcome.toLowerCase();
+        if (/die|death|deceased|expire/.test(o)) {
+            cls = 'discharge-died'; label = outcome || 'Died';
+        } else if (/abscond|absent|escape|left against/.test(o)) {
+            cls = 'discharge-absconded'; label = outcome || 'Absconded';
+        } else {
+            cls = 'discharge-discharged'; label = outcome || 'Discharged';
+        }
+        icon = DISCHARGE_TICK;
+    }
+
+    const meta = adm.discharged_at
+        ? '<span class="discharge-meta">' + escHtml(fmtDateTime(adm.discharged_at)) + '</span>'
+        : '';
+
+    return '<span class="discharge-badge ' + cls + '">' + icon + escHtml(label) + '</span>' + meta;
+}
+
 /* ============================================================
    CLINICAL PATIENT CARE & TREATMENT SHEET CARD (per patient)
    ============================================================ */
@@ -782,6 +843,7 @@ function renderPatientCard(ctx) {
                         <div class="d-flex align-items-center gap-2 flex-wrap">
                             <h6 class="mb-0 font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 16px;">${escHtml(s.full_name || bed.patient_name || 'PATIENT')}</h6>
                             <span class="badge bg-primary px-2" style="font-size: 10px;">ID: ${escHtml(s.hospital_number || '--')}</span>
+                            ${dischargeBadgeHtml(s.admission || null)}
                         </div>
                         <small class="text-muted">${demoLine}</small>
                     </div>
@@ -931,6 +993,15 @@ function renderPatientCard(ctx) {
                 <div id="billingTotals_${pid}" class="p-2 rounded d-flex justify-content-between align-items-center flex-wrap gap-2" style="background-color:#F8FAFC;border:1px solid #E2E8F0;font-size:12px;">
                     <span class="text-muted">Auto-generated from the patient's invoices &amp; billing items</span>
                     <span class="font-weight-bold text-danger">Fee To Be Paid: <span class="text-success" id="billingFee_${pid}">GHS 0.00</span></span>
+                </div>
+                <div id="billingRollup_${pid}" class="bill-rollup">
+                    <div class="bill-rollup-head">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 3v18h18"></path><rect x="7" y="12" width="3" height="6"></rect><rect x="12" y="8" width="3" height="10"></rect><rect x="17" y="5" width="3" height="13"></rect></svg>
+                        Billing Breakdown By Category
+                    </div>
+                    <div class="bill-rollup-list" id="billingRollupList_${pid}">
+                        <div class="bill-rollup-empty">Loading billing breakdown...</div>
+                    </div>
                 </div>
             </div>
 
@@ -1113,6 +1184,64 @@ function renderTreatments(pid) {
         </tr>`).join('');
 }
 
+/* Billing category rollup - groups the invoice line items that are already
+   loaded above into the categories a clinician reconciles against.
+   item_type is the schema ENUM: consultation, procedure, drug, lab_test,
+   radiology, bed, other. lab_test + radiology are merged into one category;
+   any unmapped type falls into "Other" so nothing is silently dropped. */
+const BILL_CATEGORIES = [
+    { key: 'Consultation',           types: ['consultation'],             color: '#0072BC' },
+    { key: 'Laboratory / Radiology', types: ['lab_test', 'radiology'],   color: '#7C3AED' },
+    { key: 'Pharmacy / Medications', types: ['drug'],                    color: '#16A34A' },
+    { key: 'Procedures',             types: ['procedure'],               color: '#B45309' },
+    { key: 'Bed & Nursing',          types: ['bed'],                     color: '#0284C7' },
+    { key: 'Other',                  types: ['other'],                   color: '#64748B' }
+];
+
+function renderBillingRollup(allItems, pid) {
+    const wrap = document.getElementById('billingRollupList_' + pid);
+    if (!wrap) return;
+
+    if (!allItems || !allItems.length) {
+        wrap.innerHTML = '<div class="bill-rollup-empty">No billing items to break down yet.</div>';
+        return;
+    }
+
+    const buckets = {};
+    BILL_CATEGORIES.forEach(c => { buckets[c.key] = 0; });
+    let unmapped = 0;
+
+    allItems.forEach(function (row) {
+        const it = row.it || {};
+        const t = String(it.item_type || '').trim().toLowerCase();
+        const amount = Number(it.total_price || 0);
+        const cat = BILL_CATEGORIES.find(c => c.types.indexOf(t) !== -1);
+        if (cat) buckets[cat.key] += amount;
+        else unmapped += amount;
+    });
+    buckets['Other'] += unmapped;
+
+    const present = BILL_CATEGORIES.filter(c => buckets[c.key] > 0);
+
+    if (!present.length) {
+        wrap.innerHTML = '<div class="bill-rollup-empty">No billable amounts recorded on these invoices.</div>';
+        return;
+    }
+
+    const grand = present.reduce((sum, c) => sum + buckets[c.key], 0);
+
+    const rowsHtml = present.map(c =>
+        '<div class="bill-rollup-row">' +
+            '<span class="br-label"><span class="br-dot" style="background:' + c.color + ';"></span>' + escHtml(c.key) + '</span>' +
+            '<span class="br-amt">GHS ' + buckets[c.key].toFixed(2) + '</span>' +
+        '</div>'
+    ).join('');
+
+    wrap.innerHTML = rowsHtml +
+        '<div class="bill-rollup-total"><span>Total Billed</span>' +
+        '<span class="br-amt">GHS ' + grand.toFixed(2) + '</span></div>';
+}
+
 /* ============================ BILLING SUMMARY ============================ */
 async function loadBilling(hospitalNumber, pid) {
     const body = document.getElementById('billingBody_' + pid);
@@ -1127,6 +1256,7 @@ async function loadBilling(hospitalNumber, pid) {
             body.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:12px;color:#94A3B8;">No invoices yet for this patient.</td></tr>';
             itemsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:12px;color:#94A3B8;">No billing items yet.</td></tr>';
             if (feeEl) feeEl.textContent = 'GHS 0.00';
+            renderBillingRollup([], pid);
             return;
         }
         const details = await Promise.all(invoices.map(inv =>
@@ -1175,9 +1305,11 @@ async function loadBilling(hospitalNumber, pid) {
             : '<tr><td colspan="5" style="text-align:center;padding:12px;color:#94A3B8;">No line items on these invoices.</td></tr>';
 
         if (feeEl) feeEl.textContent = 'GHS ' + due.toFixed(2);
+        renderBillingRollup(allItems, pid);
     } catch (e) {
         console.error('Billing load error:', e);
         body.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:12px;color:#C0392B;">Failed to load billing.</td></tr>';
+        renderBillingRollup([], pid);
     }
 }
 

@@ -216,6 +216,19 @@ function getPatientSummary() {
         [(int)$patientId]
     );
 
+    // Latest admission - drives the discharge-status / finalisation badge.
+    // Exposes status (Admitted|Discharged) plus discharge_outcome, which is
+    // free text (e.g. Discharged, Died, Absconded) recorded at finalisation.
+    $admission = $db->fetchOne(
+        "SELECT a.admission_code, a.admission_date, a.status,
+                a.discharged_at, a.discharge_outcome
+           FROM admissions a
+          WHERE a.patient_id = ?
+          ORDER BY a.admission_date DESC
+          LIMIT 1",
+        [(int)$patientId]
+    );
+
     $bedWard = trim(
         ($patient['ward_name'] ? $patient['ward_name'] : '') .
         ($patient['bed_number'] ? ' / Bed ' . $patient['bed_number'] : '')
@@ -237,6 +250,13 @@ function getPatientSummary() {
             'ward'            => $patient['ward_name'],
             'ward_code'       => $patient['ward_code'],
             'bed_ward'        => $bedWard,
+            'admission'       => $admission ? [
+                'admission_code'    => $admission['admission_code'],
+                'admission_date'    => $admission['admission_date'],
+                'status'            => $admission['status'],
+                'discharged_at'     => $admission['discharged_at'],
+                'discharge_outcome' => $admission['discharge_outcome'],
+            ] : null,
             'allergies'       => null, // not captured in the registration schema yet
             'vitals'          => $vital ? [
                 'blood_pressure'  => ($vital['blood_pressure_systolic'] && $vital['blood_pressure_diastolic'])
