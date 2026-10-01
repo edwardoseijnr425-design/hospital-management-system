@@ -63,6 +63,21 @@
     #pharmacy .allergy{color:#B91C1C;font-weight:700}
     #pharmacy .none{color:#94A3B8;font-style:italic}
 
+    /* ---- dispensing cost (unit price x quantity) ---- */
+    #pharmacy table.rx-tbl .cost{font-weight:700;color:var(--rx-ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+    #pharmacy table.rx-tbl .cost .per{font-size:9.5px;color:var(--rx-mute);font-weight:600;margin-top:2px}
+    #pharmacy .costbox{background:#F1F5F9;border:1px solid var(--rx-line);border-radius:4px;padding:10px 12px;margin-top:13px}
+    #pharmacy .costbox .crow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:3px 0;font-size:11.5px;color:#475569}
+    #pharmacy .costbox .crow.total{border-top:1px solid var(--rx-line);margin-top:6px;padding-top:8px;font-weight:800;font-size:14px;color:var(--rx-ink)}
+    #pharmacy .costbox .crow .amt{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700;color:var(--rx-ink)}
+    #pharmacy .costbox .crow.total .amt{font-weight:800}
+
+    /* ---- pharmacist notepad / counselling note ---- */
+    #pharmacy .notepad{width:100%;min-height:62px;padding:8px 10px;border:1px solid var(--rx-line);border-radius:3px;font-size:11.5px;font-family:inherit;background:#F8FAFC;color:#334155;resize:vertical;box-sizing:border-box;line-height:1.5}
+    #pharmacy .notepad:focus{outline:none;background:#fff;border-color:var(--rx-blue);box-shadow:0 0 0 2px rgba(27,101,157,.12)}
+    #pharmacy .nothint{font-size:9.5px;color:var(--rx-mute);margin-top:4px;line-height:1.45}
+    #pharmacy table.rx-tbl .counsel{max-width:230px;white-space:pre-wrap;font-size:10.5px;color:#475569}
+
     /* Buttons */
     #pharmacy .rx-btn{border:none;border-radius:4px;padding:6px 13px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:filter .15s}
     #pharmacy .rx-btn.blue{background:var(--rx-blue);color:#fff}
@@ -96,6 +111,16 @@
     #rx-dispense-modal .rx-line .k{color:var(--rx-mute)}
     #rx-dispense-modal .rx-line .v{font-weight:700;color:var(--rx-ink);text-align:right}
     #rx-dispense-modal .caps{margin-top:9px;padding:8px 10px;background:#FEF2F2;border:1px solid #FECACA;border-radius:4px;font-size:10.5px;color:#B91C1C;display:flex;align-items:center;gap:7px}
+
+    /* The dialog sits outside #pharmacy, so the payment panel and the notepad are
+       styled here against the same literal colours the rest of the dialog uses. */
+    #rx-dispense-modal .costbox{background:#F1F5F9;border:1px solid #DCE4EC;border-radius:4px;padding:10px 12px;margin-top:13px}
+    #rx-dispense-modal .costbox .crow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:3px 0;font-size:11.5px;color:#475569}
+    #rx-dispense-modal .costbox .crow.total{border-top:1px solid #DCE4EC;margin-top:6px;padding-top:8px;font-weight:800;font-size:14px;color:#0F2D59}
+    #rx-dispense-modal .costbox .crow .amt{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700;color:#0F2D59}
+    #rx-dispense-modal .costbox .crow .none{color:#94A3B8;font-style:italic;font-weight:600}
+    #rx-dispense-modal .notepad{min-height:62px;resize:vertical;line-height:1.5;color:#334155}
+    #rx-dispense-modal .nothint{font-size:9.5px;color:#64748B;margin-top:4px;line-height:1.45}
 
     /* Requisition form */
     #rx-req-form .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
@@ -164,12 +189,13 @@
                             <th>Prescribing Doctor</th>
                             <th class="num">Qty</th>
                             <th class="num">In Stock</th>
+                            <th class="num">Amount To Pay</th>
                             <th>Status</th>
                             <th style="text-align:center;">Action</th>
                         </tr>
                     </thead>
                     <tbody id="rx-queue-body">
-                        <tr><td colspan="7"><div class="empty">Loading prescriptions...</div></td></tr>
+                        <tr><td colspan="8"><div class="empty">Loading prescriptions...</div></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -187,12 +213,14 @@
                             <th>Patient</th>
                             <th>Drug</th>
                             <th class="num">Issued</th>
+                            <th class="num">Cost</th>
                             <th>Prescribed By</th>
                             <th>Dispensed</th>
+                            <th>Pharmacist Notes / Counselling</th>
                         </tr>
                     </thead>
                     <tbody id="rx-issued-body">
-                        <tr><td colspan="5"><div class="empty">Loading...</div></td></tr>
+                        <tr><td colspan="7"><div class="empty">Loading...</div></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -360,6 +388,7 @@
             </div>
             <div class="modal-body">
                 <div id="rx-dispense-summary"></div>
+                <div class="costbox" id="rx-dispense-cost"></div>
 
                 <div class="fgrid" style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:13px;">
                     <div>
@@ -378,8 +407,9 @@
                         <input type="date" id="rx-dispense-expiry">
                     </div>
                     <div>
-                        <label>Notes</label>
-                        <input type="text" id="rx-dispense-notes" placeholder="Optional">
+                        <label>Pharmacist Notes / Counselling</label>
+                        <textarea id="rx-dispense-notes" class="notepad" rows="3" placeholder="Dispensing notes, counselling advice given to the patient, substitution details, or instructions for administration (optional)."></textarea>
+                        <div class="nothint">These notes are written to the dispensing transaction and remain visible in the &ldquo;Recently Dispensed&rdquo; audit trail.</div>
                     </div>
                 </div>
             </div>
@@ -394,6 +424,9 @@
 <script>
 (function () {
     let rxQueue = [];
+    // Rows for the "Recently Dispensed" audit trail, held so the table can be
+    // re-rendered once prices load without a second round trip.
+    let rxIssued = [];
     let rxDrugs = [];
     // service_prices holds the price per drug (service_type='drug'), keyed by
     // inventory id. It is fetched separately and merged in, because the price
@@ -421,6 +454,54 @@
     function rxTitleCase(v) {
         if (!v) return '';
         return String(v).charAt(0).toUpperCase() + String(v).slice(1);
+    }
+
+    /* ---------- dispensing cost ----------
+       Unit prices live in service_prices (service_type='drug', service_id =
+       pharmacy_inventory.id) and are already loaded into rxDrugPrices by
+       loadDrugPrices() for the Drugs Setup tab. Reusing that map means the
+       dispensing queue costs nothing extra to query. A drug with no price row
+       reads "no price set" rather than a fabricated figure. */
+    function rxUnitPrice(drugId) {
+        const p = rxDrugPrices[drugId];
+        if (!p) return null;
+        const n = Number(p.price);
+        if (!isFinite(n)) return null;
+        return { amount: n, currency: p.currency || 'GHS' };
+    }
+
+    function rxMoney(n, currency) {
+        return (currency || 'GHS') + ' ' + Number(n).toFixed(2);
+    }
+
+    /* Full-quantity line cost for a queue row. */
+    function rxLineCost(rx) {
+        const unit = rxUnitPrice(rx.drug_id);
+        if (!unit) return null;
+        return { total: unit.amount * (Number(rx.quantity) || 0), unit: unit, qty: Number(rx.quantity) || 0 };
+    }
+
+    /* What was actually handed over. It can be less than what was prescribed when
+       the shelf could not cover the full amount, so the cost must follow the
+       issued figure rather than the prescription. */
+    function rxIssuedQty(rx) {
+        const q = (rx.dispensed_quantity === undefined || rx.dispensed_quantity === null)
+            ? rx.quantity
+            : rx.dispensed_quantity;
+        return Number(q) || 0;
+    }
+
+    function rxIssuedCostCell(rx) {
+        const unit = rxUnitPrice(rx.drug_id);
+        if (!unit) return '<td class="num"><span class="none">no price set</span></td>';
+        return '<td class="num cost">' + rxMoney(unit.amount * rxIssuedQty(rx), unit.currency) + '</td>';
+    }
+
+    /* The pharmacist's counselling note, read back off the dispensing record so a
+       later query ("what were they told?") is answerable. */
+    function rxCounselCell(rx) {
+        if (!rx.dispensing_notes) return '<td><span class="none">none recorded</span></td>';
+        return '<td class="counsel">' + escHtml(rx.dispensing_notes) + '</td>';
     }
 
     /* ---------- tabs ---------- */
@@ -457,7 +538,7 @@
             renderQueue();
             document.getElementById('rx-stat-pending').textContent = rxQueue.length;
         } catch (err) {
-            body.innerHTML = '<tr><td colspan="7"><div class="empty">Could not load the dispensing queue: '
+            body.innerHTML = '<tr><td colspan="8"><div class="empty">Could not load the dispensing queue: '
                 + escHtml(err.message) + '</div></td></tr>';
         }
     }
@@ -465,7 +546,7 @@
     function renderQueue() {
         const body = document.getElementById('rx-queue-body');
         if (!rxQueue.length) {
-            body.innerHTML = '<tr><td colspan="7"><div class="empty">Nothing waiting to be dispensed. '
+            body.innerHTML = '<tr><td colspan="8"><div class="empty">Nothing waiting to be dispensed. '
                 + 'Prescriptions appear here the moment a doctor writes them.</div></td></tr>';
             return;
         }
@@ -475,6 +556,15 @@
             const short = Number(rx.quantity_in_stock) < Number(rx.quantity);
             const stock = Number(rx.quantity_in_stock);
             const sig = [rx.dosage, rx.frequency, rx.duration].filter(Boolean).join(' ');
+            const cost = rxLineCost(rx);
+
+            // "no price set" is the honest cell. Inventing a figure on a billing
+            // column would be worse than saying nothing has been configured.
+            const costCell = cost
+                ? '<td class="num cost">' + rxMoney(cost.total, cost.unit.currency)
+                    + '<div class="per">' + escHtml(cost.unit.currency) + ' '
+                    + cost.unit.amount.toFixed(2) + ' x ' + cost.qty + '</div></td>'
+                : '<td class="num"><span class="none">no price set</span></td>';
 
             return '<tr>'
                 + '<td><div class="drug">' + escHtml(rxTitleCase(rx.patient_name)) + '</div>'
@@ -488,6 +578,7 @@
                 + '<td>' + escHtml(rx.doctor_name || 'â€”') + '</td>'
                 + '<td class="num"><b>' + Number(rx.quantity) + '</b> ' + escHtml(rx.unit || '') + '</td>'
                 + '<td class="num' + (short ? ' warnq' : '') + '">' + stock + '</td>'
+                + costCell
                 + '<td>' + (short
                     ? '<span class="pill red">Short Stock</span>'
                     : '<span class="pill amber">Pending Dispense</span>')
@@ -501,25 +592,40 @@
     }
 
     async function loadIssued() {
-        const body = document.getElementById('rx-issued-body');
         try {
             const data = await rxFetch('/hms/backend/api/prescriptions.php?action=dispensed');
-            const rows = data.prescriptions || [];
-            if (!rows.length) {
-                body.innerHTML = '<tr><td colspan="5"><div class="empty">Nothing has been dispensed yet.</div></td></tr>';
-                return;
-            }
-            body.innerHTML = rows.map(rx =>
+            rxIssued = data.prescriptions || [];
+            renderIssued();
+        } catch (err) {
+            rxIssued = [];
+            document.getElementById('rx-issued-body').innerHTML =
+                '<tr><td colspan="7"><div class="empty">' + escHtml(err.message) + '</div></td></tr>';
+        }
+    }
+
+    /* Kept separate from the fetch so the audit trail can be re-rendered when drug
+       prices arrive, without re-querying the server for the same rows. */
+    function renderIssued() {
+        const body = document.getElementById('rx-issued-body');
+        if (!rxIssued.length) {
+            body.innerHTML = '<tr><td colspan="7"><div class="empty">Nothing has been dispensed yet.</div></td></tr>';
+            return;
+        }
+        body.innerHTML = rxIssued.map(rx =>
                 '<tr>'
                 + '<td><div class="drug">' + escHtml(rxTitleCase(rx.patient_name)) + '</div>'
                     + '<div class="sub">' + escHtml(rx.hospital_number || '') + '</div></td>'
                 + '<td>' + escHtml(rx.drug_name) + '</td>'
-                + '<td class="num">' + Number(rx.quantity) + ' ' + escHtml(rx.unit || '') + '</td>'
+                + '<td class="num">' + rxIssuedQty(rx) + ' ' + escHtml(rx.unit || '') + '</td>'
+                + rxIssuedCostCell(rx)
                 + '<td>' + escHtml(rx.doctor_name || 'â€”') + '</td>'
-                + '<td>' + escHtml(fmtDateTime(rx.dispensed_at || rx.prescribed_at)) + '</td>'
+                + '<td>' + escHtml(fmtDateTime(rx.dispensed_at || rx.prescribed_at))
+                    + (rx.pharmacist_name ? '<div class="sub">by ' + escHtml(rx.pharmacist_name) + '</div>' : '')
+                    + '</td>'
+                + rxCounselCell(rx)
                 + '</tr>').join('');
         } catch (err) {
-            body.innerHTML = '<tr><td colspan="5"><div class="empty">' + escHtml(err.message) + '</div></td></tr>';
+            body.innerHTML = '<tr><td colspan="7"><div class="empty">' + escHtml(err.message) + '</div></td></tr>';
         }
     }
 
@@ -565,7 +671,35 @@
         document.getElementById('rx-dispense-notes').value = '';
         document.getElementById('rx-dispense-confirm').disabled = cap <= 0;
 
+        updateDispenseCost();
         document.getElementById('rx-dispense-modal').style.display = 'flex';
+    }
+
+    /* Amount the patient pays for this issue, recomputed as the quantity field is
+       typed. Unit price comes from service_prices; when the drug has no price
+       configured the panel says so rather than showing a fabricated zero, because
+       a silently wrong figure on a payment summary is worse than an absent one. */
+    function updateDispenseCost() {
+        const box = document.getElementById('rx-dispense-cost');
+        if (!box) return;
+
+        const unit = rxDispense ? rxUnitPrice(rxDispense.drug_id) : null;
+        if (!unit) {
+            box.innerHTML = '<div class="crow"><span>Amount To Pay</span>'
+                + '<span class="amt"><span class="none">no price set for this drug</span></span></div>'
+                + '<div class="nothint">Set a drug price in Service Prices to have dispensing costs show here.</div>';
+            return;
+        }
+
+        const qty = parseInt(document.getElementById('rx-dispense-qty').value, 10) || 0;
+        const total = unit.amount * qty;
+
+        box.innerHTML = '<div class="crow"><span>Unit Price</span>'
+                + '<span class="amt">' + escHtml(rxMoney(unit.amount, unit.currency)) + '</span></div>'
+            + '<div class="crow"><span>Quantity To Issue</span>'
+                + '<span class="amt">' + qty + ' ' + escHtml(rxDispense.unit || 'unit(s)') + '</span></div>'
+            + '<div class="crow total"><span>Amount To Pay</span>'
+                + '<span class="amt">' + escHtml(rxMoney(total, unit.currency)) + '</span></div>';
     }
 
     function closeDispense() {
@@ -698,26 +832,40 @@
             const data = await rxFetch(url);
             rxDrugs = data.items || data.inventory || [];
             body.dataset.loaded = '1';
-            await loadDrugPrices();
+            // Prices are already loaded on init for the dispensing cost columns;
+            // only fetch them here if that has not happened yet.
+            if (!rxPricesLoaded) await loadDrugPrices();
             renderDrugs();
         } catch (err) {
             body.innerHTML = '<tr><td colspan="7"><div class="empty">' + escHtml(err.message) + '</div></td></tr>';
         }
     }
 
+    let rxPricesLoaded = false;
+
     async function loadDrugPrices() {
+        if (rxPricesLoaded) return;
         try {
             const data = await rxFetch('/hms/backend/api/prices.php?service_type=drug');
             const next = {};
             (data.prices || []).forEach(p => {
+                // A retired price must never be the one charged: the price list can
+                // hold inactive rows, and showing the Drugs Setup tab is one thing,
+                // but quoting a withdrawn figure on a payment summary is not.
+                const active = p.is_active === undefined || p.is_active === null
+                    ? true
+                    : (Number(p.is_active) === 1 || String(p.is_active).toLowerCase() === 'true');
+                if (!active) return;
                 // The most recently effective price wins; several may exist per drug.
                 if (next[p.service_id] === undefined || p.effective_date > next[p.service_id].effective_date) {
                     next[p.service_id] = p;
                 }
             });
             rxDrugPrices = next;
+            rxPricesLoaded = true;
         } catch (err) {
             rxDrugPrices = {};
+            rxPricesLoaded = false;
         }
     }
 
@@ -983,9 +1131,18 @@
             b.addEventListener('click', closeDispense);
         });
 
+        // The amount to pay follows the quantity field, so it is recomputed as the
+        // pharmacist edits rather than only when the dialog is first opened.
+        document.getElementById('rx-dispense-qty').addEventListener('input', updateDispenseCost);
+
         loadQueue();
         loadIssued();
         loadStats();
+
+        // Prices drive the dispensing cost columns, so they are needed up front -
+        // the queue renders before the Drugs Setup tab is ever opened. Only the
+        // relevant service_type is requested rather than the whole price list.
+        loadDrugPrices().then(renderQueue).then(renderIssued);
     };
 })();
 </script>

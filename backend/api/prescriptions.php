@@ -72,7 +72,7 @@ function listPrescriptions() {
  * Shared projection. patient_name is built the same way admissions.php builds it so
  * the same patient reads identically across modules.
  */
-function prescriptionSelect() {
+function prescriptionSelect($extraColumns = '') {
     return "SELECT pr.*,
                    pi.drug_name,
                    pi.generic_name,
@@ -82,7 +82,9 @@ function prescriptionSelect() {
                    v.visit_number,
                    v.patient_id,
                    p.hospital_number,
-                   CONCAT_WS(' ', p.title, p.first_name, p.middle_name, p.last_name) AS patient_name
+                   CONCAT_WS(' ', p.title, p.first_name, p.middle_name, p.last_name) AS patient_name"
+        . ($extraColumns !== '' ? ",\n                   " . $extraColumns : '')
+        . "
             FROM prescriptions pr
             JOIN pharmacy_inventory pi ON pi.id = pr.drug_id
             JOIN users u ON u.id = pr.doctor_id
@@ -131,7 +133,13 @@ function listDispensingQueue() {
 function listDispensed() {
     $db = Database::getInstance();
 
-    $sql = prescriptionSelect() . "
+    // The dispensing transaction is joined in so the pharmacist's own record of
+    // what was issued, by whom, and the counselling note are readable back on
+    // the audit trail - not just captured and forgotten.
+    $sql = prescriptionSelect("md.quantity_dispensed AS dispensed_quantity,
+                                   md.notes AS dispensing_notes,
+                                   md.dispensed_at,
+                                   IFNULL(pu.full_name, '') AS pharmacist_name") . "
             JOIN medication_dispensing md ON md.prescription_id = pr.id
             LEFT JOIN users pu ON pu.id = md.pharmacist_id
         WHERE pr.status = 'dispensed'
