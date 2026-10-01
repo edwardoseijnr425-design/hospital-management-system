@@ -92,6 +92,12 @@
                             <option value="O-">O-</option>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label for="patient-allergies">Known Allergies</label>
+                        <input type="text" id="patient-allergies" name="allergies"
+                               placeholder="e.g. Penicillin, Sulfa drugs">
+                        <small class="form-text text-muted">Comma separated. Leave blank if none known.</small>
+                    </div>
                 </div>
                 
                 <h4>Contact Information</h4>
@@ -317,6 +323,7 @@ function openPatientModal(patient = null) {
         document.getElementById('patient-dob').value = patient.date_of_birth;
         document.getElementById('patient-gender').value = patient.gender;
         document.getElementById('patient-bloodgroup').value = patient.blood_group || '';
+        document.getElementById('patient-allergies').value = patient.allergies || '';
         document.getElementById('patient-phone').value = patient.phone || '';
         document.getElementById('patient-email').value = patient.email || '';
         document.getElementById('patient-address').value = patient.address || '';

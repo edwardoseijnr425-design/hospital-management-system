@@ -28,6 +28,7 @@ class Patient {
             'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
             'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
             'blood_group' => $data['blood_group'] ?? null,
+            'allergies'   => trim((string)($data['allergies'] ?? '')) === '' ? null : trim((string)$data['allergies']),
             'sponsor_id' => $data['sponsor_id'] ?? null,
             'nhia_number' => $data['nhia_number'] ?? null,
             'registration_date' => date('Y-m-d'),
@@ -51,11 +52,16 @@ class Patient {
         
         $allowedFields = ['first_name', 'middle_name', 'last_name', 'date_of_birth', 'gender', 
                          'phone', 'email', 'address', 'emergency_contact_name', 
-                         'emergency_contact_phone', 'blood_group', 'sponsor_id', 'nhia_number'];
+                         'emergency_contact_phone', 'blood_group', 'allergies', 'sponsor_id', 'nhia_number'];
         
         foreach ($allowedFields as $field) {
             if (isset($data[$field])) {
-                $updateData[$field] = $data[$field];
+                // Allergies is a free-text clinical list. Normalise the blank case
+                // the same way register() does, otherwise clearing the field stores
+                // whitespace and the alert badge renders an empty-looking chip.
+                $updateData[$field] = ($field === 'allergies')
+                    ? (trim((string)$data[$field]) === '' ? null : trim((string)$data[$field]))
+                    : $data[$field];
             }
         }
         

@@ -257,7 +257,7 @@ function getPatientSummary() {
                 'discharged_at'     => $admission['discharged_at'],
                 'discharge_outcome' => $admission['discharge_outcome'],
             ] : null,
-            'allergies'       => null, // not captured in the registration schema yet
+            'allergies'       => $patient['allergies'] ?: null,
             'vitals'          => $vital ? [
                 'blood_pressure'  => ($vital['blood_pressure_systolic'] && $vital['blood_pressure_diastolic'])
                     ? $vital['blood_pressure_systolic'] . '/' . $vital['blood_pressure_diastolic'] : null,
