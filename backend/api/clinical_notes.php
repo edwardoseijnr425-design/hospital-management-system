@@ -230,6 +230,13 @@ function deleteNote() {
     $note = $db->fetchOne("SELECT * FROM clinical_notes WHERE id = ?", [$id]);
     if (!$note) jsonResponse(['error' => 'Note not found'], 404);
 
+    // A clinical entry may only be removed by the clinician who wrote it, or by
+    // an administrator. Without this the file-level role gate alone would let any
+    // nurse delete another doctor's record - including a discharge summary.
+    if (!hasRole(['admin']) && (int)$note['doctor_id'] !== (int)getCurrentUserId()) {
+        jsonResponse(['error' => 'You can only delete your own clinical entries'], 403);
+    }
+
     try {
         $db->beginTransaction();
 
