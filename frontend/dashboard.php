@@ -541,7 +541,8 @@ function hcBrandLogo($px = 45) {
             <a href="#" class="nav-link" data-page="messages">Messages &amp; Alerts <span class="nav-msg-badge" id="msgs-nav-badge" style="display:none">0</span></a>
             <a href="#" class="nav-link" data-page="records">Patient Record Management</a>
             <a href="#" class="nav-link" data-page="admissions">Admissions</a>
-            <a href="#" class="nav-link" data-page="prices">Drugs Dispense</a>
+            <a href="#" class="nav-link" data-page="pharmacy">Pharmacy</a>
+            <a href="#" class="nav-link" data-page="prices">Service Prices</a>
             <a href="#" class="nav-link" data-page="reports">View Alerts</a>
             <a href="#" class="nav-link" data-page="lab-management">Lab Management</a>
             <a href="#" class="nav-link" data-page="account-management">Account Management</a>
@@ -1215,7 +1216,7 @@ window.fmtDateTime = fmtDateTime;
             administrator:'administrator',
             accounts_management:'account-management',
             investigations:'lab-management',
-            pharmacy_management:'prices',
+            pharmacy_management:'pharmacy',
             mis:'reports',
             ipd_management:'ipd-management',
             departments:'departments',

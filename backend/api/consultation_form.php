@@ -580,6 +580,9 @@ function writePrescription($db, $visitId, $line, &$counts) {
     $frequency  = trim((string)($line['frequency'] ?? ''));
     $duration   = trim((string)($line['duration'] ?? ''));
     $instructions = trim((string)($line['instructions'] ?? ''));
+    // How much the doctor intends to issue. The pharmacy caps its dispense at this
+    // figure, so it has to be recorded now rather than guessed at issue time.
+    $quantity   = max((int)($line['quantity'] ?? 1), 1);
 
     $db->insert('prescriptions', [
         'visit_id'     => $visitId,
@@ -588,6 +591,7 @@ function writePrescription($db, $visitId, $line, &$counts) {
         'dosage'       => $dosage === '' ? null : $dosage,
         'frequency'    => $frequency === '' ? null : $frequency,
         'duration'     => $duration === '' ? null : $duration,
+        'quantity'     => $quantity,
         'instructions' => $instructions === '' ? null : $instructions,
         'status'       => 'pending',
     ]);

@@ -288,6 +288,9 @@ CREATE TABLE prescriptions (
     dosage VARCHAR(50),
     frequency VARCHAR(50),
     duration VARCHAR(50),
+    -- Quantity the doctor intends to issue. The pharmacy may never dispense more
+    -- than this; without it there is nothing to cap a dispense against.
+    quantity INT NOT NULL DEFAULT 1,
     instructions TEXT,
     status ENUM('pending', 'dispensed', 'cancelled') DEFAULT 'pending',
     prescribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

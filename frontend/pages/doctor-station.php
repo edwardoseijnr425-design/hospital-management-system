@@ -159,7 +159,7 @@
     .ds-rx-line .top .gen{font-size:10.5px;color:#64748B}
     .ds-rx-line .top .rm{margin-left:auto;background:#fff;border:1px solid #F0B7B2;color:#C0392B;border-radius:3px;font-size:9.5px;font-weight:700;padding:3px 7px;cursor:pointer;font-family:inherit}
     .ds-rx-line .top .rm:hover{background:#FDECEA}
-    .ds-rx-line .flds{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:7px}
+    .ds-rx-line .flds{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:7px}
     .ds-rx-line .flds input{padding:5px 7px;font-size:11px}
     .ds-rx-line .flds label{font-size:9px;margin-bottom:3px}
     .ds-rx-empty{font-size:11px;color:#94A3B8;text-align:center;padding:10px;border:1px dashed var(--ds-line);border-radius:4px}
@@ -208,6 +208,7 @@
     @media (max-width:900px){
         .ds-form .cols{grid-template-columns:1fr}
         .ds-form .three{grid-template-columns:1fr}
+        .ds-rx-line .flds{grid-template-columns:1fr 1fr}
     }
     @media (max-width:640px){
         #ds-banner{flex-direction:column;align-items:flex-start}
@@ -996,6 +997,7 @@ async function addDrugFromInput() {
         dosage: '',
         frequency: '',
         duration: '',
+        quantity: 1,
         instructions: ''
     });
     input.value = '';
@@ -1020,9 +1022,10 @@ function renderRxLines() {
                 ? '<span class="gen">' + escHtml(l.generic_name) + '</span>' : '')
             + '<button type="button" class="rm" data-ds-rx-rm="' + i + '">Remove</button></div>'
         + '<div class="flds">'
-            + '<div><label>Dosage</label><input type="text" class="ds-rx-dosage" data-ds-rx-field="dosage" data-ds-rx-i="' + i + '" value="' + escHtml(l.dosage) + '" placeholder="e.g. 1g"></div>'
+            + '<div>' + '<label>Dosage</label><input type="text" class="ds-rx-dosage" data-ds-rx-field="dosage" data-ds-rx-i="' + i + '" value="' + escHtml(l.dosage) + '" placeholder="e.g. 1g"></div>'
             + '<div><label>Frequency</label><input type="text" data-ds-rx-field="frequency" data-ds-rx-i="' + i + '" value="' + escHtml(l.frequency) + '" placeholder="e.g. TDS"></div>'
             + '<div><label>Duration</label><input type="text" data-ds-rx-field="duration" data-ds-rx-i="' + i + '" value="' + escHtml(l.duration) + '" placeholder="e.g. 5 days"></div>'
+            + '<div><label>Quantity to issue</label><input type="number" min="1" step="1" class="ds-rx-qty" data-ds-rx-field="quantity" data-ds-rx-i="' + i + '" value="' + escHtml(l.quantity == null ? 1 : l.quantity) + '" title="The pharmacy will not dispense more than this"></div>'
         + '</div>'
         + '<div style="margin-top:6px;"><label>Instructions (optional)</label><input type="text" data-ds-rx-field="instructions" data-ds-rx-i="' + i + '" value="' + escHtml(l.instructions) + '" placeholder="e.g. after food"></div>'
         + '</div>').join('');
@@ -1041,7 +1044,7 @@ async function saveConsultationForm(asDraft) {
     });
     dsForm.rxLines.forEach(l => lines.push({
         drug_id: l.drug_id, dosage: l.dosage, frequency: l.frequency,
-        duration: l.duration, instructions: l.instructions
+        duration: l.duration, quantity: l.quantity, instructions: l.instructions
     }));
 
     const investigations = [];
