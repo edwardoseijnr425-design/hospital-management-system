@@ -1,6 +1,6 @@
 <?php
-// Reports (MIS) - consolidated reporting page: DHIMS Report & Data Export Console
-// on top, standard report generator below. SPA fragment loaded by the shell.
+// Reports (MIS) - consolidated reporting page: standard report generator
+// on top, DHIMS Report & Data Export Console below. SPA fragment loaded by the shell.
 require_once __DIR__ . '/../../backend/config/config.php';
 ?>
 <style>
@@ -108,6 +108,60 @@ require_once __DIR__ . '/../../backend/config/config.php';
 </style>
 
 <div id="dhims-cc">
+
+  <!-- STANDARD REPORT GENERATOR -->
+  <div class="card">
+    <div class="card-header">
+        <h2>Reports</h2>
+    </div>
+    <div class="card-body">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="report-type">Report Type</label>
+                <select id="report-type">
+                    <option value="">Select Report Type</option>
+                    <option value="patient_registrations">Patient Registrations</option>
+                    <option value="visits_summary">Visits Summary</option>
+                    <option value="consultations_summary">Consultations Summary</option>
+                    <option value="department_stats">Department Statistics</option>
+                    <option value="revenue_summary">Revenue Summary</option>
+                    <option value="bed_occupancy">Bed Occupancy</option>
+                    <option value="lab_summary">Laboratory Summary</option>
+                    <option value="audit_log">Audit Log</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="report-date-from">From Date</label>
+                <input type="date" id="report-date-from">
+            </div>
+            <div class="form-group">
+                <label for="report-date-to">To Date</label>
+                <input type="date" id="report-date-to">
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
+            <button class="btn btn-secondary" id="export-report-btn">Export CSV</button>
+        </div>
+    </div>
+</div>
+
+  <div class="card" id="report-results-card" style="display: none;">
+    <div class="card-header">
+        <h2 id="report-title">Report Results</h2>
+    </div>
+    <div class="card-body">
+        <div id="report-summary"></div>
+        <div class="table-container" id="report-table-container">
+            <table id="report-table">
+                <!-- Report data will be loaded here -->
+            </table>
+        </div>
+    </div>
+  </div>
+
+  <div class="misdhims-divider"><span>DHIMS Report &amp; Data Export Console</span></div>
 
   <!-- DHIMS REPORT & DATA EXPORT CONSOLE BANNER -->
   <div class="banner">
@@ -256,60 +310,6 @@ require_once __DIR__ . '/../../backend/config/config.php';
       </div>
     </div>
   </div>
-
-  <div class="misdhims-divider"><span>Standard Reports</span></div>
-
-  <!-- STANDARD REPORT GENERATOR -->
-  <div class="card">
-    <div class="card-header">
-        <h2>Reports</h2>
-    </div>
-    <div class="card-body">
-        <div class="form-row">
-            <div class="form-group">
-                <label for="report-type">Report Type</label>
-                <select id="report-type">
-                    <option value="">Select Report Type</option>
-                    <option value="patient_registrations">Patient Registrations</option>
-                    <option value="visits_summary">Visits Summary</option>
-                    <option value="consultations_summary">Consultations Summary</option>
-                    <option value="department_stats">Department Statistics</option>
-                    <option value="revenue_summary">Revenue Summary</option>
-                    <option value="bed_occupancy">Bed Occupancy</option>
-                    <option value="lab_summary">Laboratory Summary</option>
-                    <option value="audit_log">Audit Log</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="report-date-from">From Date</label>
-                <input type="date" id="report-date-from">
-            </div>
-            <div class="form-group">
-                <label for="report-date-to">To Date</label>
-                <input type="date" id="report-date-to">
-            </div>
-        </div>
-        
-        <div class="form-actions">
-            <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
-            <button class="btn btn-secondary" id="export-report-btn">Export CSV</button>
-        </div>
-    </div>
-</div>
-
-<div class="card" id="report-results-card" style="display: none;">
-    <div class="card-header">
-        <h2 id="report-title">Report Results</h2>
-    </div>
-    <div class="card-body">
-        <div id="report-summary"></div>
-        <div class="table-container" id="report-table-container">
-            <table id="report-table">
-                <!-- Report data will be loaded here -->
-            </table>
-        </div>
-    </div>
-</div>
 
 </div>
 
