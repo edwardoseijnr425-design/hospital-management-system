@@ -20,6 +20,33 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
 #vitals-page .discharge-died{background:#FEE2E2;color:#B91C1C;border-color:#FCA5A5}
 #vitals-page .discharge-absconded{background:#FEF3C7;color:#B45309;border-color:#FCD34D}
 #vitals-page .discharge-meta{margin-left:8px;font-size:10px;color:#64748B;font-weight:600}
+/* ---------- Station header banner ---------- */
+#vitals-page .station-banner{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 14px;border-radius:7px;background:#B91C1C;border:1px solid #991B1B;color:#fff}
+#vitals-page .station-banner h4{margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:7px}
+#vitals-page .station-banner h4 svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2;flex:0 0 auto}
+#vitals-page .station-banner p{margin:2px 0 0;font-size:11px;color:#FECACA}
+#vitals-page .station-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:5px;background:#991B1B;border:1px solid #7F1D1D;font-size:11px;font-weight:700}
+#vitals-page .station-chip svg{width:13px;height:13px;fill:none;stroke:#fff;stroke-width:2;flex:0 0 auto}
+/* ---------- Allergy alert chip ---------- */
+#vitals-page .allergy-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;font-size:11px;font-weight:700;max-width:100%}
+#vitals-page .allergy-chip svg{width:13px;height:13px;fill:none;stroke:#D97706;stroke-width:2;flex:0 0 auto}
+#vitals-page .allergy-chip span{overflow-wrap:anywhere}
+/* ---------- Latest vitals tiles ---------- */
+#vitals-page .vs-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:576px){#vitals-page .vs-tiles{grid-template-columns:repeat(2,1fr)}}
+#vitals-page .vs-tile{padding:7px 9px;border:1px solid #E2E8F0;border-radius:6px;background-color:#F8FAFC;text-align:center}
+#vitals-page .vs-tile .k{display:block;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94A3B8}
+#vitals-page .vs-tile .v{display:block;font-size:14px;font-weight:800;color:#1E293B;margin-top:1px}
+#vitals-page .vs-tile .v.none{font-size:11.5px;font-weight:600;color:#B6BECB}
+/* ---------- Billing collapsible panel ---------- */
+#vitals-page .bill-toggle{display:flex;width:100%;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#0F2D59;cursor:pointer;text-align:left}
+#vitals-page .bill-toggle:hover{background-color:#F1F5F9}
+#vitals-page .bill-toggle .lbl{display:inline-flex;align-items:center;gap:7px}
+#vitals-page .bill-toggle svg{width:14px;height:14px;fill:none;stroke:#B45309;stroke-width:2;flex:0 0 auto}
+#vitals-page .bill-toggle .chev{transition:transform .18s ease}
+#vitals-page .bill-toggle.open .chev{transform:rotate(180deg)}
+#vitals-page .bill-panel{display:none;padding:12px;border:1px solid #E2E8F0;border-top:none;border-radius:0 0 6px 6px}
+#vitals-page .bill-panel.show{display:block}
 /* ---------- Billing category rollup ---------- */
 #vitals-page .bill-rollup{margin-top:8px;border:1px solid #E2E8F0;border-radius:6px;overflow:hidden}
 #vitals-page .bill-rollup-head{display:flex;align-items:center;gap:6px;padding:6px 10px;background-color:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#0F2D59}
@@ -783,6 +810,72 @@ function dischargeBadgeHtml(adm) {
     return '<span class="discharge-badge ' + cls + '">' + icon + escHtml(label) + '</span>' + meta;
 }
 
+/* Read-side guard for displayed vitals.
+   Mirrors the plausibility bounds in backend/api/consultation_form.php and
+   backend/api/vitals.php. Rows recorded before that write-side check landed can
+   still hold impossible figures, and printing 54.5 C next to a real reading
+   invites a clinician to act on it. Anything outside these bounds renders as
+   not recorded rather than being shown. The bounds are deliberately wider than
+   the normal adult range: a genuine fever or hypoxia is displayed, not hidden. */
+const DISPLAY_VITAL_RANGES = {
+    temperature:             [25.0, 45.0],
+    blood_pressure_systolic: [40, 320],
+    blood_pressure_diastolic:[20, 200],
+    heart_rate:              [25, 250],
+    respiratory_rate:        [4, 80],
+    oxygen_saturation:       [30.0, 100.0]
+};
+
+/* Show/hide the billing panel. Keeps aria-expanded in step with the visual
+   state so the control is not announced as collapsed while it is open. */
+function toggleBillingPanel(pid) {
+    const btn = document.getElementById('billToggle_' + pid);
+    const panel = document.getElementById('billPanel_' + pid);
+    if (!btn || !panel) return;
+    const open = panel.classList.toggle('show');
+    btn.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function plausibleVital(v, field) {
+    if (!v || v[field] === null || v[field] === undefined || v[field] === '') return null;
+    const n = Number(v[field]);
+    if (isNaN(n)) return null;
+    const r = DISPLAY_VITAL_RANGES[field];
+    if (r && (n < r[0] || n > r[1])) return null;
+    return n;
+}
+
+/* Four-up tiles for the most recent set of readings. The full history table
+   below is left untouched. */
+function latestVitalTiles(readings) {
+    const v = (readings && readings.length) ? readings[0] : null;
+    const sys = plausibleVital(v, 'blood_pressure_systolic');
+    const dia = plausibleVital(v, 'blood_pressure_diastolic');
+
+    const tile = (k, text) =>
+        '<div class="vs-tile"><span class="k">' + escHtml(k) + '</span>' +
+        '<span class="v' + (text ? '' : ' none') + '">' + escHtml(text || 'Not recorded') + '</span></div>';
+
+    return '<div class="vs-tiles">'
+        + tile('Blood Pressure', (sys !== null && dia !== null) ? sys + '/' + dia : '')
+        + tile('Pulse Rate', plausibleVital(v, 'heart_rate') !== null ? plausibleVital(v, 'heart_rate') + ' bpm' : '')
+        + tile('Temperature', plausibleVital(v, 'temperature') !== null ? plausibleVital(v, 'temperature') + ' \u00B0C' : '')
+        + tile('SpO2', plausibleVital(v, 'oxygen_saturation') !== null ? plausibleVital(v, 'oxygen_saturation') + '%' : '')
+        + '</div>';
+}
+
+/* Amber allergy chip. Rendered only when something is actually recorded --
+   a chip reading "Allergies: None recorded" on every patient trains staff to
+   ignore it. */
+function allergyChipHtml(allergies) {
+    const text = String(allergies == null ? '' : allergies).trim();
+    if (!text) return '';
+    return '<span class="allergy-chip">'
+        + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>'
+        + '<span>Allergies: ' + escHtml(text) + '</span></span>';
+}
+
 /* ============================================================
    CLINICAL PATIENT CARE & TREATMENT SHEET CARD (per patient)
    ============================================================ */
@@ -809,6 +902,19 @@ function renderPatientCard(ctx) {
 
     const demoLine = `${escHtml(s.gender || '--')} | ${s.age != null ? escHtml(s.age) + ' Yrs' : '--'} | Genotype: -- | Blood Group: ${escHtml(s.blood_group || '--')}`;
 
+    // Discharge is performed from the Admissions page: it needs a final diagnosis
+    // and one of seven outcomes, and that action already validates both. This
+    // card only reports the outcome, so a badge plus a link -- not a second form
+    // that could write a partial or contradictory record.
+    const isAdmitted = !!(s.admission
+        && String(s.admission.status || '').trim().toLowerCase() === 'admitted');
+    const dischargeLink = isAdmitted
+        ? '<a href="#" onclick="if(typeof navigateTo===\'function\'){navigateTo(\'admissions\')}return false;" '
+          + 'title="Discharge this patient from the Admissions page" '
+          + 'style="font-size:11px;font-weight:700;color:#1D4ED8;text-decoration:underline;">'
+          + 'Discharge from Admissions</a>'
+        : '';
+
     return `
     <div class="card border-0 shadow-sm mb-4" style="border-radius: 8px; border: 1px solid #CBD5E1 !important;">
 
@@ -833,6 +939,21 @@ function renderPatientCard(ctx) {
 
         <div class="card-body p-3">
 
+            <!-- STATION HEADER BANNER -->
+            <div class="station-banner mb-3">
+                <div>
+                    <h4>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 6 6 1-4.5 4.2L18 20l-6-3.3L6 20l1.5-6.8L3 9l6-1z"></path></svg>
+                        Station Management &mdash; Patient Care &amp; Discharge Workflow
+                    </h4>
+                    <p>Clinical records, vitals and billing for this patient's current stay.</p>
+                </div>
+                <span class="station-chip">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h20v16H2z"></path><path d="M2 9h20"></path><path d="M6 4v5"></path></svg>
+                    ${escHtml(s.hospital_number || bed.bed_number || 'Patient')}
+                </span>
+            </div>
+
             <!-- PATIENT ID & NAME HEADER WITH SVG AVATAR -->
             <div class="p-3 mb-3 rounded d-flex justify-content-between align-items-center flex-wrap gap-2" style="background-color: #F1F5F9; border: 1px solid #CBD5E1;">
                 <div class="d-flex align-items-center gap-3">
@@ -846,12 +967,28 @@ function renderPatientCard(ctx) {
                             ${dischargeBadgeHtml(s.admission || null)}
                         </div>
                         <small class="text-muted">${demoLine}</small>
+                        ${dischargeLink ? '<div style="margin-top:4px;">' + dischargeLink + '</div>' : ''}
                     </div>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-info text-white font-weight-bold" style="font-size: 11px;">Blood Donation :- NA</span>
-                    <span class="badge bg-warning text-dark font-weight-bold" style="font-size: 11px;">(Currently Not On Oxygen)</span>
+                <!-- Allergy alert. Only rendered when something is recorded. The two
+                     badges that stood here before were literals asserted for every
+                     patient with no column behind either: a donation-status chip and
+                     an oxygen chip. The oxygen one is the dangerous kind -- a nurse
+                     could read it and withhold oxygen that was actually being given.
+                     Both removed rather than wired to invented data. -->
+                <div class="d-flex align-items-center gap-2">${allergyChipHtml(s.allergies)}</div>
+            </div>
+
+            <!-- LATEST VITALS TILES -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
+                    <h6 class="font-weight-bold text-uppercase mb-0 d-flex align-items-center gap-2" style="color: #0F2D59; font-size: 13px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0072BC" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                        Latest Vitals
+                    </h6>
+                    <span class="text-muted" style="font-size: 10.5px;">${readings.length ? 'Most recent reading' : 'No readings recorded'}</span>
                 </div>
+                ${latestVitalTiles(readings)}
             </div>
 
             <!-- VITAL SIGNS READINGS -->
@@ -953,12 +1090,22 @@ function renderPatientCard(ctx) {
                 </div>
             </div>
 
-            <!-- SECTION 4: BILLING SUMMARY -->
+            <!-- SECTION 4: BILLING SUMMARY (collapsible) -->
             <div class="mb-4">
-                <h6 class="font-weight-bold text-uppercase mb-2 d-flex align-items-center gap-2" style="color: #0F2D59; font-size: 13px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2"><path d="M20 6H9a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z"></path><path d="M6 9H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2"></path></svg>
-                    Billing Summary
-                </h6>
+                <!-- Plain onclick toggle. This project ships no Alpine.js, so the
+                     declarative show/hide bindings the original design used would
+                     silently never fire. Collapsed by default because the invoice
+                     detail is secondary to the clinical sections above. -->
+                <button type="button" class="bill-toggle" id="billToggle_${pid}"
+                        aria-expanded="false" aria-controls="billPanel_${pid}"
+                        onclick="toggleBillingPanel(${pid})">
+                    <span class="lbl">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6H9a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z"></path><path d="M6 9H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2"></path></svg>
+                        Billing Summary
+                    </span>
+                    <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="bill-panel" id="billPanel_${pid}">
                 <div class="table-responsive rounded border mb-2">
                     <table class="table table-bordered mb-0 align-middle" style="font-size: 12px;">
                         <thead class="bg-light text-uppercase" style="font-size: 11px;">
@@ -1002,6 +1149,7 @@ function renderPatientCard(ctx) {
                     <div class="bill-rollup-list" id="billingRollupList_${pid}">
                         <div class="bill-rollup-empty">Loading billing breakdown...</div>
                     </div>
+                </div>
                 </div>
             </div>
 
