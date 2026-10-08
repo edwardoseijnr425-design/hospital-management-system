@@ -1,6 +1,6 @@
 -- Hospital Management System Database Schema
 -- Inspired by LHIMS workflow
--- Compatible with XAMPP/MySQL
+-- Compatible with Laragon/MySQL (also imports on XAMPP/MariaDB)
 
 -- Drop existing tables if they exist
 DROP TABLE IF EXISTS audit_trails;

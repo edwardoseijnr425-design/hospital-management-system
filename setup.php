@@ -2,17 +2,17 @@
 /**
  * HMS Setup Script
  * This script initializes the database and creates the default super admin account
- * Run this once after setting up XAMPP
+ * Run this once after setting up Laragon
  */
 
 echo "=== Hospital Management System Setup ===\n\n";
 
-// Check if XAMPP is running
+// Check if the MySQL server (Laragon) is running
 try {
     $pdo = new PDO("mysql:host=localhost", "root", "");
     echo "✓ Connected to MySQL server\n";
 } catch (PDOException $e) {
-    die("✗ Failed to connect to MySQL. Make sure XAMPP is running.\nError: " . $e->getMessage() . "\n");
+    die("✗ Failed to connect to MySQL. Make sure Laragon MySQL is running.\nError: " . $e->getMessage() . "\n");
 }
 
 // Create database if it doesn't exist

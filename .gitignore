@@ -1,4 +1,4 @@
-# XAMPP and Server Files
+# Server files (Laragon/XAMPP logs, pids)
 *.log
 *.pid
 *.seed

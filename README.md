@@ -25,23 +25,27 @@ A comprehensive Hospital Management System inspired by LHIMS (Lightwave Health I
 
 ### Technical Features
 - **Responsive Design**: Works on desktop and mobile devices
-- **XAMPP Compatible**: Runs entirely on XAMPP (Apache, MySQL, PHP)
+- **Laragon Compatible**: Runs entirely on Laragon (Apache, MySQL, PHP)
 - **Security**: Password hashing, session management, CSRF protection
 - **Audit Logging**: Complete trail of all system actions
 
 ## System Requirements
 
-- XAMPP (or equivalent LAMP stack)
+- Laragon (or equivalent LAMP stack)
 - PHP 7.4 or higher
-- MySQL 5.7 or higher
+- MySQL 5.7 or higher (tested on MySQL 8.4)
 - Modern web browser (Chrome, Firefox, Safari, Edge)
 
 ## Installation
 
-### 1. Setup XAMPP
-1. Download and install XAMPP from https://www.apachefriends.org/
-2. Start Apache and MySQL services from XAMPP Control Panel
-3. Place the HMS folder in `C:\xampp\htdocs\hms\` (on Windows)
+### 1. Setup Laragon
+1. Download and install Laragon from https://laragon.org/
+2. Start **Apache** and **MySQL** from the Laragon control panel
+3. Place the HMS folder in `C:\laragon\www\hms\` (on Windows), or link the
+   existing checkout with a junction so one copy serves the app:
+   ```powershell
+   New-Item -ItemType Junction -Path 'C:\laragon\www\hms' -Target 'C:\path\to\hms'
+   ```
 
 ### 2. Run Setup Script
 1. Open your browser and navigate to: `http://localhost/hms/setup.php`
@@ -201,7 +205,7 @@ The system uses a comprehensive MySQL database with the following main tables:
 ## Troubleshooting
 
 ### Database Connection Issues
-- Ensure XAMPP MySQL service is running
+- Ensure Laragon MySQL is running (Laragon control panel → Start All)
 - Check database credentials in `backend/config/database.php`
 - Verify database `hms_db` exists
 
@@ -218,7 +222,7 @@ The system uses a comprehensive MySQL database with the following main tables:
 For issues and questions:
 - Check the audit logs for error details
 - Review browser console for JavaScript errors
-- Check XAMPP error logs
+- Check the Laragon error logs (`C:\laragon\log\`, or Laragon → PHP/MySQL → error log)
 
 ## License
 

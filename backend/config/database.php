@@ -1,5 +1,5 @@
 <?php
-// Database Configuration for XAMPP/MySQL
+// Database Configuration for Laragon/MySQL (root / no password by default)
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');

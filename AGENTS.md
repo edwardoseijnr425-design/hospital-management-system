@@ -30,13 +30,15 @@ git push
 
 ## Project
 
-Hospital Management System — multi-department PHP/MySQL app running on XAMPP.
-No Composer, no npm, no build step. Drop the folder in `C:\xampp\htdocs\hms\`
-and open `http://localhost/hms/setup.php`.
+Hospital Management System — multi-department PHP/MySQL app running on Laragon
+(Apache, MySQL 8.4, PHP 8.3). No Composer, no npm, no build step. The checkout
+lives at `C:\xampp\htdocs\hms\` and `C:\laragon\www\hms` is a **directory
+junction** to it, so Laragon serves this same folder — there is only one copy.
+Open `http://localhost/hms/setup.php` for the one-time installer.
 
 ```
 backend/api/       REST-ish JSON endpoints (auth, patients, visits, ...)
-backend/config/    config.php, database.php (XAMPP: root / no password)
+backend/config/    config.php, database.php (Laragon MySQL: root / no password)
 backend/includes/  shared helper functions
 backend/models/    User, Patient
 database/          schema.sql — imported by setup.php
@@ -58,7 +60,8 @@ Default login after setup: `admin` / `Admin@123` — change immediately.
   map dashboard card keys to SPA pages. Adding a module card means adding it in
   three places: the card markup, `MODULE_PAGE_MAP`, and the sidebar `data-page`
   link.
-- Verify PHP changes with `C:\xampp\php\php.exe -l <file>` before committing.
+- Verify PHP changes with `C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe -l <file>`
+  before committing.
 
 ## Personalisation
 
