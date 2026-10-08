@@ -58,8 +58,13 @@ require_once __DIR__ . '/../../backend/config/config.php';
 #dhims-cc .pill-nhia{background:#dcfce7;color:#16a34a}
 #dhims-cc .empty-note{padding:14px;text-align:center;color:#94a3b8;font-style:italic;font-size:12px}
 #dhims-cc .mt15{margin-top:15px}
-#dhims-cc .misdhims-divider{height:2px;background:#c0d4e8;margin:26px 0 20px;border-radius:2px;position:relative}
-#dhims-cc .misdhims-divider span{position:absolute;top:-9px;left:16px;background:#0b5fa5;color:#fff;font-size:10px;font-weight:700;padding:3px 12px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px}
+#dhims-cc .misdhims-divider{height:2px;background:#c0d4e8;margin:26px 0 20px;border-radius:2px;position:relative;cursor:pointer;user-select:none;transition:background .2s}
+#dhims-cc .misdhims-divider:hover{background:#9dbcd9}
+#dhims-cc .misdhims-divider:focus-visible{outline:2px solid #0b5fa5;outline-offset:4px}
+#dhims-cc .misdhims-divider span{position:absolute;top:-9px;left:16px;background:#0b5fa5;color:#fff;font-size:10px;font-weight:700;padding:3px 12px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 2px 6px rgba(11,95,165,.3)}
+#dhims-cc .misdhims-divider .dhi-hint{font-weight:600;text-transform:none;letter-spacing:.2px;opacity:.85}
+#dhims-cc .misdhims-divider .dhi-caret{display:inline-block;margin-left:8px;font-size:9px;font-style:normal;opacity:.9;transition:transform .25s ease}
+#dhims-cc .misdhims-divider.open .dhi-caret{transform:rotate(180deg)}
 
 /* ---- Monthly indicators: Edit control, reported-figure markers, dialog ---- */
 #dhims-cc .dhi-edit-btn{background:#fff;color:#0b5fa5;border:1px solid #b2c8de;border-radius:3px;padding:4px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
@@ -161,7 +166,15 @@ require_once __DIR__ . '/../../backend/config/config.php';
     </div>
   </div>
 
-  <div class="misdhims-divider"><span>DHIMS Report &amp; Data Export Console</span></div>
+  <!-- Toggle control: click (or press Enter/Space) to show or hide the console -->
+  <div class="misdhims-divider" id="dhiConsoleToggle" role="button" tabindex="0"
+       aria-expanded="false" aria-controls="dhiConsoleBody"
+       title="Press to show or hide the DHIMS Report &amp; Data Export Console">
+    <span>DHIMS Report &amp; Data Export Console <b class="dhi-hint">— toggle or press to view</b><i class="dhi-caret" aria-hidden="true">▼</i></span>
+  </div>
+
+  <!-- DHIMS CONSOLE BODY (hidden until the divider above is pressed) -->
+  <div id="dhiConsoleBody" style="display:none;">
 
   <!-- DHIMS REPORT & DATA EXPORT CONSOLE BANNER -->
   <div class="banner">
@@ -281,6 +294,8 @@ require_once __DIR__ . '/../../backend/config/config.php';
     </div>
   </div>
 
+  </div><!-- /#dhiConsoleBody -->
+
   <!-- REPORTED FIGURE DIALOG -->
   <div class="modal" id="dhi-override-modal">
     <div class="modal-content" style="max-width:520px;">
@@ -331,10 +346,44 @@ async function initReports() {
 var dhiData = null;      // cached dhims.php monthly payload
 var dhiOverview = null;  // cached system overview counts
 
+/* Show / hide the DHIMS console. The divider labelled "toggle or press to
+   view" is the control. Called with no argument it flips the current state;
+   called with a boolean it sets it (used on load to restore the choice). */
+function dhiToggleConsole(open){
+    var toggle = document.getElementById('dhiConsoleToggle');
+    var body = document.getElementById('dhiConsoleBody');
+    if(!toggle || !body) return;
+    if(typeof open !== 'boolean') open = (body.style.display === 'none');
+
+    body.style.display = open ? 'block' : 'none';
+    toggle.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+    var hint = toggle.querySelector('.dhi-hint');
+    if(hint) hint.textContent = open ? '— press to hide' : '— toggle or press to view';
+    toggle.title = open ? 'Press to hide the DHIMS Report & Data Export Console'
+                        : 'Press to show the DHIMS Report & Data Export Console';
+
+    try{ localStorage.setItem('dhimsConsoleOpen', open ? '1' : '0'); }catch(err){}
+}
+
 function dhiInit(){
     var now = new Date();
     var m = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
     document.getElementById('dhiMonth').value = m;
+
+    // Show/hide toggle: the divider doubles as the control (click, or press
+    // Enter/Space). The choice is remembered for the next visit.
+    var dhiToggle = document.getElementById('dhiConsoleToggle');
+    if(dhiToggle){
+        dhiToggle.addEventListener('click', function(){ dhiToggleConsole(); });
+        dhiToggle.addEventListener('keydown', function(e){
+            if(e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar'){ e.preventDefault(); dhiToggleConsole(); }
+        });
+        var saved = null;
+        try{ saved = localStorage.getItem('dhimsConsoleOpen'); }catch(err){}
+        dhiToggleConsole(saved === '1');
+    }
 
     // Reported-figure dialog (the monthly indicator Edit control)
     document.getElementById('dhi-ovr-save').addEventListener('click', dhiSaveIndicator);
