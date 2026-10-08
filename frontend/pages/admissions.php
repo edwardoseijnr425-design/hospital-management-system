@@ -238,50 +238,7 @@
     </div>
 </div>
 
-<!-- ================= DRAFT ADMISSIONS ================= -->
-<div id="draft-banner">
-    <div>
-        <div class="ttl"><i class="fa-solid fa-file-pen"></i> Draft Admissions &mdash; In-Progress Admissions Pending Finalization</div>
-        <div class="sub">A draft does not occupy a bed. Finalizing it creates the real admission and occupies the bed.</div>
-    </div>
-    <button type="button" id="new-draft-btn"><i class="fa-solid fa-plus"></i> Create New Draft</button>
-</div>
 
-<div class="card">
-    <div class="card-header">
-        <h2><i class="fa-solid fa-file-lines"></i> Pending Draft Admissions</h2>
-        <div style="display:flex;gap:8px;align-items:center;">
-            <select id="filter-draft-status" style="padding:6px 9px;border:1px solid #C9D4E0;border-radius:4px;font-size:12px;font-family:inherit;background:#fff;">
-                <option value="DRAFT">Pending Drafts</option>
-                <option value="FINALIZED">Finalized</option>
-                <option value="CANCELLED">Discarded</option>
-                <option value="ALL">All Drafts</option>
-            </select>
-            <input type="text" id="filter-draft-q" placeholder="Search patient, hospital no. or draft no..." style="padding:6px 9px;border:1px solid #C9D4E0;border-radius:4px;font-size:12px;font-family:inherit;background:#fff;width:250px;">
-            <button class="btn btn-secondary btn-sm" id="refresh-drafts-btn"><i class="fa-solid fa-rotate"></i> Refresh</button>
-        </div>
-    </div>
-    <div class="card-body">
-        <div class="table-container">
-            <table id="draft-table">
-                <thead>
-                    <tr>
-                        <th>Draft No</th>
-                        <th>Patient</th>
-                        <th>Hospital No.</th>
-                        <th>Ward / Bed</th>
-                        <th>Admission Date</th>
-                        <th>Admitting Doctor</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="drafts-table">
-                    <tr><td colspan="7" style="text-align:center;">Loading...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
 
 <!-- Draft Admission Modal: create a new draft, or edit a pending one -->
 <div class="modal" id="draft-modal">
