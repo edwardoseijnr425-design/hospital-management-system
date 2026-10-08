@@ -144,8 +144,8 @@ require_once __DIR__ . '/../../backend/config/config.php';
           </div>
 
           <div class="form-group">
-            <label for="occupation">Occupation <span class="required">*</span></label>
-            <input type="text" id="occupation" class="form-control" placeholder="e.g. Teacher, Trader, Civil Servant, Student" required>
+            <label for="occupation">Occupation</label>
+            <input type="text" id="occupation" class="form-control" placeholder="e.g. Teacher, Trader, Civil Servant, Student (optional)">
           </div>
 
         </div>
@@ -249,7 +249,7 @@ function rgVal(id) { var el = document.getElementById(id); return el ? el.value 
 async function submitPatientRegistration(e) {
     e.preventDefault();
     var required = { title: 'Title', firstName: 'First Name', lastName: 'Last Name', gender: 'Gender',
-                     dob: 'Date of Birth', occupation: 'Occupation', phone: 'Primary Mobile Number', address: 'Residential Area / Location' };
+                     dob: 'Date of Birth', phone: 'Primary Mobile Number', address: 'Residential Area / Location' };
     var missing = [];
     for (var k in required) {
         if (required.hasOwnProperty(k) && !rgVal(k).trim()) { missing.push(required[k]); }
@@ -266,7 +266,7 @@ async function submitPatientRegistration(e) {
         date_of_birth: rgVal('dob'),
         gender: rgVal('gender'),
         title: rgVal('title'),
-        occupation: rgVal('occupation').trim(),
+        occupation: rgVal('occupation').trim() || null,
         marital_status: rgVal('maritalStatus') || null,
         secondary_phone: rgVal('altPhone').trim() || null,
         phone: rgVal('phone').trim(),
