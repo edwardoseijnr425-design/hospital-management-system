@@ -541,6 +541,7 @@ function hcBrandLogo($px = 45) {
             <a href="#" class="nav-link" data-page="messages">Messages &amp; Alerts <span class="nav-msg-badge" id="msgs-nav-badge" style="display:none">0</span></a>
             <a href="#" class="nav-link" data-page="records">Patient Record Management</a>
             <a href="#" class="nav-link" data-page="admissions">Admissions</a>
+            <a href="#" class="nav-link" data-page="active-inpatients">Active In-Patients</a>
             <a href="#" class="nav-link" data-page="pharmacy">Pharmacy</a>
             <a href="#" class="nav-link" data-page="prices">Service Prices</a>
             <a href="#" class="nav-link" data-page="reports">View Alerts</a>
@@ -1180,7 +1181,13 @@ window.fmtDateTime = fmtDateTime;
             })(nodes[i]);
         }
     }
-    function loadPage(page, linkEl){
+    /* Page intent: a navigation may carry a one-shot instruction ("open the
+       admit modal", "scroll to drafts") that the target page's init function
+       reads from window.__pageIntent. Set here on EVERY navigation — including
+       plain ones, which clear it to null — so an intent can never leak into a
+       later, unrelated visit. The consuming init reads it and nulls it. */
+    function loadPage(page, linkEl, opts){
+        window.__pageIntent = (opts && opts.intent) ? opts.intent : null;
         if(page!==currentPage){
             if(!backNav && currentPage!=='dashboard') pageStack.push(currentPage);
             currentPage=page;
@@ -1221,6 +1228,7 @@ window.fmtDateTime = fmtDateTime;
             pharmacy_management:'pharmacy',
             mis:'reports',
             ipd_management:'ipd-management',
+            active_inpatients:'active-inpatients',
             departments:'departments',
             system_activities:'system-activities',
             nhia_claim:'sponsors',
@@ -1598,10 +1606,11 @@ function initGMTDashboardTimer() {
 }
 
 document.addEventListener('DOMContentLoaded', initGMTDashboardTimer);
-function navigateTo(page){
+function navigateTo(page, intent){
     var l=document.querySelector('.side-nav .nav-link[data-page="'+page+'"]');
-    if(l){ l.click(); return; }
-    if(typeof window.loadPage==='function') window.loadPage(page);
+    if(l && !intent){ l.click(); return; }
+    if(typeof window.loadPage==='function'){ window.loadPage(page, l, {intent: intent}); return; }
+    if(l) l.click();
 }
 /* Global feedback toast used by SPA page scripts (showAlert) — self-contained,
    no Bootstrap dependency; floats above modals so saves/errors stay visible. */

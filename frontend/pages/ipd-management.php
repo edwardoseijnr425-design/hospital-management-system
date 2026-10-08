@@ -52,6 +52,22 @@
     box-shadow:0 0 0 2px rgba(0,114,188,.22) !important;
 }
 
+/* Live count badge shown inside a tile heading (filled in by loadIpdBadges) */
+#ipd-page .ipd-badge{
+    display:inline-block;
+    vertical-align:middle;
+    margin-left:6px;
+    padding:2px 7px;
+    border-radius:10px;
+    background:#0072BC;
+    color:#fff;
+    font-size:9.5px;
+    font-weight:800;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+    white-space:nowrap;
+}
+
 /* Bed status panel mini-stats */
 .stat-mini{border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;background:#fff;}
 .stat-mini .stat-mini-label{font-size:10px;font-weight:800;letter-spacing:.4px;color:#64748B;text-transform:uppercase;}
@@ -126,9 +142,9 @@ let bedsData = [];
    MANAGEMENT have pages of their own. */
 const IPD_TILES = [
     { label: 'WARDS, ROOMS & BED STATUS', sub: 'Real-time occupancy and bed allocation status', icon: 'bed',    color: 'bg-primary-subtle text-primary',   page: 'wards' },
-    { label: 'CURRENT PATIENT ACCESS',    sub: 'Access newly admitted or active in-patients',   icon: 'user',    color: 'bg-info-subtle text-info',        page: 'patients' },
-    { label: 'ADMIT PATIENT',             sub: 'Admit patient directly to a ward and bed',      icon: 'user-plus', color: 'bg-success-subtle text-success', page: 'admissions' },
-    { label: 'DRAFT ADMISSIONS',          sub: 'In-progress admissions pending finalization',   icon: 'file',    color: 'bg-secondary-subtle text-secondary', page: 'admissions' },
+    { label: 'CURRENT PATIENT ACCESS',    sub: 'Access newly admitted or active in-patients',   icon: 'user',    color: 'bg-info-subtle text-info',        page: 'active-inpatients', badge: 'badge-census' },
+    { label: 'ADMIT PATIENT',             sub: 'Admit patient directly to a ward and bed',      icon: 'user-plus', color: 'bg-success-subtle text-success', page: 'admissions', intent: 'admit', badge: 'badge-freebeds' },
+    { label: 'DRAFT ADMISSIONS',          sub: 'In-progress admissions pending finalization',   icon: 'file',    color: 'bg-secondary-subtle text-secondary', page: 'admissions', intent: 'drafts', badge: 'badge-drafts' },
     { label: 'NURSING STATION',           sub: 'Admit patient directly to a ward & bed only', icon: 'activity', color: 'bg-warning-subtle text-warning', page: 'vitals' },
     { label: 'DOCTOR STATION',            sub: 'OPD/IPD doctor notes, clinical entries & discharge summary', icon: 'doctor',  color: 'bg-danger-subtle text-danger',      page: 'doctor-station' },
     { label: 'BILLING MANAGEMENT',        sub: 'In-patient billing, deposits, & clearance',     icon: 'card',    color: 'bg-success-subtle text-success', page: 'ipd-billing' },
@@ -156,13 +172,13 @@ function loadIpdTiles() {
     if (!grid) return;
     grid.innerHTML = IPD_TILES.map(c => `
         <div class="col-md-6">
-          <div class="card border-0 shadow-sm h-100 p-2 ipd-tile" data-page="${c.page}">
+          <div class="card border-0 shadow-sm h-100 p-2 ipd-tile" data-page="${c.page}"${c.intent ? ' data-intent="' + c.intent + '"' : ''}>
             <div class="card-body d-flex align-items-center gap-3 p-2">
               <div class="icon-box ${c.color} p-3 rounded">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IPD_ICONS[c.icon] || ''}</svg>
               </div>
               <div>
-                <h6 class="font-weight-bold text-uppercase mb-0" style="${c.page === 'patients' ? 'color:#0d6efd;' : 'color:#0F2D59;'}font-size:.9rem;letter-spacing:.5px;">${c.label}</h6>
+                <h6 class="font-weight-bold text-uppercase mb-0" style="${c.page === 'patients' ? 'color:#0d6efd;' : 'color:#0F2D59;'}font-size:.9rem;letter-spacing:.5px;">${c.label}${c.badge ? ' <span class="ipd-badge" id="' + c.badge + '" style="display:none;"></span>' : ''}</h6>
                 ${c.sub ? '<small class="text-muted" style="font-size:.78rem;">' + c.sub + '</small>' : ''}
               </div>
             </div>
@@ -175,9 +191,39 @@ function loadIpdTiles() {
                 toggleBedStatusSection();
                 return;
             }
-            if (typeof window.loadPage === 'function') window.loadPage(card.dataset.page);
+            if (typeof window.loadPage === 'function') {
+                window.loadPage(card.dataset.page, null, { intent: card.dataset.intent || null });
+            }
         });
     });
+    loadIpdBadges();
+}
+
+/* Live count badges on the tiles. Free beds are derived from bedsData (already
+   fetched by loadBeds) so no extra request is made for that one. */
+function setBadge(id, value, suffix) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (value === null || value === undefined) { el.style.display = 'none'; return; }
+    el.textContent = suffix ? value + ' ' + suffix : String(value);
+    el.style.display = 'inline-block';
+}
+
+async function loadIpdBadges() {
+    setBadge('badge-drafts', null);
+    setBadge('badge-census', null);
+    try {
+        const [draftsRes, censusRes] = await Promise.all([
+            fetch('/hms/backend/api/draft_admissions.php?status=DRAFT'),
+            fetch('/hms/backend/api/admissions.php?status=ADMITTED')
+        ]);
+        const drafts = await draftsRes.json();
+        const census = await censusRes.json();
+        if (drafts && drafts.success) setBadge('badge-drafts', (drafts.drafts || []).length, 'pending');
+        if (census && census.success) setBadge('badge-census', (census.admissions || []).length, 'active');
+    } catch (error) {
+        console.error('IPD tile badge load error:', error);
+    }
 }
 
 function toggleBedStatusSection() {
@@ -231,6 +277,7 @@ function renderBedsTable() {
 
     const total = bedsData.length;
     const occupied = bedsData.filter(b => String(b.status || '').toUpperCase() === 'OCCUPIED').length;
+    setBadge('badge-freebeds', total - occupied, 'free');
     document.getElementById('statBedsTotal').textContent = total;
     document.getElementById('statBedsOccupied').textContent = occupied;
     document.getElementById('statBedsAvailable').textContent = total - occupied;

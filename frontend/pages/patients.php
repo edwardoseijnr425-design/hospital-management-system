@@ -1,14 +1,31 @@
+<style>
+/* View tabs: All Patients vs Currently Admitted. Scoped to this fragment. */
+.pt-tabs{display:flex;gap:6px;margin-bottom:12px;border-bottom:1px solid #E2E8F0;padding-bottom:8px;flex-wrap:wrap;}
+.pt-tab{font-family:inherit;font-size:11.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:6px 13px;border:1px solid #CBD5E1;border-radius:15px;background:#fff;color:#475569;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
+.pt-tab:hover{background:#F1F5F9;}
+.pt-tab.active{background:#0072BC;border-color:#0072BC;color:#fff;}
+.pt-cell-ward{font-weight:700;color:#0F2D59;}
+.pt-cell-bed{font-weight:700;color:#0072BC;}
+.pt-new{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:800;background:#0072BC;color:#fff;text-transform:uppercase;letter-spacing:.3px;}
+.pt-empty{text-align:center;padding:22px;color:#8A94A6;font-size:12.5px;}
+</style>
+
 <div class="card">
     <div class="card-header">
         <h2>Patient Management</h2>
         <button class="btn btn-primary btn-sm" id="register-patient-btn">Register Patient</button>
     </div>
     <div class="card-body">
+        <div class="pt-tabs" role="tablist" aria-label="Patient list view">
+            <button type="button" class="pt-tab active" data-pt-view="all" role="tab" aria-selected="true">All Patients</button>
+            <button type="button" class="pt-tab" data-pt-view="admitted" role="tab" aria-selected="false">Currently Admitted</button>
+        </div>
+
         <div class="form-row">
             <div class="form-group">
                 <input type="text" id="search-patients" placeholder="Search by name, hospital number, or phone...">
             </div>
-            <div class="form-group">
+            <div class="form-group" id="sponsor-filter-group">
                 <select id="filter-sponsor">
                     <option value="">All Sponsors</option>
                 </select>
@@ -17,7 +34,7 @@
         
         <div class="table-container">
             <table>
-                <thead>
+                <thead id="patients-thead">
                     <tr>
                         <th>Hospital No.</th>
                         <th>Name</th>
@@ -213,11 +230,125 @@
 <script>
 let patientsData = [];
 let sponsorsData = [];
+let admittedData = [];
+// 'all' = full patient registry, 'admitted' = active in-patient census.
+let patientsView = 'all';
+
+const PT_HEAD_ALL = `<tr>
+    <th>Hospital No.</th>
+    <th>Name</th>
+    <th>Age/Gender</th>
+    <th>Phone</th>
+    <th>Sponsor</th>
+    <th>Registration Date</th>
+    <th>Actions</th>
+</tr>`;
+
+const PT_HEAD_ADMITTED = `<tr>
+    <th>Hospital No.</th>
+    <th>Name</th>
+    <th>Age/Gender</th>
+    <th>Ward</th>
+    <th>Bed</th>
+    <th>Admitted</th>
+    <th>Actions</th>
+</tr>`;
+
+function setPtHead(markup) {
+    const head = document.getElementById('patients-thead');
+    if (head) head.innerHTML = markup;
+}
 
 async function initPatients() {
+    setupPtTabs();
     await loadSponsors();
     await loadPatients();
     setupEventListeners();
+}
+
+function setupPtTabs() {
+    document.querySelectorAll('.pt-tab').forEach(tab => {
+        tab.addEventListener('click', () => setPtView(tab.dataset.ptView));
+    });
+}
+
+// Switches between the registry and the active in-patient census. The sponsor
+// filter only makes sense for the registry, so it is hidden on the census tab.
+function setPtView(view) {
+    patientsView = view === 'admitted' ? 'admitted' : 'all';
+    document.querySelectorAll('.pt-tab').forEach(t => {
+        const on = t.dataset.ptView === patientsView;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    const sponsorGroup = document.getElementById('sponsor-filter-group');
+    if (sponsorGroup) sponsorGroup.style.display = patientsView === 'admitted' ? 'none' : '';
+    refreshPatientsView();
+}
+
+function refreshPatientsView() {
+    return patientsView === 'admitted' ? loadAdmitted() : loadPatients();
+}
+
+async function loadAdmitted() {
+    const tbody = document.getElementById('patients-table');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading active in-patients...</td></tr>';
+
+    const params = new URLSearchParams({ status: 'ADMITTED' });
+    const q = (document.getElementById('search-patients').value || '').trim();
+    if (q) params.set('q', q);
+
+    try {
+        const response = await fetch('/hms/backend/api/admissions.php?' + params.toString());
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || 'Failed to load admissions');
+        admittedData = data.admissions || [];
+        renderAdmittedTable();
+    } catch (error) {
+        console.error('Admitted patients load error:', error);
+        tbody.innerHTML = '<tr><td colspan="7"><div class="pt-empty">Could not load active in-patients — ' + escPt(error.message) + '</div></td></tr>';
+    }
+}
+
+function escPt(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function renderAdmittedTable() {
+    const tbody = document.getElementById('patients-table');
+    if (!tbody) return;
+    setPtHead(PT_HEAD_ADMITTED);
+
+    if (!admittedData.length) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="pt-empty">No active in-patients' +
+            ((document.getElementById('search-patients').value || '').trim() ? ' match this search' : ' — no one is currently admitted') +
+            '.</div></td></tr>';
+        return;
+    }
+
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+
+    tbody.innerHTML = admittedData.map(a => {
+        const isNew = String(a.admission_date || '').slice(0, 10) === today;
+        const admitted = String(a.admission_date || '').slice(0, 10) || '-';
+        return `
+        <tr>
+            <td><strong>${escPt(a.hospital_number || '-')}</strong></td>
+            <td>${escPt(a.patient_name || '-')}</td>
+            <td>${a.age != null ? escPt(a.age) + ' yrs' : '-'} / ${escPt(a.gender || '-')}</td>
+            <td><span class="pt-cell-ward">${escPt(a.ward_name || '-')}</span></td>
+            <td><span class="pt-cell-bed">${escPt(a.bed_number || '-')}</span></td>
+            <td>${admitted}${isNew ? '<span class="pt-new">New</span>' : ''}</td>
+            <td>
+                <button class="btn btn-sm btn-secondary" onclick="viewPatient(${a.patient_id})">View</button>
+                <button class="btn btn-sm btn-primary" onclick="createVisit(${a.patient_id})">New Visit</button>
+            </td>
+        </tr>`;
+    }).join('');
 }
 
 async function loadSponsors() {
@@ -258,6 +389,7 @@ async function loadPatients(filters = {}) {
 
 function renderPatientsTable() {
     const tbody = document.getElementById('patients-table');
+    setPtHead(PT_HEAD_ALL);
     
     if (!patientsData || patientsData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No patients found</td></tr>';
@@ -294,6 +426,7 @@ function setupEventListeners() {
     document.getElementById('patient-form').addEventListener('submit', handlePatientSubmit);
     
     document.getElementById('search-patients').addEventListener('input', debounce(function() {
+        if (patientsView === 'admitted') { loadAdmitted(); return; }
         if (this.value.length >= 2) {
             loadPatients({ search: this.value });
         } else if (this.value.length === 0) {
@@ -302,6 +435,7 @@ function setupEventListeners() {
     }, 300));
     
     document.getElementById('filter-sponsor').addEventListener('change', function() {
+        if (patientsView === 'admitted') return; // sponsor filter is registry-only
         loadPatients({ sponsor_id: this.value });
     });
 }
@@ -367,7 +501,7 @@ async function handlePatientSubmit(e) {
         if (result.success) {
             showAlert(patientId ? 'Patient updated successfully' : 'Patient registered successfully', 'success');
             closePatientModal();
-            await loadPatients();
+            await refreshPatientsView();
         } else {
             showAlert(result.error || 'Operation failed', 'error');
         }

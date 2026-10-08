@@ -136,6 +136,9 @@
 
     /* ---- DRAFT ADMISSIONS (in-progress admissions pending finalization) ---- */
     #draft-banner{background:#E2E8F0;border:1px solid #CBD5E1;border-left:4px solid #64748B;color:#334155;border-radius:5px;padding:11px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    /* Brief highlight when the DRAFT ADMISSIONS tile deep-links to this section */
+    @keyframes intent-flash{0%,100%{box-shadow:0 0 0 0 rgba(0,114,188,0)}30%,70%{box-shadow:0 0 0 4px rgba(0,114,188,.35)}}
+    #draft-banner.intent-flash{animation:intent-flash 1.2s ease-in-out 2}
     #draft-banner .ttl{font-weight:800;font-size:12.5px;letter-spacing:.3px;text-transform:uppercase;color:#334155}
     #draft-banner .sub{font-size:11.5px;color:#64748B;margin-top:2px}
     #draft-banner button{background:#334155;color:#fff;border:none;border-radius:4px;padding:7px 13px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
@@ -675,6 +678,31 @@ async function initAdmissions() {
     // attached before the load so the section is usable as soon as it renders.
     setupDraftListeners();
     await loadDrafts();
+
+    // One-shot page intent carried over from the IPD dashboard tiles (ADMIT
+    // PATIENT / DRAFT ADMISSIONS both land here). Read-and-clear so a later
+    // plain visit to this page never replays it.
+    const intent = window.__pageIntent;
+    window.__pageIntent = null;
+    if (intent === 'admit') {
+        openAdmitModal();
+    } else if (intent === 'drafts') {
+        revealDraftSection();
+    }
+}
+
+// Scrolls the draft table into view and flashes it so DRAFT ADMISSIONS lands
+// somewhere visibly different from the plain Admissions link.
+function revealDraftSection() {
+    const banner = document.getElementById('draft-banner');
+    if (!banner) return;
+    banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    banner.classList.remove('intent-flash');
+    void banner.offsetWidth; // restart the animation on repeat visits
+    banner.classList.add('intent-flash');
+    banner.addEventListener('animationend', () => banner.classList.remove('intent-flash'), { once: true });
+    const statusSel = document.getElementById('filter-draft-status');
+    if (statusSel) statusSel.focus({ preventScroll: true });
 }
 
 async function loadAdmissionWards() {
