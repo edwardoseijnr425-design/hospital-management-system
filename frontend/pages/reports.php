@@ -66,6 +66,14 @@ require_once __DIR__ . '/../../backend/config/config.php';
 #dhims-cc .misdhims-divider .dhi-caret{display:inline-block;margin-left:8px;font-size:9px;font-style:normal;opacity:.9;transition:transform .25s ease}
 #dhims-cc .misdhims-divider.open .dhi-caret{transform:rotate(180deg)}
 
+/* ---- Functional top navigation buttons (HOME / BACK / PASSWORD) ----
+   Plain-CSS version of the Tailwind snippet: #1b659d bg, #155380 hover,
+   8px radius, shadow, small bold uppercase label. */
+#dhims-cc .top-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+#dhims-cc .top-nav .nav-btn{background-color:#1b659d;color:#fff;padding:8px 16px;border:none;border-radius:8px;font-weight:700;font-size:12px;letter-spacing:.3px;text-decoration:none;box-shadow:0 1px 3px rgba(0,0,0,.12);transition:background-color .2s,box-shadow .2s;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;line-height:1.3}
+#dhims-cc .top-nav .nav-btn:hover{background-color:#155380;box-shadow:0 2px 5px rgba(0,0,0,.18)}
+#dhims-cc .top-nav .nav-btn:focus-visible{outline:2px solid #1b659d;outline-offset:2px}
+
 /* ---- Monthly indicators: Edit control, reported-figure markers, dialog ---- */
 #dhims-cc .dhi-edit-btn{background:#fff;color:#0b5fa5;border:1px solid #b2c8de;border-radius:3px;padding:4px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
 #dhims-cc .dhi-edit-btn svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -113,6 +121,13 @@ require_once __DIR__ . '/../../backend/config/config.php';
 </style>
 
 <div id="dhims-cc">
+
+  <!-- FUNCTIONAL TOP NAVIGATION BUTTONS -->
+  <div class="top-nav">
+    <a href="#" class="nav-btn" onclick="rptNavHome(event)">HOME</a>
+    <button type="button" class="nav-btn" onclick="rptNavBack(event)">&lt; BACK</button>
+    <a href="#" class="nav-btn" onclick="rptNavPassword(event)">PASSWORD</a>
+  </div>
 
   <!-- STANDARD REPORT GENERATOR -->
   <div class="card">
@@ -340,6 +355,26 @@ async function initReports() {
     document.getElementById('report-date-to').value = today.toISOString().split('T')[0];
 
     dhiInit();
+}
+
+/* ============ TOP NAV : HOME / BACK / PASSWORD ============
+   SPA-safe replacements for the raw hrefs in the original snippet:
+   dashboard.php / change_password.php links would unload the shell, so we
+   route through navigateTo() with loadPage() as the fallback. */
+function rptNavHome(e){
+    if(e) e.preventDefault();
+    if(window.navigateTo) window.navigateTo('dashboard');
+    else if(window.loadPage) window.loadPage('dashboard');
+}
+function rptNavBack(e){
+    if(e) e.preventDefault();
+    if(window.history && window.history.length > 1) window.history.back();
+    else rptNavHome(null);
+}
+function rptNavPassword(e){
+    if(e) e.preventDefault();
+    if(window.navigateTo) window.navigateTo('change-password');
+    else if(window.loadPage) window.loadPage('change-password');
 }
 
 /* ============ DHIMS REPORT CONSOLE LOGIC ============ */
