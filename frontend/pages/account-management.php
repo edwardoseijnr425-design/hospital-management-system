@@ -1,3 +1,13 @@
+<style>
+/* ============ REVENUE VIEW TOGGLE (Account Management) ============
+   Swaps between the "Revenue by Area" panel and the "Total Money Paid"
+   panel. Scoped under .am-view-toggle so it can't clash with other pages. */
+.am-view-toggle{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid #E2E8F0}
+.am-toggle{font-family:inherit;font-size:11.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:8px 15px;border:1px solid #CBD5E1;border-radius:6px;background:#fff;color:#475569;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .15s,border-color .15s,color .15s}
+.am-toggle:hover{background:#F1F5F9;border-color:#9FC6E4;color:#0F2D59}
+.am-toggle.active{background:#0072BC;border-color:#0072BC;color:#fff;box-shadow:0 2px 6px rgba(0,114,188,.25)}
+</style>
+
 <div class="card">
     <div class="card-header">
         <h2>Account Management</h2>
@@ -65,8 +75,18 @@
     </div>
 </div>
 
+<!-- VIEW TOGGLE : Revenue by Area  <->  Total Money Paid -->
+<div class="am-view-toggle" role="tablist" aria-label="Revenue view">
+    <button type="button" class="am-toggle active" data-am-view="areas" role="tab" aria-selected="true">
+        <i class="fa-solid fa-chart-pie"></i> Toggle to view: Revenue by Area
+    </button>
+    <button type="button" class="am-toggle" data-am-view="paid" role="tab" aria-selected="false">
+        <i class="fa-solid fa-money-bill-wave"></i> Toggle to view: Total Money Paid
+    </button>
+</div>
+
 <!-- Revenue by Area -->
-<div class="card">
+<div class="card" id="am-areas-card">
     <div class="card-header">
         <h2>Revenue by Area</h2>
         <button class="btn btn-secondary btn-sm" id="refresh-areas-btn">Refresh</button>
@@ -92,7 +112,7 @@
 </div>
 
 <!-- Transactions & Money Paid Log -->
-<div class="card">
+<div class="card" id="am-paid-card" style="display:none;">
     <div class="card-header">
         <h2>Transactions &amp; Money Paid Log</h2>
         <div style="display:flex;gap:8px;align-items:center;">
@@ -266,7 +286,32 @@ let pendingPaidInvoiceId = null;
 
 async function initAccountManagement() {
     setupEventListeners();
+    setupRevenueViewToggle();
     await Promise.all([loadPatients(), loadInvoices(), loadInvoiceStats(), loadRevenueAreas(), loadTransactions()]);
+}
+
+/* Revenue view toggle: shows exactly one of the two summary panels
+   (Revenue by Area / Total Money Paid). Both datasets are already fetched by
+   initAccountManagement, so switching is purely presentational — flipping
+   back never needs a refetch, and the hidden panel's filters keep their state. */
+function setupRevenueViewToggle() {
+    document.querySelectorAll('.am-toggle').forEach(btn => {
+        btn.addEventListener('click', () => setRevenueView(btn.dataset.amView));
+    });
+    setRevenueView('areas');
+}
+
+function setRevenueView(view) {
+    const active = view === 'paid' ? 'paid' : 'areas';
+    const areas = document.getElementById('am-areas-card');
+    const paid = document.getElementById('am-paid-card');
+    if (areas) areas.style.display = active === 'areas' ? '' : 'none';
+    if (paid) paid.style.display = active === 'paid' ? '' : 'none';
+    document.querySelectorAll('.am-toggle').forEach(btn => {
+        const on = btn.dataset.amView === active;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
 }
 
 async function loadPatients() {
