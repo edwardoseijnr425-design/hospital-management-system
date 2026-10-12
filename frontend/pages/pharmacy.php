@@ -404,7 +404,7 @@
                 <div class="fgrid" style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:11px;">
                     <div>
                         <label>Expiry Date</label>
-                        <input type="date" id="rx-dispense-expiry">
+                        <input type="date" id="rx-dispense-expiry" data-dp-no-time>
                     </div>
                     <div>
                         <label>Pharmacist Notes / Counselling</label>

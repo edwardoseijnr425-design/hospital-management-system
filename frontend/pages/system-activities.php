@@ -16,11 +16,11 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px 12px;border:1px solid #E2E8F0;border-radius:8px;padding:14px;background:#F8FAFC;margin-bottom:12px;">
             <div>
                 <label style="display:block;font-size:11px;font-weight:800;color:#0F2D59;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">From Date</label>
-                <input type="date" id="audit-date-from" style="width:100%;">
+                <input type="date" id="audit-date-from" style="width:100%;" data-dp-no-time>
             </div>
             <div>
                 <label style="display:block;font-size:11px;font-weight:800;color:#0F2D59;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">To Date</label>
-                <input type="date" id="audit-date-to" style="width:100%;">
+                <input type="date" id="audit-date-to" style="width:100%;" data-dp-no-time>
             </div>
             <div>
                 <label style="display:block;font-size:11px;font-weight:800;color:#0F2D59;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Action</label>

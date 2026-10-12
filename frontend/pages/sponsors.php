@@ -119,7 +119,7 @@
                 
                 <div class="form-group">
                     <label for="sponsor-expiry">Expiry Date</label>
-                    <input type="date" id="sponsor-expiry" name="expiry_date">
+                    <input type="date" id="sponsor-expiry" name="expiry_date" data-dp-no-time>
                 </div>
                 
                 <div class="form-group">

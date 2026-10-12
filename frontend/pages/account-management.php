@@ -125,11 +125,11 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="trans-date-from">From</label>
-                <input type="date" id="trans-date-from">
+                <input type="date" id="trans-date-from" data-dp-no-time>
             </div>
             <div class="form-group">
                 <label for="trans-date-to">To</label>
-                <input type="date" id="trans-date-to">
+                <input type="date" id="trans-date-to" data-dp-no-time>
             </div>
             <div class="form-group" style="flex:2;min-width:220px;">
                 <input type="text" id="trans-search" placeholder="Search invoice no., patient, or hospital no...">

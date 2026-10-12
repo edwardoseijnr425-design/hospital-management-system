@@ -136,7 +136,7 @@
                 <!-- EFFECTIVE DATE -->
                 <div class="form-group">
                     <label for="price-effective">Effective Date <span class="text-danger">*</span></label>
-                    <input type="date" id="price-effective" name="effective_date" required value="<?= date('Y-m-d') ?>">
+                    <input type="date" id="price-effective" name="effective_date" required value="<?= date('Y-m-d') ?>" data-dp-no-time>
                 </div>
 
                 <!-- STATUS (ACTIVE / DEACTIVE) -->

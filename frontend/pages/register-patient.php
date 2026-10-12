@@ -150,7 +150,7 @@ require_once __DIR__ . '/../../backend/config/config.php';
 
           <div class="form-group">
             <label for="dob">Date of Birth <span class="required">*</span></label>
-            <input type="date" id="dob" class="form-control" required onchange="calculateAge()">
+            <input type="date" id="dob" class="form-control" required onchange="calculateAge()" data-dp-no-time>
           </div>
 
           <div class="form-group">

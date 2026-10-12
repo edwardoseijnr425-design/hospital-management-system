@@ -152,11 +152,11 @@ require_once __DIR__ . '/../../backend/config/config.php';
             </div>
             <div class="form-group">
                 <label for="report-date-from">From Date</label>
-                <input type="date" id="report-date-from">
+                <input type="date" id="report-date-from" data-dp-no-time>
             </div>
             <div class="form-group">
                 <label for="report-date-to">To Date</label>
-                <input type="date" id="report-date-to">
+                <input type="date" id="report-date-to" data-dp-no-time>
             </div>
         </div>
         

@@ -191,7 +191,7 @@
                     </div>
                     <div class="form-group">
                         <label for="item-expiry">Expiry Date</label>
-                        <input type="date" id="item-expiry">
+                        <input type="date" id="item-expiry" data-dp-no-time>
                     </div>
                 </div>
                 <div class="form-row">

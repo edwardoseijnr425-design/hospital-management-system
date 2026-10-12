@@ -135,7 +135,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="patient-dob">Date of Birth *</label>
-                        <input type="date" id="patient-dob" name="date_of_birth" required>
+                        <input type="date" id="patient-dob" name="date_of_birth" required data-dp-no-time>
                     </div>
                     <div class="form-group">
                         <label for="patient-gender">Gender *</label>
