@@ -37,7 +37,7 @@
             </div>
             <div>
                 <label style="display:block;font-size:11px;font-weight:800;color:#0F2D59;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Table</label>
-                <select id="audit-table" style="width:100%;">
+                <select id="audit-table-filter" style="width:100%;">
                     <option value="">All Tables</option>
                     <option value="users">Users</option>
                     <option value="patient_registrations">Patients</option>
@@ -133,7 +133,7 @@ function getAuditFilter() {
     return {
         user_id: document.getElementById('audit-user').value,
         action: document.getElementById('audit-action').value,
-        table_name: document.getElementById('audit-table').value,
+        table_name: document.getElementById('audit-table-filter').value,
         date_from: document.getElementById('audit-date-from').value,
         date_to: document.getElementById('audit-date-to').value,
         q: document.getElementById('audit-q').value.trim()
