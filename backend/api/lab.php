@@ -25,6 +25,10 @@ if ($method === 'GET' && $action === 'stats') {
     createLabRequest();
 } elseif ($method === 'POST' && $action === 'result') {
     recordLabResult();
+} elseif ($method === 'POST' && $action === 'cancel') {
+    cancelLabRequest();
+} elseif ($method === 'POST' && $action === 'reschedule') {
+    rescheduleLabRequest();
 } elseif ($method === 'PUT' && $action === 'status') {
     updateRequestStatus();
 } else {
@@ -185,5 +189,103 @@ function updateRequestStatus() {
         jsonResponse(['success' => true]);
     } catch (Exception $e) {
         jsonResponse(['error' => 'Failed to update status'], 500);
+    }
+}
+
+/* ============================================================================
+   CANCEL / RESCHEDULE (Lab Technician Form - Process Investigation)
+   A request may only be cancelled or moved while it is still outstanding
+   (pending / in_progress). Both actions require a reason, stored on the
+   request; a reschedule also records the agreed date/time and returns the
+   request to 'pending' so it reappears in the worklist.
+   ============================================================================ */
+
+function labStoreReason($reason) {
+    return function_exists('mb_substr') ? mb_substr($reason, 0, 255) : substr($reason, 0, 255);
+}
+
+function cancelLabRequest() {
+    $data = getPostData();
+    $errors = validateRequired($data, ['id', 'reason']);
+    if (!empty($errors)) {
+        jsonResponse(['errors' => $errors], 400);
+    }
+    $reason = trim((string)$data['reason']);
+    if ($reason === '') {
+        jsonResponse(['error' => 'A reason is required to cancel a test'], 400);
+    }
+
+    $db = Database::getInstance();
+    $id = (int)$data['id'];
+    $req = $db->fetchOne("SELECT * FROM lab_requests WHERE id = ?", [$id]);
+    if (!$req) {
+        jsonResponse(['error' => 'Lab request not found'], 404);
+    }
+    if ($req['status'] === 'completed') {
+        jsonResponse(['error' => 'This test is already completed and cannot be cancelled'], 400);
+    }
+    if ($req['status'] === 'cancelled') {
+        jsonResponse(['error' => 'This test is already cancelled'], 400);
+    }
+
+    try {
+        $db->update('lab_requests', [
+            'status'            => 'cancelled',
+            'status_reason'     => labStoreReason($reason),
+            'rescheduled_to'    => null,
+            'status_updated_by' => getCurrentUserId(),
+            'status_updated_at' => date('Y-m-d H:i:s'),
+        ], 'id = ?', [$id]);
+        logAudit('UPDATE', 'lab_requests', $id, $req, ['status' => 'cancelled', 'reason' => $reason]);
+        jsonResponse(['success' => true]);
+    } catch (Exception $e) {
+        error_log("Lab cancel error: " . $e->getMessage());
+        jsonResponse(['error' => 'Failed to cancel the test'], 500);
+    }
+}
+
+function rescheduleLabRequest() {
+    $data = getPostData();
+    $errors = validateRequired($data, ['id', 'reason', 'scheduled_at']);
+    if (!empty($errors)) {
+        jsonResponse(['errors' => $errors], 400);
+    }
+    $reason = trim((string)$data['reason']);
+    if ($reason === '') {
+        jsonResponse(['error' => 'A reason is required to reschedule a test'], 400);
+    }
+
+    $ts = strtotime(str_replace('T', ' ', trim((string)$data['scheduled_at'])));
+    if ($ts === false) {
+        jsonResponse(['error' => 'Enter a valid new date and time'], 400);
+    }
+    $scheduledAt = date('Y-m-d H:i:s', $ts);
+
+    $db = Database::getInstance();
+    $id = (int)$data['id'];
+    $req = $db->fetchOne("SELECT * FROM lab_requests WHERE id = ?", [$id]);
+    if (!$req) {
+        jsonResponse(['error' => 'Lab request not found'], 404);
+    }
+    if ($req['status'] === 'completed') {
+        jsonResponse(['error' => 'This test is already completed and cannot be rescheduled'], 400);
+    }
+    if ($req['status'] === 'cancelled') {
+        jsonResponse(['error' => 'This test was cancelled - raise a new request instead'], 400);
+    }
+
+    try {
+        $db->update('lab_requests', [
+            'status'            => 'pending',
+            'status_reason'     => labStoreReason($reason),
+            'rescheduled_to'    => $scheduledAt,
+            'status_updated_by' => getCurrentUserId(),
+            'status_updated_at' => date('Y-m-d H:i:s'),
+        ], 'id = ?', [$id]);
+        logAudit('UPDATE', 'lab_requests', $id, $req, ['status' => 'pending', 'reason' => $reason, 'rescheduled_to' => $scheduledAt]);
+        jsonResponse(['success' => true, 'rescheduled_to' => $scheduledAt]);
+    } catch (Exception $e) {
+        error_log("Lab reschedule error: " . $e->getMessage());
+        jsonResponse(['error' => 'Failed to reschedule the test'], 500);
     }
 }

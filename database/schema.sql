@@ -345,6 +345,13 @@ CREATE TABLE lab_requests (
     test_description TEXT,
     urgency ENUM('routine', 'urgent', 'emergency') DEFAULT 'routine',
     status ENUM('pending', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
+    -- Cancellation / reschedule trail. The technician's Cancel or Reschedule
+    -- action stores the reason here; a reschedule also records the agreed
+    -- date/time so the request comes back into the worklist on that day.
+    status_reason VARCHAR(255) DEFAULT NULL,
+    rescheduled_to DATETIME DEFAULT NULL,
+    status_updated_by INT DEFAULT NULL,
+    status_updated_at TIMESTAMP NULL DEFAULT NULL,
     requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (visit_id) REFERENCES patient_visits(id),
     FOREIGN KEY (doctor_id) REFERENCES users(id)

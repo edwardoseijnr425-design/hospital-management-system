@@ -202,6 +202,21 @@ foreach ($__labCatalog as $__cat => $__items) {
   #lab-page .span-3,#lab-page .span-4,#lab-page .span-2,#lab-page .span-6,#lab-page .lab-form-actions{grid-column:span 1}
   #lab-page .lab-topbar .lab-tag-hide{display:none}
 }
+
+/* ---- CANCEL / RESCHEDULE TOGGLE (inside the technician form panel) ---- */
+#lab-page .lab-cr-head{padding:20px 18px 0;background-color:#f8fafc}
+#lab-page .lab-cr-divider{height:2px;background:#c0d4e8;border-radius:2px;position:relative;cursor:pointer;user-select:none;transition:background .2s}
+#lab-page .lab-cr-divider:hover{background:#9dbcd9}
+#lab-page .lab-cr-divider:focus-visible{outline:2px solid #0b5fa5;outline-offset:4px}
+#lab-page .lab-cr-divider span{position:absolute;top:-9px;left:6px;background:#c0392b;color:#fff;font-size:10px;font-weight:700;padding:3px 12px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 2px 6px rgba(192,57,43,.3)}
+#lab-page .lab-cr-divider .dhi-hint{font-weight:600;text-transform:none;letter-spacing:.2px;opacity:.85}
+#lab-page .lab-cr-divider .dhi-caret{display:inline-block;margin-left:8px;font-size:9px;font-style:normal;opacity:.9;transition:transform .25s ease}
+#lab-page .lab-cr-divider.open .dhi-caret{transform:rotate(180deg)}
+#lab-page #labCrBody .lab-form{background-color:#fdf7f5;border-top:1px solid #f0d9d4}
+#lab-page .lab-cr-hint{grid-column:span 6;font-size:10.5px;color:#8a5a00;background:#FEF5E0;border:1px solid #f0ad4e;border-radius:3px;padding:8px 10px;margin:0}
+@media (max-width:760px){
+  #lab-page .lab-cr-hint{grid-column:span 1}
+}
 </style>
 
 <!-- LAB MANAGEMENT & INVESTIGATION MODULE -->
@@ -318,6 +333,71 @@ foreach ($__labCatalog as $__cat => $__items) {
           </button>
         </div>
       </form>
+
+      <!-- FEATURE 2b: CANCEL OR RESCHEDULE (toggle to show / view, with reasons) -->
+      <div class="lab-cr-head">
+        <div class="lab-cr-divider" id="labCrToggle" role="button" tabindex="0"
+             aria-expanded="false" aria-controls="labCrBody"
+             title="Press to show or hide Cancel / Reschedule">
+          <span>Cancel or Reschedule Investigation <b class="dhi-hint">- toggle or press to view</b><i class="dhi-caret" aria-hidden="true">&#9660;</i></span>
+        </div>
+      </div>
+
+      <div id="labCrBody" style="display:none;">
+        <form class="lab-form" id="labCancelRescheduleForm">
+          <div class="lab-field span-3">
+            <label for="crRequisition">Investigation / Requisition <span class="req">*</span></label>
+            <select id="crRequisition" required>
+              <option value="">-- Select Requisition --</option>
+            </select>
+          </div>
+
+          <div class="lab-field span-3">
+            <label for="crAction">Action <span class="req">*</span></label>
+            <select id="crAction" onchange="labCrToggleAction()" required>
+              <option value="">-- Select Action --</option>
+              <option value="cancel">Cancel Test</option>
+              <option value="reschedule">Reschedule Test</option>
+            </select>
+          </div>
+
+          <div class="lab-field span-3" id="crWhenField" style="display:none;">
+            <label for="crWhen">New Date &amp; Time <span class="req">*</span></label>
+            <input type="datetime-local" id="crWhen">
+          </div>
+
+          <div class="lab-field span-3">
+            <label for="crReason">Reason <span class="req">*</span></label>
+            <select id="crReason" required>
+              <option value="">-- Select Reason --</option>
+              <option>Patient not ready / not on bed</option>
+              <option>Sample not collected</option>
+              <option>Insufficient sample</option>
+              <option>Sample haemolysed / clotted</option>
+              <option>Machine / analyser fault</option>
+              <option>Reagent unavailable</option>
+              <option>Patient deferred / requested later</option>
+              <option>Duplicate request</option>
+              <option>Wrong test ordered</option>
+              <option>Other (state in details)</option>
+            </select>
+          </div>
+
+          <div class="lab-field span-6">
+            <label for="crNotes">Details / Notes</label>
+            <input type="text" id="crNotes" placeholder="Optional details, e.g. collected in the wrong tube, patient fasting not observed...">
+          </div>
+
+          <p class="lab-cr-hint">Cancelling stops the test and records the reason against the request. Rescheduling keeps the request open and returns it to the pending worklist on the new date.</p>
+
+          <div class="lab-form-actions">
+            <button type="submit" class="lab-btn-submit" id="labCrSubmit">
+              <svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+              Submit Cancel / Reschedule
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <!-- FEATURE 3-5: LAB STATUS TABLES -->
@@ -451,6 +531,20 @@ function setupLabEvents() {
     if (closeRes) closeRes.addEventListener('click', closeResultModal);
     var entryForm2 = document.getElementById('labResultEntryForm');
     if (entryForm2) entryForm2.addEventListener('submit', handleEntrySubmit);
+
+    /* Cancel / Reschedule toggle */
+    var crToggle = document.getElementById('labCrToggle');
+    if (crToggle) {
+        crToggle.addEventListener('click', function () { labCrToggle(); });
+        crToggle.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') {
+                ev.preventDefault();
+                labCrToggle();
+            }
+        });
+    }
+    var crForm = document.getElementById('labCancelRescheduleForm');
+    if (crForm) crForm.addEventListener('submit', handleCancelReschedule);
 }
 
 /* ================= TOP BAR / NAV ================= */
@@ -695,7 +789,7 @@ function standardRequestTable(rows, q, actionCell, emptyMsg) {
                     + '<td>' + escHtml(r.test_type || '--') + '</td>'
                     + '<td>' + escHtml(r.doctor_name || '--') + '</td>'
                     + '<td>' + fmtLabTime(r.requested_at) + '</td>'
-                    + '<td>' + labStatusBadge(r.status) + '</td>'
+                    + '<td>' + labStatusBadge(r.status) + labCrInfo(r) + '</td>'
                     + '<td class="act-col">' + actionCell(r) + '</td>'
                     + '</tr>';
             }).join('')
@@ -832,6 +926,7 @@ function populateEntryRequisition() {
         ? rows.map(function (r) { return '<option value="' + r.id + '">LAB ' + r.id + ' - ' + escHtml(r.patient_name) + ' (' + escHtml(r.test_type) + ')</option>'; }).join('')
         : '<option value="">-- Awaiting requisitions --</option>';
     if (keep && rows.some(function (r) { return String(r.id) === String(keep); })) sel.value = keep;
+    populateCrRequisitions();
 }
 
 function openEntryFor(requestId) {
@@ -889,6 +984,99 @@ async function handleEntrySubmit(e) {
         console.error('Entry save error:', err);
         showAlert('Network error. Please try again.', 'error');
     }
+}
+
+/* ================= CANCEL / RESCHEDULE (Lab Technician Form) =================
+   Toggle reveals a panel that cancels or reschedules an outstanding request
+   (pending / in_progress) with a reason. Reschedule also needs the new
+   date/time; the backend stores the reason and returns the request to pending. */
+function labCrToggle(open) {
+    var divider = document.getElementById('labCrToggle');
+    var body = document.getElementById('labCrBody');
+    if (!divider || !body) return;
+    if (typeof open !== 'boolean') open = (body.style.display === 'none' || !body.style.display);
+    body.style.display = open ? 'block' : 'none';
+    divider.classList.toggle('open', open);
+    divider.setAttribute('aria-expanded', open ? 'true' : 'false');
+    var hint = divider.querySelector('.dhi-hint');
+    if (hint) hint.textContent = open ? '- press to hide' : '- toggle or press to view';
+}
+
+function labCrToggleAction() {
+    var action = document.getElementById('crAction');
+    var whenField = document.getElementById('crWhenField');
+    var whenInput = document.getElementById('crWhen');
+    if (!action || !whenField) return;
+    var isResched = action.value === 'reschedule';
+    whenField.style.display = isResched ? 'flex' : 'none';
+    if (whenInput) whenInput.required = isResched;
+}
+
+function populateCrRequisitions() {
+    var sel = document.getElementById('crRequisition');
+    if (!sel) return;
+    var keep = sel.value;
+    var rows = (labData || []).filter(function (r) { return r.status === 'pending' || r.status === 'in_progress'; });
+    sel.innerHTML = '<option value="">-- Select Requisition --</option>'
+        + rows.map(function (r) {
+            return '<option value="' + r.id + '">LAB ' + escHtml(r.id) + ' - '
+                + escHtml(r.patient_name || '') + ' (' + escHtml(r.test_type || '') + ')</option>';
+        }).join('');
+    if (keep && rows.some(function (r) { return String(r.id) === String(keep); })) sel.value = keep;
+}
+
+async function handleCancelReschedule(e) {
+    e.preventDefault();
+    var id = document.getElementById('crRequisition').value;
+    var action = document.getElementById('crAction').value;
+    var reasonSel = document.getElementById('crReason').value;
+    var notes = document.getElementById('crNotes').value.trim();
+    var when = document.getElementById('crWhen').value;
+
+    if (!id) { showAlert('Select the requisition to cancel or reschedule.', 'error'); return; }
+    if (!action) { showAlert('Choose Cancel or Reschedule.', 'error'); return; }
+    if (!reasonSel) { showAlert('Select a reason.', 'error'); return; }
+    if (action === 'reschedule' && !when) { showAlert('Enter the new date and time.', 'error'); return; }
+
+    var reason = reasonSel + (notes ? ' - ' + notes : '');
+    var payload = { id: id, reason: reason };
+    if (action === 'reschedule') payload.scheduled_at = when;
+
+    try {
+        var r = await fetch('/hms/backend/api/lab.php?action=' + (action === 'cancel' ? 'cancel' : 'reschedule'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        var d = await r.json();
+        if (d.success) {
+            showAlert(action === 'cancel'
+                ? 'Test cancelled. Reason recorded: ' + reason
+                : 'Test rescheduled to ' + when.replace('T', ' ') + '.', 'success');
+            e.target.reset();
+            labCrToggleAction();
+            await loadLabRequests();
+        } else {
+            showAlert(d.error || 'Action failed.', 'error');
+        }
+    } catch (err) {
+        console.error('Cancel/reschedule error:', err);
+        showAlert('Network error. Please try again.', 'error');
+    }
+}
+
+/* Small note under a request's status: the cancellation reason, or the date a
+   request was moved to. */
+function labCrInfo(r) {
+    if (r.status === 'cancelled' && r.status_reason) {
+        return '<div style="font-size:9.5px;color:#B23B3B;margin-top:3px;max-width:190px;white-space:normal;">'
+            + escHtml(r.status_reason) + '</div>';
+    }
+    if (r.rescheduled_to) {
+        return '<div style="font-size:9.5px;color:#B9770E;margin-top:3px;max-width:190px;white-space:normal;">Rescheduled: '
+            + fmtLabTime(r.rescheduled_to) + (r.status_reason ? ' - ' + escHtml(r.status_reason) : '') + '</div>';
+    }
+    return '';
 }
 
 /* ================= DISPATCH (browser-local log; backend has no 'dispatched' status yet) ================= */
