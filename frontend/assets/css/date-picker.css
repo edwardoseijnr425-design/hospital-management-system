@@ -108,6 +108,35 @@
 .footer-action-btn.today-btn{background:#0b5fa5;border-color:#0b5fa5;color:#fff}
 .footer-action-btn.today-btn:hover{background:#0a4f8a;border-color:#0a4f8a;color:#fff}
 
+/* ---- Preferred time slot, attached beneath every upgraded date field ----
+   The clinic books by slot, so every date widget carries the same chip group
+   the schedule/records pages already draw by hand. */
+.dp-timeslot{
+    margin-top:6px;
+    padding:8px 10px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:6px;
+}
+.dp-timeslot-label{
+    display:block;margin-bottom:6px;
+    font-size:.68rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#64748b;
+}
+.dp-timeslot-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+.dp-timeslot-chip{
+    padding:4px 9px;border:1px solid #cbd5e1;border-radius:5px;
+    background:#fff;color:#475569;font-size:.7rem;font-weight:600;
+    font-family:inherit;cursor:pointer;
+    transition:background-color .12s ease,color .12s ease,border-color .12s ease;
+}
+.dp-timeslot-chip:hover{border-color:#0b5fa5;color:#0b5fa5;background:#eef6ff}
+.dp-timeslot-chip.active{background:#0b5fa5;border-color:#0b5fa5;color:#fff}
+.dp-timeslot-input{
+    width:100%;padding:6px 9px;border:1px solid #cbd5e1;border-radius:6px;
+    background:#fff;color:#0b5fa5;font-weight:600;font-size:.82rem;font-family:inherit;
+}
+.dp-timeslot-input:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 0 3px rgba(11,95,165,.15)}
+
 /* Fallback for native inputs the widget does not replace (e.g.
    datetime-local admission fields) — keeps the portal calendar look. */
 .form-group input[type="date"],

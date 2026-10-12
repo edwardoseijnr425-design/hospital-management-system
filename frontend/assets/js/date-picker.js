@@ -188,6 +188,96 @@
         return { closePopover: closePopover, openPopover: openPopover, onViewportChange: onViewportChange };
     }
 
+    /* ---- Preferred time slot attached to every upgraded date field ----
+       The clinic books by slot, so each date field carries the same chip group
+       the schedule/records pages already draw by hand. Fields that already own
+       a slot (inside .date-scheduling-card) are left alone.
+
+       Any field can opt out with data-dp-no-time (date of birth, expiry dates,
+       reporting ranges, ...). The slot input deliberately has NO name by
+       default so it is never serialised into forms whose endpoint inserts the
+       raw payload — a page that wants it submitted sets
+       data-dp-time-name="<field>" on the date input. Read the chosen value
+       from JS with window.hmsPreferredTime('theDateInputId'). */
+    var TIME_SLOTS = [
+        { v: '08:30', l: '08:30 AM' },
+        { v: '10:00', l: '10:00 AM' },
+        { v: '11:30', l: '11:30 AM' },
+        { v: '14:00', l: '02:00 PM' },
+        { v: '15:30', l: '03:30 PM' }
+    ];
+    var DEFAULT_TIME_SLOT = '10:00';
+    var timeSlotSeq = 0;
+
+    function attachTimeSlot(input, wrapper) {
+        if (input.hasAttribute('data-dp-no-time')) return;
+        if (input.getAttribute('data-dp-timeslot')) return;
+        // Pages that already draw their own time-slot column keep it.
+        if (input.closest && input.closest('.date-scheduling-card')) return;
+        input.setAttribute('data-dp-timeslot', '1');
+
+        var box = document.createElement('div');
+        box.className = 'dp-timeslot';
+
+        var label = document.createElement('span');
+        label.className = 'dp-timeslot-label';
+        label.textContent = 'Select Preferred Time Slot';
+        box.appendChild(label);
+
+        var chips = document.createElement('div');
+        chips.className = 'dp-timeslot-chips';
+        box.appendChild(chips);
+
+        var time = document.createElement('input');
+        time.type = 'time';
+        time.className = 'dp-timeslot-input';
+        time.value = DEFAULT_TIME_SLOT;
+        // Only give the field a submit name when the page asks for one.
+        var submitName = input.getAttribute('data-dp-time-name');
+        if (submitName) time.name = submitName;
+        box.appendChild(time);
+
+        TIME_SLOTS.forEach(function (slot) {
+            var chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'dp-timeslot-chip' + (slot.v === DEFAULT_TIME_SLOT ? ' active' : '');
+            chip.textContent = slot.l;
+            chip.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                time.value = slot.v;
+                chips.querySelectorAll('.dp-timeslot-chip').forEach(function (c) {
+                    c.classList.remove('active');
+                });
+                chip.classList.add('active');
+                time.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            chips.appendChild(chip);
+        });
+
+        wrapper.insertAdjacentElement('afterend', box);
+
+        // Mirror the pair onto the date input so page code can read both nodes.
+        input._dpTimeInput = time;
+        input.setAttribute('data-dp-time', DEFAULT_TIME_SLOT);
+        time.addEventListener('change', function () {
+            input.setAttribute('data-dp-time', time.value);
+        });
+    }
+
+    // Read the preferred slot for a date input (accepts an id or the element).
+    window.hmsPreferredTime = function (ref) {
+        var input = typeof ref === 'string' ? document.getElementById(ref) : ref;
+        if (!input) return '';
+        var t = input._dpTimeInput;
+        if (!t) {
+            var base = input.getAttribute('data-dp-time-name');
+            t = base ? document.querySelector('input[name="' + base + '"]') : null;
+        }
+        return t ? t.value : '';
+    };
+    window.DP_TIME_SLOTS = TIME_SLOTS;
+
     // Build the day widget around one native date input.
     function buildWidget(input) {
         if (input.getAttribute('data-ehms-dp')) return;
@@ -202,6 +292,9 @@
             'Next Month'
         );
         parts.popover.querySelector('[data-role="today"]').textContent = 'Today';
+
+        // Attach the "Select Preferred Time Slot" control beneath the picker.
+        attachTimeSlot(input, parts.wrapper);
 
         var trigger = parts.trigger;
         var popover = parts.popover;
