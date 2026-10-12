@@ -55,27 +55,28 @@ foreach ($__radCatalog as $__mod => $__studies) {
 ?>
 <style>
 /* ============= RADIOLOGY & IMAGING MODULE : FULL-WIDTH ======================
-   Scoped under #rad-page. No Bootstrap - every utility used here is defined
-   below. Font Awesome is available (the shell loads
+   Scoped under #rad-page. No Bootstrap and no Tailwind - every utility used
+   here is defined below. Font Awesome is available (the shell loads
    frontend/assets/fontawesome/css/all.min.css).
-   Structure intentionally mirrors #lab-page so the two departments read as
-   one system: same topbar, banner, cards, panels, tabs, tables and modals.
+   Restyled to the Radiology workspace mockup: slate palette, rounded cards, a
+   #1b659d module banner, a two-column order form and a dark tabbed register.
+   Behaviour (vanilla JS, element IDs, workflow) is unchanged.
    No inline support footer: the shell auto-appends the system banner. */
-#rad-page{background:#dce7f2;color:#333;font-size:13px;min-height:100vh;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding-bottom:30px}
+#rad-page{background:#f8fafc;color:#334155;font-size:12px;min-height:100vh;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding-bottom:24px}
 #rad-page *,#rad-page *::before,#rad-page *::after{box-sizing:border-box}
 
-/* ---- TOP BAR (HMS - HEALTHCARE MANAGEMENT SYSTEM branding) ---- */
-#rad-page .rad-topbar{background-color:#0b5fa5;color:#fff;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 5px rgba(0,0,0,0.15);flex-wrap:wrap;gap:8px}
-#rad-page .rad-topbar .title-group{display:flex;align-items:center;gap:10px}
-#rad-page .rad-topbar .title-group svg{width:22px;height:22px;fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#rad-page .rad-topbar-title{font-size:16px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase}
-#rad-page .rad-topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-#rad-page .rad-topbar-right > span{font-size:11px}
-#rad-page .rad-nav-btn{background-color:#0088cc;color:#fff;border:none;padding:5px 12px;font-size:11px;font-weight:bold;border-radius:3px;cursor:pointer;text-decoration:none;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
-#rad-page .rad-nav-btn:hover{background-color:#006699}
+/* ---- TOP BAR (slim utility strip - the blue module banner sits below) ---- */
+#rad-page .rad-topbar{background:#fff;color:#475569;padding:7px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;gap:8px}
+#rad-page .rad-topbar .title-group{display:flex;align-items:center;gap:8px}
+#rad-page .rad-topbar .title-group svg{width:16px;height:16px;fill:none;stroke:#1b659d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#rad-page .rad-topbar-title{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#1e293b}
+#rad-page .rad-topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+#rad-page .rad-topbar-right > span{font-size:10px;color:#94a3b8}
+#rad-page .rad-nav-btn{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;padding:4px 11px;font-size:10px;font-weight:700;border-radius:7px;cursor:pointer;text-decoration:none;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+#rad-page .rad-nav-btn:hover{background:#e2e8f0}
 
 /* ---- MODULE HEADER BANNER ---- */
-#rad-page .rad-wrap{max-width:1240px;margin:0 auto;padding:12px 16px 16px}
+#rad-page .rad-wrap{max-width:1280px;margin:0 auto;padding:14px 16px 16px}
 #rad-page .rad-modhead{background:#1b659d;color:#fff;padding:14px 16px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(15,45,89,.18)}
 #rad-page .rad-modhead .left{display:flex;align-items:center;gap:10px}
 #rad-page .rad-modhead .left svg{width:22px;height:22px;fill:none;stroke:#BBD6EC;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
@@ -105,118 +106,129 @@ foreach ($__radCatalog as $__mod => $__studies) {
 #rad-page .rad-feature-card:nth-child(4) svg{stroke:#15803D;background:#ECFDF5;border-color:#A7F3D0}
 
 /* ---- PANELS ---- */
-#rad-page .rad-panel{background:#fff;border:1px solid #b2c8de;border-top:none;border-radius:0 0 6px 6px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,.06)}
+#rad-page .rad-panel{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
 #rad-page .rad-panel + .rad-panel{margin-top:14px}
-#rad-page .rad-panel.is-first{border-top:1px solid #b2c8de;border-radius:6px}
-#rad-page .rad-panel-head{background-color:#0b5fa5;color:#fff;font-weight:bold;font-size:12px;padding:9px 14px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-#rad-page .rad-panel-head.dark{background-color:#1f2933;padding:0}
-#rad-page .rad-panel-head .head-left{display:flex;align-items:center;gap:8px}
-#rad-page .rad-panel-head svg{width:17px;height:17px;fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#rad-page .rad-panel.is-first{border-radius:12px}
+#rad-page .rad-panel-head{background:#fff;padding:14px 16px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+#rad-page .rad-panel-head.dark{background:#1e293b;padding:0}
+#rad-page .rad-panel-head .head-left{display:inline-flex;align-items:center;gap:8px;background:#1b659d;color:#fff;border-radius:8px;padding:8px 12px;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+#rad-page .rad-panel-head svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* ---- ORDER FORM ---- */
-#rad-page .rad-form{display:grid;grid-template-columns:repeat(6,1fr);gap:12px 16px;padding:16px 18px;background-color:#f8fafc}
+#rad-page .rad-form{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 16px;padding:16px 16px 20px;background:#fff}
 #rad-page .rad-field{display:flex;flex-direction:column;gap:5px}
-#rad-page .rad-field label{font-weight:700;color:#222;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
-#rad-page .rad-field label .req{color:#e74c3c;font-weight:bold}
-#rad-page .rad-field select,#rad-page .rad-field input,#rad-page .rad-field textarea{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;background-color:#fff;color:#222;font-family:inherit}
+#rad-page .rad-field label{font-weight:700;color:#475569;font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+#rad-page .rad-field label .req{color:#e11d48}
+#rad-page .rad-field select,#rad-page .rad-field input,#rad-page .rad-field textarea{width:100%;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;background:#f8fafc;color:#334155;font-family:inherit}
 #rad-page .rad-field textarea{resize:vertical}
-#rad-page .rad-field select:focus,#rad-page .rad-field input:focus,#rad-page .rad-field textarea:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
-#rad-page .rad-field input[readonly]{background-color:#eef3f8;color:#1E7A34;font-weight:bold;cursor:not-allowed}
-#rad-page .span-2{grid-column:span 2}
-#rad-page .span-3{grid-column:span 3}
-#rad-page .span-4{grid-column:span 4}
-#rad-page .span-6{grid-column:span 6}
-#rad-page .rad-form-actions{grid-column:span 6;display:flex;justify-content:flex-end;gap:10px;margin-top:2px}
-#rad-page .rad-btn-submit{background-color:#0b5fa5;color:#fff;border:none;padding:9px 24px;font-weight:bold;font-size:12px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:8px}
-#rad-page .rad-btn-submit:hover{background-color:#004080}
+#rad-page .rad-field select:focus,#rad-page .rad-field input:focus,#rad-page .rad-field textarea:focus{outline:none;border-color:#1b659d;background:#fff;box-shadow:0 0 0 2px rgba(27,101,157,.18)}
+#rad-page .rad-field input[readonly]{background:#f1f5f9;color:#15803d;font-weight:700;cursor:not-allowed}
+#rad-page .span-2,#rad-page .span-3,#rad-page .span-4{grid-column:span 1}
+#rad-page .span-6{grid-column:span 2}
+#rad-page .rad-form-actions{grid-column:span 2;display:flex;justify-content:flex-end;gap:10px;margin-top:4px}
+#rad-page .rad-btn-submit{background:#1b659d;color:#fff;border:none;padding:9px 20px;font-weight:700;font-size:11px;border-radius:8px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 1px 2px rgba(15,23,42,.15)}
+#rad-page .rad-btn-submit:hover{background:#155380}
 #rad-page .rad-btn-submit svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* ---- TABS ---- */
 #rad-page .rad-tabs{display:flex;flex-wrap:wrap}
-#rad-page .rad-tab{background:transparent;border:none;border-right:1px solid rgba(255,255,255,.18);color:#dbe6f2;font-family:inherit;font-weight:bold;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:11px 16px;cursor:pointer}
-#rad-page .rad-tab:last-child{border-right:none}
-#rad-page .rad-tab:hover{background:rgba(255,255,255,.08);color:#fff}
-#rad-page .rad-tab.active{background:#0b5fa5;color:#fff;box-shadow:inset 0 -3px 0 #FFD166}
+#rad-page .rad-tab{background:transparent;border:none;color:#cbd5e1;font-family:inherit;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:11px 16px;cursor:pointer;transition:background .15s}
+#rad-page .rad-tab:hover{background:#334155;color:#fff}
+#rad-page .rad-tab.active{background:#1b659d;color:#fff}
 #rad-page .rad-tab .tab-count{background:rgba(255,255,255,.2);border-radius:999px;padding:1px 6px;margin-left:5px;font-size:10px}
-#rad-page .rad-tab.active .tab-count{background:#FFD166;color:#0D47A1}
+#rad-page .rad-tab.active .tab-count{background:#fff;color:#1b659d}
 
 /* ---- VIEW TOOLBAR ---- */
-#rad-page .rad-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid #e1e8f0;background-color:#f8fafc}
+#rad-page .rad-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid #e2e8f0;background:#f8fafc}
 #rad-page .rad-toolbar .search{display:flex;align-items:center;gap:8px;flex:1 1 240px;min-width:200px}
-#rad-page .rad-toolbar .search svg{width:16px;height:16px;fill:none;stroke:#0b5fa5;stroke-width:2;flex-shrink:0}
-#rad-page .rad-toolbar .search input{flex:1;padding:6px 9px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;font-family:inherit;background:#fff}
-#rad-page .rad-toolbar .search input:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
-#rad-page .rad-counts{font-size:10.5px;color:#64748b;display:flex;gap:12px;flex-wrap:wrap}
-#rad-page .rad-counts b{color:#0b5fa5}
+#rad-page .rad-toolbar .search svg{width:16px;height:16px;fill:none;stroke:#94a3b8;stroke-width:2;flex-shrink:0}
+#rad-page .rad-toolbar .search input{flex:1;padding:7px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;font-family:inherit;background:#fff}
+#rad-page .rad-toolbar .search input:focus{outline:none;border-color:#1b659d;box-shadow:0 0 0 2px rgba(27,101,157,.18)}
+#rad-page .rad-counts{font-size:10px;color:#64748b;font-weight:600;display:flex;gap:12px;flex-wrap:wrap}
+#rad-page .rad-counts b{color:#1b659d}
+#rad-page #cEmergency{color:#e11d48}
 #rad-page .rad-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-#rad-page .rad-filters select{padding:5px 8px;border:1px solid #b2c8de;border-radius:3px;font-size:11px;font-family:inherit;background:#fff}
+#rad-page .rad-filters select{padding:6px 9px;border:1px solid #cbd5e1;border-radius:8px;font-size:11px;font-family:inherit;background:#fff}
 
 /* ---- TAB PANES + TABLE ---- */
 #rad-page .rad-pane{display:none}
 #rad-page .rad-pane.active{display:block}
-#rad-page .rad-table-wrap{background-color:#fff;max-height:460px;overflow-y:auto}
-#rad-page .rad-table{width:100%;border-collapse:collapse;font-size:11px}
-#rad-page .rad-table th{background-color:#e6eef5;color:#222;font-weight:bold;text-align:left;padding:8px;border-bottom:2px solid #b2c8de;position:sticky;top:0;z-index:1;white-space:nowrap;text-transform:uppercase;font-size:10.5px;letter-spacing:.3px}
-#rad-page .rad-table td{padding:7px 8px;border-bottom:1px solid #e1e8f0;vertical-align:middle}
-#rad-page .rad-table tbody tr:hover{background-color:#eef4fb}
-#rad-page .rad-table .first-col{padding-left:14px}
+#rad-page .rad-table-wrap{background:#fff;max-height:520px;overflow-y:auto}
+#rad-page .rad-table{width:100%;border-collapse:collapse;font-size:12px}
+#rad-page .rad-table th{background:#f1f5f9;color:#475569;font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:1;white-space:nowrap;text-transform:uppercase;font-size:10px;letter-spacing:.5px}
+#rad-page .rad-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+#rad-page .rad-table tbody tr:hover{background:#f8fafc}
+#rad-page .rad-table .first-col{padding-left:16px}
 #rad-page .rad-table .act-col{text-align:center;white-space:nowrap}
-#rad-page .rad-empty{text-align:center;padding:18px;color:#8a94a6}
-#rad-page .rad-badge{display:inline-block;padding:2px 8px;border-radius:3px;font-weight:bold;font-size:10px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
-#rad-page .rad-badge.grey{color:#64748B;background:#EEF1F5}
-#rad-page .rad-badge.amber{color:#B9770E;background:#FEF5E0}
-#rad-page .rad-badge.blue{color:#0D47A1;background:#E8F4FD}
-#rad-page .rad-badge.green{color:#1E7A34;background:#E9F9EF}
-#rad-page .rad-badge.red{color:#B23B3B;background:#FDEBEC}
-#rad-page .rad-badge.purple{color:#6D28D9;background:#F1EBFE}
-#rad-page .rad-btn-outline{background-color:#fff;color:#0b5fa5;border:1px solid #b2c8de;padding:4px 11px;font-weight:bold;font-size:10px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
-#rad-page .rad-btn-outline:hover{background-color:#e2edf7}
-#rad-page .rad-btn-primary{background-color:#0b5fa5;color:#fff;border:none;padding:4px 12px;font-weight:bold;font-size:10px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
-#rad-page .rad-btn-primary:hover{background-color:#004080}
-#rad-page .rad-btn-success{background-color:#27ae60;color:#fff;border:none;padding:4px 11px;font-weight:bold;font-size:10px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
-#rad-page .rad-btn-success:hover{background-color:#1e8c4d}
-#rad-page .rad-btn-danger{background-color:#c0392b;color:#fff;border:none;padding:4px 11px;font-weight:bold;font-size:10px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px}
-#rad-page .rad-btn-danger:hover{background-color:#96281b}
+#rad-page .rad-empty{text-align:center;padding:28px 16px;color:#94a3b8;font-weight:500}
+#rad-page .rad-badge{display:inline-block;padding:3px 9px;border-radius:6px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+#rad-page .rad-badge.grey{color:#475569;background:#f1f5f9}
+#rad-page .rad-badge.amber{color:#b45309;background:#fef3c7}
+#rad-page .rad-badge.blue{color:#1d4ed8;background:#dbeafe}
+#rad-page .rad-badge.green{color:#047857;background:#d1fae5}
+#rad-page .rad-badge.red{color:#be123c;background:#ffe4e6}
+#rad-page .rad-badge.purple{color:#6d28d9;background:#ede9fe}
+#rad-page .rad-btn-outline{background:#fff;color:#1b659d;border:1px solid #cbd5e1;padding:5px 11px;font-weight:700;font-size:10px;border-radius:7px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
+#rad-page .rad-btn-outline:hover{background:#f1f5f9}
+#rad-page .rad-btn-primary{background:#1b659d;color:#fff;border:none;padding:5px 12px;font-weight:700;font-size:10px;border-radius:7px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
+#rad-page .rad-btn-primary:hover{background:#155380}
+#rad-page .rad-btn-success{background:#059669;color:#fff;border:none;padding:5px 11px;font-weight:700;font-size:10px;border-radius:7px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
+#rad-page .rad-btn-success:hover{background:#047857}
+#rad-page .rad-btn-danger{background:#dc2626;color:#fff;border:none;padding:5px 11px;font-weight:700;font-size:10px;border-radius:7px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px}
+#rad-page .rad-btn-danger:hover{background:#b91c1c}
 #rad-page .rad-btn-success svg,#rad-page .rad-btn-outline svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
-#rad-page .rad-muted{color:#8a94a6}
+#rad-page .rad-muted{color:#94a3b8}
 #rad-page .rad-sub{font-size:10px;color:#64748b;display:block}
 
 /* ---- MODALS (scoped; both live inside #rad-page) ---- */
-#rad-page .modal{display:none;position:fixed;inset:0;z-index:2000;background:rgba(15,45,89,.55);align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+#rad-page .modal{display:none;position:fixed;inset:0;z-index:2000;background:rgba(15,23,42,.55);align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
 #rad-page .modal.show{display:flex}
 #rad-page .modal.centered{align-items:center}
-#rad-page .modal-content{background:#fff;border-radius:8px;width:min(640px,100%);box-shadow:0 12px 34px rgba(0,0,0,.25);overflow:hidden}
-#rad-page .modal-header{background-color:#0b5fa5;color:#fff;padding:13px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-#rad-page .modal-header h3{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
-#rad-page .modal-header.danger{background-color:#c0392b}
+#rad-page .modal-content{background:#fff;border-radius:12px;width:min(640px,100%);box-shadow:0 12px 34px rgba(15,23,42,.25);overflow:hidden}
+#rad-page .modal-header{background:#1b659d;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+#rad-page .modal-header h3{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+#rad-page .modal-header.danger{background:#dc2626}
 #rad-page .modal-header svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #rad-page .modal-close{background:none;border:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:0 4px}
-#rad-page .modal-close:hover{color:#FFD54F}
-#rad-page .modal-body{padding:18px 20px;background:#F8FAFC}
+#rad-page .modal-close:hover{color:#fde68a}
+#rad-page .modal-body{padding:18px 20px;background:#f8fafc}
 #rad-page .modal-body.text-center{text-align:center}
-#rad-page .rad-alert-title{font-size:15px;font-weight:bold;color:#222;margin:0 0 6px}
+#rad-page .rad-alert-title{font-size:14px;font-weight:700;color:#1e293b;margin:0 0 6px}
 #rad-page .rad-alert-sub{font-size:12px;color:#64748b;margin:0}
 #rad-page .modal-body .form-group{margin-bottom:14px}
-#rad-page .modal-body label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#64748b;margin-bottom:5px}
-#rad-page .modal-body input,#rad-page .modal-body select,#rad-page .modal-body textarea{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;background-color:#fff;color:#222;font-family:inherit;box-sizing:border-box}
-#rad-page .modal-body input[readonly]{background-color:#eef3f8;color:#555}
+#rad-page .modal-body label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#475569;margin-bottom:5px}
+#rad-page .modal-body input,#rad-page .modal-body select,#rad-page .modal-body textarea{width:100%;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;background:#fff;color:#334155;font-family:inherit;box-sizing:border-box}
+#rad-page .modal-body input[readonly]{background:#f1f5f9;color:#64748b}
 #rad-page .modal-body textarea{resize:vertical}
-#rad-page .modal-body input:focus,#rad-page .modal-body select:focus,#rad-page .modal-body textarea:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
-#rad-page .rad-context{background:#fff;border:1px solid #b2c8de;border-radius:4px;padding:10px 12px;margin-bottom:14px;font-size:12px;line-height:1.6}
-#rad-page .rad-context b{color:#0D47A1}
-#rad-page .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #e1e8f0}
+#rad-page .modal-body input:focus,#rad-page .modal-body select:focus,#rad-page .modal-body textarea:focus{outline:none;border-color:#1b659d;box-shadow:0 0 0 2px rgba(27,101,157,.18)}
+#rad-page .rad-context{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;line-height:1.6;color:#475569}
+#rad-page .rad-context b{color:#1b659d}
+#rad-page .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #e2e8f0}
 #rad-page .form-actions.center{justify-content:center;border-top:none;margin-top:8px;padding-top:0}
-#rad-page .btn{border:none;border-radius:3px;cursor:pointer;font-weight:bold;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:8px 18px;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
-#rad-page .btn-primary{background:#0072BC;color:#fff}
-#rad-page .btn-primary:hover{filter:brightness(1.08)}
-#rad-page .btn-secondary{background:#F1F5F9;color:#34495E;border:1px solid #C0C0C0}
-#rad-page .btn-secondary:hover{background:#E2E8F0}
+#rad-page .btn{border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:9px 18px;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+#rad-page .btn-primary{background:#1b659d;color:#fff}
+#rad-page .btn-primary:hover{background:#155380}
+#rad-page .btn-secondary{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+#rad-page .btn-secondary:hover{background:#e2e8f0}
 
 /* ---- REPORT PREVIEW ---- */
-#rad-page .rad-report-box{background:#fff;border:1px solid #b2c8de;border-radius:4px;padding:12px 14px;font-size:12px;line-height:1.65;max-height:210px;overflow-y:auto}
+#rad-page .rad-report-box{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;font-size:12px;line-height:1.65;max-height:210px;overflow-y:auto}
 #rad-page .rad-report-box .rb-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#64748b;margin:0 0 3px}
 #rad-page .rad-report-box .rb-val{white-space:pre-wrap;margin:0 0 10px;color:#222}
 #rad-page .rad-report-box .rb-val:last-child{margin-bottom:0}
+
+/* ---- CANCEL / RESCHEDULE TOGGLE (inside the order form panel) ---- */
+#rad-page .rad-cr-head{padding:0 16px 18px;background:#fff}
+#rad-page .rad-cr-divider{height:2px;background:#e2e8f0;border-radius:2px;position:relative;cursor:pointer;user-select:none;transition:background .2s}
+#rad-page .rad-cr-divider:hover{background:#cbd5e1}
+#rad-page .rad-cr-divider:focus-visible{outline:2px solid #1b659d;outline-offset:4px}
+#rad-page .rad-cr-divider span{position:absolute;top:-9px;left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:3px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 2px 6px rgba(220,38,38,.3)}
+#rad-page .rad-cr-divider .dhi-hint{font-weight:600;text-transform:none;letter-spacing:.2px;opacity:.85}
+#rad-page .rad-cr-divider .dhi-caret{display:inline-block;margin-left:8px;font-size:9px;font-style:normal;opacity:.9;transition:transform .25s ease}
+#rad-page .rad-cr-divider.open .dhi-caret{transform:rotate(180deg)}
+#rad-page #radCrBody .rad-form{background:#fff5f5;border-top:1px solid #fee2e2}
+#rad-page .rad-cr-hint{grid-column:span 2;font-size:10.5px;color:#92400e;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;margin:0}
+#rad-page .rad-cr-info{display:block;font-size:10px;color:#be123c;margin-top:3px;max-width:170px;white-space:normal;line-height:1.35}
 
 @media (max-width:1024px){
   #rad-page .rad-feature-grid{grid-template-columns:1fr 1fr}
@@ -224,7 +236,7 @@ foreach ($__radCatalog as $__mod => $__studies) {
 @media (max-width:760px){
   #rad-page .rad-feature-grid{grid-template-columns:1fr}
   #rad-page .rad-form{grid-template-columns:1fr}
-  #rad-page .span-2,#rad-page .span-3,#rad-page .span-4,#rad-page .span-6,#rad-page .rad-form-actions{grid-column:span 1}
+  #rad-page .span-2,#rad-page .span-3,#rad-page .span-4,#rad-page .span-6,#rad-page .rad-form-actions,#rad-page .rad-cr-hint{grid-column:span 1}
   #rad-page .rad-topbar .rad-tag-hide{display:none}
 }
 </style>
@@ -374,6 +386,71 @@ foreach ($__radCatalog as $__mod => $__studies) {
           </button>
         </div>
       </form>
+
+      <!-- CANCEL OR RESCHEDULE (toggle, with reasons) -->
+      <div class="rad-cr-head">
+        <div class="rad-cr-divider" id="radCrToggle" role="button" tabindex="0"
+             aria-expanded="false" aria-controls="radCrBody"
+             title="Press to show or hide Cancel / Reschedule">
+          <span>Cancel or Reschedule Study <b class="dhi-hint">- toggle or press to view</b><i class="dhi-caret" aria-hidden="true">&#9660;</i></span>
+        </div>
+      </div>
+
+      <div id="radCrBody" style="display:none;">
+        <form class="rad-form" id="radCancelRescheduleForm">
+          <div class="rad-field span-3">
+            <label for="radCrRequisition">Study / Accession <span class="req">*</span></label>
+            <select id="radCrRequisition" required>
+              <option value="">-- Select Study --</option>
+            </select>
+          </div>
+
+          <div class="rad-field span-3">
+            <label for="radCrAction">Action <span class="req">*</span></label>
+            <select id="radCrAction" onchange="radCrToggleAction()" required>
+              <option value="">-- Select Action --</option>
+              <option value="cancel">Cancel Study</option>
+              <option value="reschedule">Reschedule Study</option>
+            </select>
+          </div>
+
+          <div class="rad-field span-3" id="radCrWhenField" style="display:none;">
+            <label for="radCrWhen">New Date &amp; Time <span class="req">*</span></label>
+            <input type="datetime-local" id="radCrWhen">
+          </div>
+
+          <div class="rad-field span-3">
+            <label for="radCrReason">Reason <span class="req">*</span></label>
+            <select id="radCrReason" required>
+              <option value="">-- Select Reason --</option>
+              <option>Patient not ready / not on bed</option>
+              <option>Patient not fasting / not prepared</option>
+              <option>Machine / scanner fault</option>
+              <option>Modality unavailable / already booked</option>
+              <option>Contrast / consumable not available</option>
+              <option>Patient deferred / requested later date</option>
+              <option>Patient too unstable to attend</option>
+              <option>Duplicate request</option>
+              <option>Wrong study / wrong region ordered</option>
+              <option>Other (state in details)</option>
+            </select>
+          </div>
+
+          <div class="rad-field span-6">
+            <label for="radCrNotes">Details / Notes</label>
+            <input type="text" id="radCrNotes" placeholder="Optional details, e.g. CT scanner under maintenance until Friday, patient transferred to another ward...">
+          </div>
+
+          <p class="rad-cr-hint">Cancelling stops the study and records the reason against the request. Rescheduling keeps the study open and moves it to the new slot on the worklist.</p>
+
+          <div class="rad-form-actions">
+            <button type="submit" class="rad-btn-submit" id="radCrSubmit">
+              <svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+              Submit Cancel / Reschedule
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <!-- WORKLIST PANEL -->
@@ -387,6 +464,7 @@ foreach ($__radCatalog as $__mod => $__studies) {
           <button type="button" class="rad-tab" id="radTabReported" onclick="radSwitchTab('reported')">Reported</button>
           <button type="button" class="rad-tab" id="radTabVerified" onclick="radSwitchTab('verified')">Verified</button>
           <button type="button" class="rad-tab" id="radTabDispatched" onclick="radSwitchTab('dispatched')">Dispatched</button>
+          <button type="button" class="rad-tab" id="radTabCancelled" onclick="radSwitchTab('cancelled')">Cancelled</button>
         </div>
       </div>
 
@@ -416,6 +494,7 @@ foreach ($__radCatalog as $__mod => $__studies) {
           <span>In Progress: <b id="cInProgress">0</b></span>
           <span>Reported: <b id="cReported">0</b></span>
           <span>Verified: <b id="cVerified">0</b></span>
+          <span>Cancelled: <b id="cCancelled">0</b></span>
           <span>STAT: <b id="cEmergency">0</b></span>
         </div>
       </div>
@@ -428,6 +507,7 @@ foreach ($__radCatalog as $__mod => $__studies) {
         <div class="rad-pane" id="radPaneReported"></div>
         <div class="rad-pane" id="radPaneVerified"></div>
         <div class="rad-pane" id="radPaneDispatched"></div>
+        <div class="rad-pane" id="radPaneCancelled"></div>
       </div>
     </div>
 
@@ -603,6 +683,20 @@ function setupRadEvents() {
     /* Study picker drives the context panel and prefills any existing report. */
     var study = document.getElementById('radReportStudy');
     if (study) study.addEventListener('change', function () { onRadStudyChange(this.value); });
+
+    /* Cancel / Reschedule toggle + form */
+    var crToggle = document.getElementById('radCrToggle');
+    if (crToggle) {
+        crToggle.addEventListener('click', function () { radCrToggle(); });
+        crToggle.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') {
+                ev.preventDefault();
+                radCrToggle();
+            }
+        });
+    }
+    var crForm = document.getElementById('radCancelRescheduleForm');
+    if (crForm) crForm.addEventListener('submit', handleRadCancelReschedule);
 }
 
 /* ================= TOP BAR / NAV ================= */
@@ -659,6 +753,7 @@ async function radLivePoll() {
             radData = reqs;
             renderRadPanes();
             populateRadReportStudy();
+            populateRadCrRequisitions();
             if (fresh.length) showRadNewAlert(fresh[0]);
         }
     } catch (e) {
@@ -828,10 +923,11 @@ async function loadRadRequests() {
     }
     renderRadPanes();
     populateRadReportStudy();
+    populateRadCrRequisitions();
 }
 
 /* ================= TABS ================= */
-var RAD_TABS = ['worklist', 'pending', 'scheduled', 'inprogress', 'reported', 'verified', 'dispatched'];
+var RAD_TABS = ['worklist', 'pending', 'scheduled', 'inprogress', 'reported', 'verified', 'dispatched', 'cancelled'];
 
 function radSwitchTab(view) {
     if (RAD_TABS.indexOf(view) === -1) view = 'worklist';
@@ -915,7 +1011,7 @@ function radWorklistTable(rows, q, emptyMsg) {
                     + '<td>' + escHtml(r.doctor_name || '--') + '</td>'
                     + '<td>' + fmtRadTime(r.requested_at) + '</td>'
                     + '<td>' + (r.scheduled_at ? fmtRadTime(r.scheduled_at) : '<span class="rad-muted">-</span>') + '</td>'
-                    + '<td>' + radStatusBadge(r) + '</td>'
+                    + '<td>' + radStatusBadge(r) + radCrInfo(r) + '</td>'
                     + '<td class="act-col">' + radActions(r) + '</td>'
                     + '</tr>';
             }).join('')
@@ -929,7 +1025,8 @@ function radWorklistTable(rows, q, emptyMsg) {
 function radActions(r) {
     var out = [];
     if (r.status === 'cancelled') {
-        return '<span class="rad-muted">-</span>';
+        out.push('<button class="rad-btn-outline" onclick="openRadView(' + r.id + ')">View</button>');
+        return out.join(' ');
     }
     if (r.status === 'pending') {
         out.push('<button class="rad-btn-primary" onclick="openRadSchedule(' + r.id + ')">Schedule</button>');
@@ -964,7 +1061,7 @@ function radReportTable(rows, q, emptyMsg) {
                     + '<td style="max-width:230px;white-space:pre-wrap;">' + escHtml(truncate(r.findings, 150)) + '</td>'
                     + '<td style="max-width:190px;white-space:pre-wrap;">' + escHtml(truncate(r.impression, 110)) + '</td>'
                     + '<td>' + escHtml(r.radiologist_name || '--') + '<span class="rad-sub">' + verified + '</span></td>'
-                    + '<td>' + radStatusBadge(r) + '</td>'
+                    + '<td>' + radStatusBadge(r) + radCrInfo(r) + '</td>'
                     + '<td class="act-col">' + radReportActions(r) + '</td>'
                     + '</tr>';
             }).join('')
@@ -1001,6 +1098,7 @@ function renderRadPanes() {
     setCount('cInProgress', active.filter(function (r) { return r.status === 'in_progress'; }).length);
     setCount('cReported', active.filter(function (r) { return r.result_status === 'draft'; }).length);
     setCount('cVerified', active.filter(function (r) { return r.result_status === 'final' || r.result_status === 'amended'; }).length);
+    setCount('cCancelled', radData.filter(function (r) { return r.status === 'cancelled'; }).length);
     setCount('cEmergency', active.filter(function (r) { return r.urgency === 'emergency'; }).length);
 
     var noMatch = q ? 'Nothing matches "' + q + '".' : '';
@@ -1053,10 +1151,114 @@ function renderRadPanes() {
         + '<th class="first-col">Accession</th><th>Patient</th><th>Examination</th><th>Reported By</th><th>Dispatched</th><th class="act-col">Report</th>'
         + '</tr></thead><tbody>' + (dlist || '<tr><td colspan="6" class="rad-empty">No reports dispatched yet - dispatch a verified study above.</td></tr>')
         + '</tbody></table>');
+
+    /* Cancelled - studies stopped with a recorded reason. Kept out of the live
+       worklist but visible here so the reason and who actioned it stay auditable. */
+    setPane('radPaneCancelled', radWorklistTable(
+        radData.filter(function (r) { return r.status === 'cancelled'; }).filter(radPassFilter), q,
+        q || 'No studies have been cancelled - use Cancel or Reschedule above when a study cannot go ahead.'
+    ));
 }
 
 function setCount(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
 function setPane(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+
+/* ================= CANCEL / RESCHEDULE (with reasons) =================
+   Toggle reveals a panel that cancels or reschedules an outstanding study
+   (pending / scheduled / in_progress) with a reason. Reschedule also needs the
+   new date/time; the backend stores the reason and moves the study to that
+   slot so it reappears on the worklist. */
+function radCrToggle(open) {
+    var divider = document.getElementById('radCrToggle');
+    var body = document.getElementById('radCrBody');
+    if (!divider || !body) return;
+    if (typeof open !== 'boolean') open = (body.style.display === 'none' || !body.style.display);
+    body.style.display = open ? 'block' : 'none';
+    divider.classList.toggle('open', open);
+    divider.setAttribute('aria-expanded', open ? 'true' : 'false');
+    var hint = divider.querySelector('.dhi-hint');
+    if (hint) hint.textContent = open ? '- press to hide' : '- toggle or press to view';
+    if (open) populateRadCrRequisitions();
+}
+
+function radCrToggleAction() {
+    var action = document.getElementById('radCrAction');
+    var whenField = document.getElementById('radCrWhenField');
+    var whenInput = document.getElementById('radCrWhen');
+    if (!action || !whenField) return;
+    var isResched = action.value === 'reschedule';
+    whenField.style.display = isResched ? 'flex' : 'none';
+    if (whenInput) whenInput.required = isResched;
+}
+
+function populateRadCrRequisitions() {
+    var sel = document.getElementById('radCrRequisition');
+    if (!sel) return;
+    var keep = sel.value;
+    var rows = (radData || []).filter(function (r) {
+        return r.status === 'pending' || r.status === 'scheduled' || r.status === 'in_progress';
+    });
+    sel.innerHTML = '<option value="">-- Select Study --</option>'
+        + rows.map(function (r) {
+            var slot = r.scheduled_at ? ' | ' + fmtRadTime(r.scheduled_at) : '';
+            return '<option value="' + r.id + '">RAD ' + escHtml(r.id) + ' - '
+                + escHtml(r.patient_name || '') + ' (' + escHtml(r.exam_type || '') + ')' + escHtml(slot) + '</option>';
+        }).join('');
+    if (keep && rows.some(function (r) { return String(r.id) === String(keep); })) sel.value = keep;
+}
+
+async function handleRadCancelReschedule(e) {
+    e.preventDefault();
+    var id = document.getElementById('radCrRequisition').value;
+    var action = document.getElementById('radCrAction').value;
+    var reasonSel = document.getElementById('radCrReason').value;
+    var notes = document.getElementById('radCrNotes').value.trim();
+    var when = document.getElementById('radCrWhen').value;
+
+    if (!id) { showAlert('Select the study to cancel or reschedule.', 'error'); return; }
+    if (!action) { showAlert('Choose Cancel or Reschedule.', 'error'); return; }
+    if (!reasonSel) { showAlert('Select a reason.', 'error'); return; }
+    if (action === 'reschedule' && !when) { showAlert('Enter the new date and time.', 'error'); return; }
+
+    var reason = reasonSel + (notes ? ' - ' + notes : '');
+    var payload = { id: id, reason: reason };
+    if (action === 'reschedule') payload.scheduled_at = when;
+
+    try {
+        var r = await fetch('/hms/backend/api/radiology.php?action=' + (action === 'cancel' ? 'cancel' : 'reschedule'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        var d = await r.json();
+        if (d.success) {
+            showAlert(action === 'cancel'
+                ? 'Study RAD ' + id + ' cancelled. Reason recorded: ' + reason
+                : 'Study RAD ' + id + ' rescheduled to ' + when.replace('T', ' ') + '.', 'success');
+            e.target.reset();
+            radCrToggleAction();
+            await loadRadRequests();
+        } else {
+            showAlert(d.error || 'Action failed.', 'error');
+        }
+    } catch (err) {
+        console.error('Radiology cancel/reschedule error:', err);
+        showAlert('Network error. Please try again.', 'error');
+    }
+}
+
+/* Small note under a study's status: the cancellation reason, or the slot a
+   study was moved to. */
+function radCrInfo(r) {
+    if (r.status === 'cancelled' && r.status_reason) {
+        return '<span class="rad-cr-info"><b>Cancelled:</b> ' + escHtml(r.status_reason) + '</span>';
+    }
+    if (r.rescheduled_to) {
+        return '<span class="rad-cr-info" style="color:#b45309;"><b>Rescheduled ' + escHtml(fmtRadTime(r.rescheduled_to)) + ':</b> '
+            + (r.status_reason ? escHtml(r.status_reason) : '') + '</span>';
+    }
+    return '';
+}
 
 /* ================= SCHEDULING ================= */
 function openRadSchedule(requestId) {
@@ -1268,7 +1470,9 @@ function openRadView(requestId) {
         + '<br><b>Referring doctor:</b> ' + escHtml(r.doctor_name || '--')
         + ' &nbsp;|&nbsp; <b>Requested:</b> ' + fmtRadTime(r.requested_at)
         + (r.scheduled_at ? ' &nbsp;|&nbsp; <b>Scheduled:</b> ' + fmtRadTime(r.scheduled_at) : '')
-        + (r.clinical_indication ? '<br><b>Indication:</b> ' + escHtml(r.clinical_indication) : '');
+        + (r.clinical_indication ? '<br><b>Indication:</b> ' + escHtml(r.clinical_indication) : '')
+        + (r.status_reason ? '<br><b>' + (r.status === 'cancelled' ? 'Cancellation reason' : 'Reschedule reason') + ':</b> ' + escHtml(r.status_reason) : '')
+        + (r.rescheduled_to ? ' &nbsp;|&nbsp; <b>Moved to:</b> ' + fmtRadTime(r.rescheduled_to) : '');
 
     if (r.findings) {
         rep.innerHTML = '<p class="rb-label">Findings</p><p class="rb-val">' + escHtml(r.findings) + '</p>'

@@ -384,6 +384,13 @@ CREATE TABLE radiology_requests (
     clinical_indication TEXT,
     urgency ENUM('routine', 'urgent', 'emergency') DEFAULT 'routine',
     status ENUM('pending', 'scheduled', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
+    -- Cancellation / reschedule trail (mirrors lab_requests). The desk's Cancel
+    -- or Reschedule action stores the reason here; a reschedule also records the
+    -- agreed new date/time so the study returns to the worklist on that slot.
+    status_reason VARCHAR(255) DEFAULT NULL,
+    rescheduled_to DATETIME DEFAULT NULL,
+    status_updated_by INT DEFAULT NULL,
+    status_updated_at TIMESTAMP NULL DEFAULT NULL,
     requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     scheduled_at TIMESTAMP NULL,
     FOREIGN KEY (visit_id) REFERENCES patient_visits(id),

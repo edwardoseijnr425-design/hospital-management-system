@@ -11,6 +11,8 @@
 //   GET  ?action=catalogue            -> modality catalogue (single source of truth)
 //   POST ?action=request              -> order an imaging study
 //   POST ?action=result               -> record / amend a report for a request
+//   POST ?action=cancel               -> cancel an outstanding study (reason required)
+//   POST ?action=reschedule           -> move an outstanding study to a new slot (reason required)
 //   PUT  ?action=status&id=N          -> update request status (+ optional scheduled_at)
 require_once __DIR__ . '/../config/config.php';
 
@@ -43,6 +45,10 @@ if ($method === 'GET' && $action === 'stats') {
     createRadiologyRequest();
 } elseif ($method === 'POST' && $action === 'result') {
     recordRadiologyResult();
+} elseif ($method === 'POST' && $action === 'cancel') {
+    cancelRadiologyRequest();
+} elseif ($method === 'POST' && $action === 'reschedule') {
+    rescheduleRadiologyRequest();
 } elseif ($method === 'PUT' && $action === 'status') {
     updateRequestStatus();
 } else {
@@ -362,5 +368,120 @@ function updateRequestStatus() {
     } catch (Exception $e) {
         error_log("Radiology status error: " . $e->getMessage());
         jsonResponse(['error' => 'Failed to update status'], 500);
+    }
+}
+
+/* ============================================================================
+   CANCEL / RESCHEDULE (Radiology Desk - with reasons)
+   Mirrors lab.php. A request may only be cancelled or moved while it is still
+   outstanding (pending / scheduled / in_progress). Both actions require a
+   reason, stored on the request; a reschedule also records the agreed new
+   date/time and puts the study back on the schedule.
+   ============================================================================ */
+
+function radStoreReason($reason) {
+    return function_exists('mb_substr') ? mb_substr($reason, 0, 255) : substr($reason, 0, 255);
+}
+
+function cancelRadiologyRequest() {
+    $data = getPostData();
+    $errors = validateRequired($data, ['id', 'reason']);
+    if (!empty($errors)) {
+        jsonResponse(['errors' => $errors], 400);
+    }
+    $reason = trim((string)$data['reason']);
+    if ($reason === '') {
+        jsonResponse(['error' => 'A reason is required to cancel a study'], 400);
+    }
+
+    $db = Database::getInstance();
+    $id = (int)$data['id'];
+    $req = $db->fetchOne("SELECT * FROM radiology_requests WHERE id = ?", [$id]);
+    if (!$req) {
+        jsonResponse(['error' => 'Radiology request not found'], 404);
+    }
+    if ($req['status'] === 'completed') {
+        jsonResponse(['error' => 'This study is already completed and cannot be cancelled'], 400);
+    }
+    if ($req['status'] === 'cancelled') {
+        jsonResponse(['error' => 'This study is already cancelled'], 400);
+    }
+    // A verified report means the study is done - cancelling it would orphan
+    // the findings, so block it the same way a status edit is blocked.
+    $hasFinal = $db->fetchOne(
+        "SELECT id FROM radiology_results WHERE radiology_request_id = ? AND status IN ('final','amended')",
+        [$id]
+    );
+    if ($hasFinal) {
+        jsonResponse(['error' => 'This study already has a verified report and cannot be cancelled'], 409);
+    }
+
+    try {
+        $db->update('radiology_requests', [
+            'status'            => 'cancelled',
+            'status_reason'     => radStoreReason($reason),
+            'rescheduled_to'    => null,
+            'status_updated_by' => getCurrentUserId(),
+            'status_updated_at' => date('Y-m-d H:i:s'),
+        ], 'id = ?', [$id]);
+        logAudit('UPDATE', 'radiology_requests', $id, $req, ['status' => 'cancelled', 'reason' => $reason]);
+        jsonResponse(['success' => true]);
+    } catch (Exception $e) {
+        error_log("Radiology cancel error: " . $e->getMessage());
+        jsonResponse(['error' => 'Failed to cancel the study'], 500);
+    }
+}
+
+function rescheduleRadiologyRequest() {
+    $data = getPostData();
+    $errors = validateRequired($data, ['id', 'reason', 'scheduled_at']);
+    if (!empty($errors)) {
+        jsonResponse(['errors' => $errors], 400);
+    }
+    $reason = trim((string)$data['reason']);
+    if ($reason === '') {
+        jsonResponse(['error' => 'A reason is required to reschedule a study'], 400);
+    }
+
+    $ts = strtotime(str_replace('T', ' ', trim((string)$data['scheduled_at'])));
+    if ($ts === false) {
+        jsonResponse(['error' => 'Enter a valid new date and time'], 400);
+    }
+    $scheduledAt = date('Y-m-d H:i:s', $ts);
+
+    $db = Database::getInstance();
+    $id = (int)$data['id'];
+    $req = $db->fetchOne("SELECT * FROM radiology_requests WHERE id = ?", [$id]);
+    if (!$req) {
+        jsonResponse(['error' => 'Radiology request not found'], 404);
+    }
+    if ($req['status'] === 'completed') {
+        jsonResponse(['error' => 'This study is already completed and cannot be rescheduled'], 400);
+    }
+    if ($req['status'] === 'cancelled') {
+        jsonResponse(['error' => 'This study was cancelled - raise a new order instead'], 400);
+    }
+    $hasFinal = $db->fetchOne(
+        "SELECT id FROM radiology_results WHERE radiology_request_id = ? AND status IN ('final','amended')",
+        [$id]
+    );
+    if ($hasFinal) {
+        jsonResponse(['error' => 'This study already has a verified report and cannot be rescheduled'], 409);
+    }
+
+    try {
+        $db->update('radiology_requests', [
+            'status'            => 'scheduled',
+            'scheduled_at'      => $scheduledAt,
+            'status_reason'     => radStoreReason($reason),
+            'rescheduled_to'    => $scheduledAt,
+            'status_updated_by' => getCurrentUserId(),
+            'status_updated_at' => date('Y-m-d H:i:s'),
+        ], 'id = ?', [$id]);
+        logAudit('UPDATE', 'radiology_requests', $id, $req, ['status' => 'scheduled', 'reason' => $reason, 'rescheduled_to' => $scheduledAt]);
+        jsonResponse(['success' => true, 'rescheduled_to' => $scheduledAt]);
+    } catch (Exception $e) {
+        error_log("Radiology reschedule error: " . $e->getMessage());
+        jsonResponse(['error' => 'Failed to reschedule the study'], 500);
     }
 }
