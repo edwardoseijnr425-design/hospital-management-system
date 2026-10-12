@@ -257,59 +257,175 @@
     </div>
 </div>
 
-<!-- Patient Identification Summary Modal (old EHMS patient bar) -->
+<style>
+/* ============ PATIENT CLINICAL PROFILE (Health Records "View") ============
+   Read-only patient chart: NHIS status header plus Doctor Entries (descending),
+   Investigations Results and IPD Billing tabs. Scoped under .pcp so nothing
+   leaks into the records list or the SPA shell. */
+#patient-summary-modal .modal-content{max-width:1150px;width:96vw}
+.pcp{--pcp-blue:#1b659d;--pcp-line:#e2e8f0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;font-size:12px;color:#334155;background:#f4f7f9;border:1px solid #e2e8f0;border-radius:12px;padding:16px}
+.pcp *,.pcp *::before,.pcp *::after{box-sizing:border-box}
+.pcp-head{background:#fff;border:1px solid var(--pcp-line);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.pcp-avatar{background:var(--pcp-blue);color:#fff;width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto}
+.pcp-name-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pcp-name{font-weight:800;font-size:14px;color:#1e293b}
+.pcp-id{background:var(--pcp-blue);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px}
+.pcp-nhis{font-size:10px;font-weight:800;padding:3px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;border:1px solid #cbd5e1;background:#f1f5f9;color:#64748b}
+.pcp-nhis .dot{width:8px;height:8px;border-radius:999px;background:#94a3b8}
+.pcp-nhis.active{background:#ecfdf5;color:#047857;border-color:#6ee7b7}
+.pcp-nhis.active .dot{background:#10b981}
+.pcp-nhis.inactive{background:#fef2f2;color:#b91c1c;border-color:#fca5a5}
+.pcp-nhis.inactive .dot{background:#ef4444}
+.pcp-meta{margin:3px 0 0;font-size:11px;color:#64748b}
+.pcp-tabs{display:flex;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--pcp-line);padding:14px 0 12px;margin-top:4px}
+.pcp-tab{border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;color:#334155;transition:background .15s,color .15s}
+.pcp-tab:hover{background:#e2e8f0}
+.pcp-tab.active{background:var(--pcp-blue);color:#fff;box-shadow:0 1px 3px rgba(27,101,157,.4)}
+.pcp-pane{display:none;padding-top:14px}
+.pcp-pane.active{display:block}
+.pcp-feedbar{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid var(--pcp-line);border-radius:8px;padding:8px 14px;font-size:11px;color:#64748b}
+.pcp-feedbar .t{font-weight:800;color:#334155;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px}
+.pcp-feedbar .t i{color:var(--pcp-blue)}
+.pcp-entry{background:#fff;border:1px solid var(--pcp-line);border-radius:12px;padding:14px 16px;margin-top:12px;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.pcp-entry-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid #f1f5f9;padding-bottom:8px;margin-bottom:8px}
+.pcp-entry-who{font-weight:800;color:var(--pcp-blue);font-size:11.5px}
+.pcp-entry-when{font-size:11px;font-weight:700;color:#94a3b8;background:#f8fafc;border:1px solid var(--pcp-line);border-radius:4px;padding:2px 8px}
+.pcp-fld{margin:0 0 5px}
+.pcp-fld .k{color:var(--pcp-blue);font-weight:800}
+.pcp-fld.allergy .k{color:#be123c}
+.pcp-fld .v{display:block;white-space:pre-wrap;color:#334155;margin-top:1px}
+.pcp-raw{white-space:pre-wrap;color:#475569}
+.pcp-diag{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;border-top:1px dashed var(--pcp-line);padding-top:8px}
+.pcp-diag .cell{flex:1;min-width:150px}
+.pcp-diag .cell .k{font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.3px}
+.pcp-diag .cell .v{font-weight:700;color:#1e293b}
+.pcp-badge{display:inline-block;font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px}
+.pcp-badge.final{background:#ecfdf5;color:#047857}
+.pcp-badge.amended{background:#eff6ff;color:#1d4ed8}
+.pcp-badge.draft{background:#fffbeb;color:#b45309}
+.pcp-card{background:#fff;border:1px solid var(--pcp-line);border-radius:12px;padding:16px;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.pcp-card-title{font-weight:800;font-size:13px;text-transform:uppercase;color:var(--pcp-blue);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--pcp-line);padding-bottom:8px;margin-bottom:12px}
+.pcp-card-title .tariff{margin-left:auto;background:#eff6ff;color:var(--pcp-blue);font-size:11px;font-weight:800;padding:3px 10px;border-radius:6px;text-transform:none}
+.pcp-tbl-wrap{overflow-x:auto}
+.pcp-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.pcp-tbl th{background:#f1f5f9;color:#475569;text-align:left;padding:10px 12px;border-bottom:1px solid var(--pcp-line);font-weight:700}
+.pcp-tbl td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+.pcp-tbl tbody tr:hover{background:#f8fafc}
+.pcp-tbl .num{text-align:right}
+.pcp-tbl .ctr{text-align:center}
+.pcp-tbl tfoot td{background:#f8fafc;font-weight:800;border-top:2px solid var(--pcp-line);color:#1e293b}
+.pcp-tbl tfoot td.grand{color:var(--pcp-blue);font-size:13px}
+.pcp-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:#eff6ff;color:#1d4ed8}
+.pcp-empty{background:#fff;border:1px dashed #cbd5e1;border-radius:8px;padding:18px;text-align:center;color:#94a3b8;font-style:italic;margin-top:12px}
+</style>
+
+<!-- Patient Clinical Profile Modal (Health Records "View") -->
 <div class="modal" id="patient-summary-modal">
-    <div class="modal-content" style="max-width:860px;">
+    <div class="modal-content">
         <div class="modal-header">
-            <h3>PATIENT IDENTIFICATION</h3>
+            <h3>Patient Clinical Profile</h3>
             <button class="modal-close" id="close-summary-modal">&times;</button>
         </div>
         <div class="modal-body">
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
-                <div style="grid-column:span 2;border-left:3px solid #0072BC;padding-left:8px;">
-                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Patient Name</div>
-                    <div style="font-size:16px;font-weight:800;color:#0F2D59;" id="patientBarName">-</div>
+            <div class="pcp">
+
+                <!-- Patient header + NHIS status -->
+                <div class="pcp-head">
+                    <div class="pcp-avatar"><i class="fa-solid fa-user-doctor"></i></div>
+                    <div style="min-width:0;">
+                        <div class="pcp-name-row">
+                            <span class="pcp-name" id="pcpName">Patient</span>
+                            <span class="pcp-id" id="pcpId">ID: -</span>
+                            <span class="pcp-nhis inactive" id="pcpNhis"><span class="dot"></span><span>NHIS STATUS: --</span></span>
+                        </div>
+                        <p class="pcp-meta" id="pcpMeta">&nbsp;</p>
+                    </div>
                 </div>
-                <div style="grid-column:span 2;border-left:3px solid #0072BC;padding-left:8px;">
-                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Hospital Number</div>
-                    <div style="font-size:16px;font-weight:800;color:#0072BC;" id="patientBarId">-</div>
+
+                <!-- Tabs -->
+                <div class="pcp-tabs">
+                    <button type="button" class="pcp-tab active" data-pcp-tab="entries" onclick="pcpSwitchTab('entries')">
+                        <i class="fa-solid fa-notes-medical"></i><span>Doctor Entries (Descending)</span>
+                    </button>
+                    <button type="button" class="pcp-tab" data-pcp-tab="investigations" onclick="pcpSwitchTab('investigations')">
+                        <i class="fa-solid fa-flask-vial"></i><span>View Investigations Results</span>
+                    </button>
+                    <button type="button" class="pcp-tab" data-pcp-tab="billing" onclick="pcpSwitchTab('billing')">
+                        <i class="fa-solid fa-file-invoice-dollar"></i><span>IPD Billing &amp; Costings</span>
+                    </button>
                 </div>
-                <div style="border-left:3px solid #80C342;padding-left:8px;">
-                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Gender</div>
-                    <div style="font-size:14px;font-weight:700;" id="patientBarGender">-</div>
+
+                <!-- Tab 1: Doctor Entries (newest first) -->
+                <div class="pcp-pane active" id="pcpPaneEntries">
+                    <div class="pcp-feedbar">
+                        <span class="t"><i class="fa-solid fa-arrow-down-wide-short"></i> Doctor Notes &amp; All Clinical Entries (Sorted Descending)</span>
+                        <span><span id="pcpEntriesCount">0 entries</span> &bull; Read-only clinical feed from Doctor Station</span>
+                    </div>
+                    <div id="pcpEntries"><div class="pcp-empty">Loading clinical entries&hellip;</div></div>
                 </div>
-                <div style="border-left:3px solid #80C342;padding-left:8px;">
-                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Age</div>
-                    <div style="font-size:14px;font-weight:700;" id="patientBarAge">-</div>
+
+                <!-- Tab 2: Investigations results -->
+                <div class="pcp-pane" id="pcpPaneInvestigations">
+                    <div class="pcp-card">
+                        <div class="pcp-card-title">
+                            <i class="fa-solid fa-flask-vial"></i> Laboratory &amp; Radiology Results Feed
+                            <span class="tariff" id="pcpInvCount">0 results</span>
+                        </div>
+                        <div class="pcp-tbl-wrap">
+                            <table class="pcp-tbl">
+                                <thead>
+                                    <tr>
+                                        <th>Date / Time</th>
+                                        <th>Investigation / Test Name</th>
+                                        <th>Category</th>
+                                        <th>Findings / Report Summary</th>
+                                        <th class="ctr">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pcpInvBody">
+                                    <tr><td colspan="5" class="pcp-empty" style="border:none;">Loading results&hellip;</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div style="grid-column:span 2;border-left:3px solid #F39C12;padding-left:8px;">
-                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Bed / Ward</div>
-                    <div style="font-size:14px;font-weight:700;" id="patientBarBedWard">Not admitted</div>
+
+                <!-- Tab 3: IPD billing & costings -->
+                <div class="pcp-pane" id="pcpPaneBilling">
+                    <div class="pcp-card">
+                        <div class="pcp-card-title">
+                            <i class="fa-solid fa-file-invoice-dollar"></i> Inpatient Billing &amp; Departmental Costings
+                            <span class="tariff" id="pcpBillCount">0 charges</span>
+                        </div>
+                        <div class="pcp-tbl-wrap">
+                            <table class="pcp-tbl">
+                                <thead>
+                                    <tr>
+                                        <th>Cost Center / Service Category</th>
+                                        <th>Description / Itemized Breakdown</th>
+                                        <th class="num">Unit Cost (GHS)</th>
+                                        <th class="ctr">Qty / Days</th>
+                                        <th class="num">Total (GHS)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pcpBillBody">
+                                    <tr><td colspan="5" class="pcp-empty" style="border:none;">Loading billing&hellip;</td></tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="4" class="num">Total Inpatient Bill:</td>
+                                        <td class="num grand" id="pcpBillTotal">GHS 0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="num">Outstanding Balance:</td>
+                                        <td class="num grand" id="pcpBillOutstanding">GHS 0.00</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div style="border-left:3px solid #E53E3E;padding-left:8px;">
-                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Blood Pressure</div>
-                    <div style="font-size:14px;font-weight:700;" id="patientBarBP">-</div>
-                </div>
-                <div style="border-left:3px solid #E53E3E;padding-left:8px;">
-                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Pulse</div>
-                    <div style="font-size:14px;font-weight:700;" id="patientBarPulse">-</div>
-                </div>
-                <div style="border-left:3px solid #E53E3E;padding-left:8px;">
-                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">SpO2</div>
-                    <div style="font-size:14px;font-weight:700;" id="patientBarSpO2">-</div>
-                </div>
-                <div style="grid-column:span 2;border-left:3px solid #9C27B0;padding-left:8px;">
-                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Allergies</div>
-                    <div style="font-size:14px;" id="patientBarAllergies">None recorded</div>
-                </div>
-                <div style="grid-column:span 2;border-left:3px solid #0072BC;padding-left:8px;">
-                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Latest Diagnosis</div>
-                    <div style="font-size:14px;" id="patientBarDiagnosis">-</div>
-                </div>
-                <div style="grid-column:span 2;border-left:3px solid #80C342;padding-left:8px;">
-                    <div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#0F2D59;text-transform:uppercase;">Latest Prescription</div>
-                    <div style="font-size:14px;" id="patientBarPrescription">-</div>
-                </div>
+
             </div>
         </div>
     </div>
@@ -641,41 +757,309 @@ function viewPatient(patientId) {
     loadPatientSummary(patientId);
 }
 
-// Patient identification summary (old EHMS patient bar): demographics + bed/ward + latest vitals/diagnosis/prescription
+/* ============ PATIENT CLINICAL PROFILE (Health Records "View") ============
+   Read-only chart assembled from five endpoints fetched in parallel:
+     patients.php?action=summary      -> header + NHIS status
+     clinical_notes.php?action=list   -> Doctor Entries (descending)
+     lab.php?action=results           -> laboratory findings
+     radiology.php?action=results     -> imaging findings
+     invoices.php?action=patient_billing -> IPD billing line items
+   Each panel degrades on its own if one endpoint fails. */
+
+function pcpEsc(s) {
+    if (s === null || s === undefined) return '';
+    return String(s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function pcpMoney(v) {
+    var n = parseFloat(v);
+    if (isNaN(n)) n = 0;
+    return 'GHS ' + n.toFixed(2);
+}
+
+function pcpFmtDateTime(v) {
+    if (!v) return '—';
+    var d = new Date(String(v).replace(' ', 'T'));
+    if (isNaN(d.getTime())) return String(v);
+    var p = function (x) { return (x < 10 ? '0' : '') + x; };
+    return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear()
+        + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+function pcpSwitchTab(tab) {
+    var tabs = document.querySelectorAll('#patient-summary-modal .pcp-tab');
+    for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.toggle('active', tabs[i].getAttribute('data-pcp-tab') === tab);
+    }
+    ['Entries', 'Investigations', 'Billing'].forEach(function (pane) {
+        var el = document.getElementById('pcpPane' + pane);
+        if (el) el.classList.toggle('active', pane.toLowerCase() === tab);
+    });
+}
+
 async function loadPatientSummary(patientId) {
-    try {
-        const response = await fetch(`/hms/backend/api/patients.php?action=summary&id=${patientId}`);
-        const data = await response.json();
-        if (!data.success) {
-            showAlert(data.error || 'Failed to load patient summary', 'error');
-            return;
-        }
-        populatePatientIdentificationBar(data.patient);
-        document.getElementById('patient-summary-modal').classList.add('show');
-    } catch (error) {
-        console.error('Patient summary load error:', error);
-        showAlert('Failed to load patient summary', 'error');
+    pcpSwitchTab('entries');
+
+    // Reset to a loading state so a slow fetch never shows the last patient's chart.
+    document.getElementById('pcpName').textContent = 'Loading…';
+    document.getElementById('pcpId').textContent = 'ID: -';
+    document.getElementById('pcpMeta').innerHTML = '&nbsp;';
+    var nb = document.getElementById('pcpNhis');
+    nb.className = 'pcp-nhis inactive';
+    nb.innerHTML = '<span class="dot"></span><span>NHIS STATUS: --</span>';
+    document.getElementById('pcpEntries').innerHTML = '<div class="pcp-empty">Loading clinical entries&hellip;</div>';
+    document.getElementById('pcpInvBody').innerHTML = '<tr><td colspan="5" class="pcp-empty" style="border:none;">Loading results&hellip;</td></tr>';
+    document.getElementById('pcpBillBody').innerHTML = '<tr><td colspan="5" class="pcp-empty" style="border:none;">Loading billing&hellip;</td></tr>';
+    document.getElementById('pcpBillTotal').textContent = 'GHS 0.00';
+    document.getElementById('pcpBillOutstanding').textContent = 'GHS 0.00';
+
+    document.getElementById('patient-summary-modal').classList.add('show');
+
+    var base = '/hms/backend/api/';
+    var pid = encodeURIComponent(patientId);
+    function getJson(url) { return fetch(url).then(function (r) { return r.json(); }); }
+
+    var settled = await Promise.allSettled([
+        getJson(base + 'patients.php?action=summary&id=' + pid),
+        getJson(base + 'clinical_notes.php?action=list&patient_id=' + pid),
+        getJson(base + 'lab.php?action=results&patient_id=' + pid),
+        getJson(base + 'radiology.php?action=results&patient_id=' + pid),
+        getJson(base + 'invoices.php?action=patient_billing&patient_id=' + pid)
+    ]);
+    function ok(i) { return settled[i].status === 'fulfilled' ? settled[i].value : null; }
+
+    pcpRenderHeader(ok(0));
+    pcpRenderEntries(ok(1));
+    pcpRenderInvestigations(ok(2), ok(3));
+    pcpRenderBilling(ok(4));
+}
+
+function pcpRenderHeader(summary) {
+    var p = (summary && summary.success && summary.patient) ? summary.patient : null;
+    if (!p) {
+        document.getElementById('pcpName').textContent = 'Patient';
+        document.getElementById('pcpMeta').textContent = 'Could not load patient details.';
+        return;
+    }
+    document.getElementById('pcpName').textContent = p.full_name || 'Patient';
+    document.getElementById('pcpId').textContent = 'ID: ' + (p.hospital_number || '-');
+
+    var bits = [];
+    if (p.gender) bits.push(p.gender);
+    bits.push((p.age === null || p.age === undefined || p.age === '') ? '- Yrs' : p.age + ' Yrs');
+    bits.push('Genotype: --');
+    bits.push('Blood Group: ' + (p.blood_group || '--'));
+    bits.push('NHIS No: ' + (p.nhia_number || '--'));
+    document.getElementById('pcpMeta').textContent = bits.join('  |  ');
+
+    var nb = document.getElementById('pcpNhis');
+    if (p.nhis_active) {
+        nb.className = 'pcp-nhis active';
+        nb.innerHTML = '<span class="dot"></span><span>NHIS STATUS: ACTIVE'
+            + (p.claim_check_code ? ' (CCC: ' + pcpEsc(p.claim_check_code) + ')' : '') + '</span>';
+    } else {
+        nb.className = 'pcp-nhis inactive';
+        nb.innerHTML = '<span class="dot"></span><span>NHIS STATUS: INACTIVE</span>';
     }
 }
 
-function populatePatientIdentificationBar(p) {
-    const set = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = (val === null || val === undefined || val === '') ? '-' : val;
-    };
-    const vit = p.vitals || {};
-    const has = v => (v !== null && v !== undefined && v !== '');
-    set('patientBarName', p.full_name);
-    set('patientBarId', p.hospital_number);
-    set('patientBarGender', p.gender);
-    set('patientBarAge', has(p.age) ? p.age + ' yrs' : '-');
-    set('patientBarBedWard', p.bed_ward || 'Not admitted');
-    set('patientBarBP', vit.blood_pressure || '-');
-    set('patientBarPulse', has(vit.pulse) ? vit.pulse + ' bpm' : '-');
-    set('patientBarSpO2', has(vit.spo2) ? vit.spo2 + '%' : '-');
-    set('patientBarAllergies', 'None recorded');
-    set('patientBarDiagnosis', p.diagnosis || 'No diagnosis recorded');
-    set('patientBarPrescription', p.latest_rx || 'No prescription');
+/* ---- Tab 1: Doctor Entries ---- */
+
+// Labels embedded in the clinical_notes.clinical_note block by the Doctor
+// Station form (see DS_NOTE_FIELDS in doctor-station.php).
+var PCP_NOTE_LABELS = {
+    'ENTRY TYPE': 'entry_type',
+    'PRINCIPAL COMPLAINTS': 'principal_complaints',
+    'ON DIRECT QUESTION': 'on_direct_question',
+    'PREVIOUS HISTORY / MEDICAL HISTORY': 'previous_history',
+    'ALLERGIES / DRUG REACTIONS': 'allergies',
+    'PROVISIONAL DIAGNOSIS': 'provisional_diagnosis',
+    'CONFIRMED DIAGNOSIS': 'confirmed_diagnosis',
+    'DIAGNOSIS STATUS': 'diagnosis_status'
+};
+
+function pcpParseNote(text) {
+    var out = {};
+    if (!text) return out;
+    var lines = String(text).split(/\r?\n/);
+    var current = null, buf = [];
+    lines.forEach(function (line) {
+        var m = line.match(/^([A-Z][A-Z0-9 /()._-]+):\s*(.*)$/);
+        var key = m ? (PCP_NOTE_LABELS[m[1].trim()] || null) : null;
+        if (key) {
+            if (current) out[current] = buf.join('\n').trim();
+            current = key;
+            buf = m[2] ? [m[2]] : [];
+        } else if (current) {
+            buf.push(line);
+        }
+    });
+    if (current) out[current] = buf.join('\n').trim();
+    if (!Object.keys(out).length) out.raw = String(text).trim();
+    return out;
+}
+
+function pcpEntryTypeLabel(noteType) {
+    if (noteType === 'IPD_NOTE') return 'IPD Daily Clinical Round Note';
+    if (noteType === 'DISCHARGE_SUMMARY') return 'Discharge Summary Note';
+    if (noteType === 'OPD_NOTE') return 'OPD Consultation Entry';
+    return noteType || 'Clinical Entry';
+}
+
+function pcpRenderEntries(data) {
+    var box = document.getElementById('pcpEntries');
+    var count = document.getElementById('pcpEntriesCount');
+    var notes = (data && data.success && data.notes) ? data.notes : [];
+    if (count) count.textContent = notes.length + (notes.length === 1 ? ' entry' : ' entries');
+    if (!notes.length) {
+        box.innerHTML = '<div class="pcp-empty">No doctor notes or clinical entries recorded for this patient yet.</div>';
+        return;
+    }
+    box.innerHTML = notes.map(pcpRenderEntry).join('');
+}
+
+function pcpRenderEntry(n) {
+    var d = pcpParseNote(n.clinical_note);
+    var typeLabel = d.entry_type || pcpEntryTypeLabel(n.note_type);
+    var html = '<div class="pcp-entry">'
+        + '<div class="pcp-entry-top">'
+        + '<span class="pcp-entry-who">' + pcpEsc(n.doctor_name || 'Clinician') + ' &bull; ' + pcpEsc(typeLabel) + '</span>'
+        + '<span class="pcp-entry-when">' + pcpEsc(pcpFmtDateTime(n.created_at)) + '</span>'
+        + '</div>';
+
+    var body = '';
+    var any = false;
+    [['principal_complaints', 'Principal Complaints', false],
+     ['on_direct_question', 'On Direct Question', false],
+     ['previous_history', 'Previous History / Medical History', false],
+     ['allergies', 'Allergies / Drug Reactions', true]].forEach(function (f) {
+        if (!d[f[0]]) return;
+        any = true;
+        body += '<div class="pcp-fld' + (f[2] ? ' allergy' : '') + '">'
+            + '<span class="k">' + pcpEsc(f[1].toUpperCase()) + ':</span>'
+            + '<span class="v">' + pcpEsc(d[f[0]]) + '</span></div>';
+    });
+
+    // Diagnosis trio gets its own compact panel.
+    var diag = '';
+    ['provisional_diagnosis', 'confirmed_diagnosis', 'diagnosis_status'].forEach(function (k) {
+        if (d[k]) any = true;
+    });
+    if (d.provisional_diagnosis || d.confirmed_diagnosis || d.diagnosis_status) {
+        diag = '<div class="pcp-diag">'
+            + pcpDiagCell('Provisional Diagnosis', d.provisional_diagnosis)
+            + pcpDiagCell('Confirmed Diagnosis', d.confirmed_diagnosis)
+            + pcpDiagCell('Diagnosis Status', d.diagnosis_status)
+            + '</div>';
+    }
+
+    if (!any) {
+        body = '<div class="pcp-raw">' + pcpEsc(n.clinical_note || '') + '</div>';
+    }
+    return html + body + diag + '</div>';
+}
+
+function pcpDiagCell(label, value) {
+    return '<div class="cell"><div class="k">' + pcpEsc(label) + '</div>'
+        + '<div class="v">' + pcpEsc(value || '—') + '</div></div>';
+}
+
+/* ---- Tab 2: Investigations Results (lab + radiology) ---- */
+
+function pcpStatusBadge(status) {
+    var s = String(status || '').toLowerCase();
+    if (s === 'final') return '<span class="pcp-badge final">VERIFIED</span>';
+    if (s === 'amended') return '<span class="pcp-badge amended">AMENDED</span>';
+    if (s === 'draft') return '<span class="pcp-badge draft">DRAFT</span>';
+    return '<span class="pcp-badge draft">' + pcpEsc((status || '—').toUpperCase()) + '</span>';
+}
+
+function pcpRenderInvestigations(labData, radData) {
+    var rows = [];
+    ((labData && labData.results) || []).forEach(function (r) {
+        var summary = r.results || '';
+        if (r.interpretation) summary += (summary ? ' — ' : '') + r.interpretation;
+        rows.push({
+            when: r.completed_at,
+            name: r.test_type || 'Laboratory Test',
+            category: 'Laboratory',
+            summary: summary,
+            status: r.status
+        });
+    });
+    ((radData && radData.results) || []).forEach(function (r) {
+        var summary = r.findings || '';
+        if (r.impression) summary += (summary ? ' — ' : '') + r.impression;
+        var name = r.exam_type || 'Imaging Study';
+        if (r.body_part) name += ' — ' + r.body_part;
+        rows.push({
+            when: r.completed_at,
+            name: name,
+            category: 'Radiology',
+            summary: summary,
+            status: r.status
+        });
+    });
+    rows.sort(function (a, b) { return String(b.when || '').localeCompare(String(a.when || '')); });
+
+    var count = document.getElementById('pcpInvCount');
+    if (count) count.textContent = rows.length + (rows.length === 1 ? ' result' : ' results');
+
+    var body = document.getElementById('pcpInvBody');
+    if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="5" class="pcp-empty" style="border:none;">No laboratory or radiology results recorded yet.</td></tr>';
+        return;
+    }
+    body.innerHTML = rows.map(function (r) {
+        return '<tr>'
+            + '<td style="white-space:nowrap;color:#64748b;">' + pcpEsc(pcpFmtDateTime(r.when)) + '</td>'
+            + '<td style="font-weight:700;color:#1e293b;">' + pcpEsc(r.name) + '</td>'
+            + '<td><span class="pcp-tag">' + pcpEsc(r.category) + '</span></td>'
+            + '<td style="color:#334155;">' + pcpEsc(r.summary || '—') + '</td>'
+            + '<td class="ctr">' + pcpStatusBadge(r.status) + '</td>'
+            + '</tr>';
+    }).join('');
+}
+
+/* ---- Tab 3: IPD Billing & Costings ---- */
+
+var PCP_ITEM_TYPES = {
+    consultation: 'Consultation',
+    procedure: 'Procedure',
+    drug: 'Medication',
+    lab_test: 'Laboratory',
+    radiology: 'Radiology',
+    bed: 'Accommodation',
+    other: 'Other / Consumables'
+};
+
+function pcpRenderBilling(data) {
+    var items = (data && data.items) || [];
+    var outstanding = (data && data.outstanding) || 0;
+    var total = 0;
+    items.forEach(function (it) { total += parseFloat(it.total_price || 0); });
+
+    document.getElementById('pcpBillTotal').textContent = pcpMoney(total);
+    document.getElementById('pcpBillOutstanding').textContent = pcpMoney(outstanding);
+    var count = document.getElementById('pcpBillCount');
+    if (count) count.textContent = items.length + (items.length === 1 ? ' charge' : ' charges');
+
+    var body = document.getElementById('pcpBillBody');
+    if (!items.length) {
+        body.innerHTML = '<tr><td colspan="5" class="pcp-empty" style="border:none;">No inpatient charges raised for this patient yet.</td></tr>';
+        return;
+    }
+    body.innerHTML = items.map(function (it) {
+        return '<tr>'
+            + '<td style="font-weight:700;color:#1b659d;">' + pcpEsc(PCP_ITEM_TYPES[it.item_type] || 'Other') + '</td>'
+            + '<td style="color:#475569;">' + pcpEsc(it.description || '—') + '</td>'
+            + '<td class="num">' + pcpMoney(it.unit_price) + '</td>'
+            + '<td class="ctr">' + pcpEsc(it.quantity) + '</td>'
+            + '<td class="num" style="font-weight:700;color:#1e293b;">' + pcpMoney(it.total_price) + '</td>'
+            + '</tr>';
+    }).join('');
 }
 
 function closeSummaryModal() {

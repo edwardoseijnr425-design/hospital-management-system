@@ -244,6 +244,14 @@ function getPatientSummary() {
             'age'             => $patient['age'],
             'blood_group'     => $patient['blood_group'],
             'nhia_number'     => $patient['nhia_number'],
+            // NHIS card data captured at registration. nhis_active is derived:
+            // the patient is on cover when an NHIA number is on file and the
+            // card has not expired (a missing expiry is treated as open-ended).
+            'claim_check_code'=> $patient['claim_check_code'],
+            'nhis_expiry_date'=> $patient['nhis_expiry_date'],
+            'nhis_active'     => (bool)($patient['nhia_number']
+                                    && (empty($patient['nhis_expiry_date'])
+                                        || $patient['nhis_expiry_date'] >= date('Y-m-d'))),
             'is_active'       => (int)$patient['is_active'],
             'phone'           => $patient['phone'],
             'address'         => $patient['address'],

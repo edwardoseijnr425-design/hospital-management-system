@@ -6,7 +6,7 @@
 //
 //   GET  ?action=requests             -> imaging requests (with patient info)
 //   GET  ?action=request&id=N         -> one request joined to its report
-//   GET  ?action=results              -> recorded reports
+//   GET  ?action=results[&patient_id=N] -> recorded reports (optionally one patient)
 //   GET  ?action=stats                -> pending / scheduled / in progress / reported / verified
 //   GET  ?action=catalogue            -> modality catalogue (single source of truth)
 //   POST ?action=request              -> order an imaging study
@@ -153,6 +153,9 @@ function radiologyRequestOne() {
 
 function radiologyResults() {
     $db = Database::getInstance();
+    // Optional patient_id scopes the feed to a single chart (Health Records
+    // clinical summary). Omitting it preserves the original full worklist.
+    $patientId = (int)($_GET['patient_id'] ?? 0);
     $sql = "SELECT rr.*, r.exam_type, r.body_part, r.urgency, r.status AS request_status,
                    CONCAT(TRIM(CONCAT(p.first_name, ' ', IFNULL(p.middle_name, ''))), ' ', p.last_name) AS patient_name,
                    p.hospital_number,
@@ -163,9 +166,14 @@ function radiologyResults() {
             JOIN patient_visits v ON v.id = r.visit_id
             JOIN patient_registrations p ON p.id = v.patient_id
             LEFT JOIN users rad ON rad.id = rr.radiologist_id
-            LEFT JOIN users ver ON ver.id = rr.verified_by
-            ORDER BY rr.completed_at DESC";
-    $rows = $db->fetchAll($sql);
+            LEFT JOIN users ver ON ver.id = rr.verified_by";
+    $params = [];
+    if ($patientId) {
+        $sql .= " WHERE v.patient_id = ?";
+        $params[] = $patientId;
+    }
+    $sql .= " ORDER BY rr.completed_at DESC";
+    $rows = $db->fetchAll($sql, $params);
     jsonResponse(['success' => true, 'results' => $rows]);
 }
 

@@ -77,41 +77,41 @@ foreach ($__radCatalog as $__mod => $__studies) {
 
 /* ---- MODULE HEADER BANNER ---- */
 #rad-page .rad-wrap{max-width:1280px;margin:0 auto;padding:14px 16px 16px}
-#rad-page .rad-modhead{background:#1b659d;color:#fff;padding:14px 16px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(15,45,89,.18)}
+#rad-page .rad-modhead{background:linear-gradient(135deg,#0072BC,#0D47A1);color:#fff;padding:14px 16px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 2px 6px rgba(13,71,161,.22);border:1px solid #0B3E8F}
 #rad-page .rad-modhead .left{display:flex;align-items:center;gap:10px}
-#rad-page .rad-modhead .left svg{width:22px;height:22px;fill:none;stroke:#BBD6EC;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
-#rad-page .rad-modhead h2{margin:0;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.7px}
-#rad-page .rad-modhead .mod-sub{margin:2px 0 0;font-size:11px;font-weight:400;color:#BFD9F0}
+#rad-page .rad-modhead .left svg{width:22px;height:22px;fill:none;stroke:#EAF2FC;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+#rad-page .rad-modhead h2{margin:0;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+#rad-page .rad-modhead .mod-sub{margin:2px 0 0;font-size:10px;font-weight:600;color:#CFE6F5;text-transform:uppercase;letter-spacing:.5px}
 #rad-page .rad-modhead .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-#rad-page .rad-h-btn{border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:11px;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-family:inherit;transition:background .15s}
+#rad-page .rad-h-btn{border:none;border-radius:4px;cursor:pointer;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-family:inherit;transition:background .15s}
 #rad-page .rad-h-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#rad-page .rad-h-btn.light{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.22)}
-#rad-page .rad-h-btn.light:hover{background:rgba(255,255,255,.22)}
-#rad-page .rad-live-badge{background:rgba(16,185,129,.18);color:#A7F3D0;border:1px solid rgba(52,211,153,.35);border-radius:8px;font-size:10px;font-weight:bold;letter-spacing:.6px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase}
+#rad-page .rad-h-btn.light{background:#0072BC;color:#fff;border:1px solid rgba(255,255,255,.22)}
+#rad-page .rad-h-btn.light:hover{background:#0D47A1}
+#rad-page .rad-live-badge{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:4px;font-size:10px;font-weight:bold;letter-spacing:.6px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase}
 #rad-page .rad-live-badge .live-dot{width:8px;height:8px;border-radius:50%;background:#34D399;flex-shrink:0;animation:radPulse 1.6s ease-in-out infinite}
 @keyframes radPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(52,211,153,.7)}50%{opacity:.6;box-shadow:0 0 0 4px rgba(52,211,153,0)}}
 
 /* ---- FEATURE NAVIGATION GRID ---- */
 #rad-page .rad-feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0 16px}
-#rad-page .rad-feature-card{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px;cursor:pointer;text-align:left;font-family:inherit;box-shadow:0 1px 2px rgba(15,45,89,.06);transition:transform .15s,box-shadow .15s,border-color .15s}
-#rad-page .rad-feature-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(15,45,89,.12);border-color:#1b659d}
-#rad-page .rad-feature-card svg{width:40px;height:40px;flex-shrink:0;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;padding:9px;border-radius:10px;border:1px solid transparent}
-#rad-page .rad-feature-card .fc-title{font-size:12px;font-weight:800;color:#1E293B;text-transform:uppercase;letter-spacing:.4px;margin:0 0 2px;display:block}
+#rad-page .rad-feature-card{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #C0C0C0;border-radius:6px;padding:14px;cursor:pointer;text-align:left;font-family:inherit;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .15s,box-shadow .15s,border-color .15s}
+#rad-page .rad-feature-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,45,89,.12);border-color:#0072BC}
+#rad-page .rad-feature-card svg{width:44px;height:44px;flex-shrink:0;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;padding:8px;border-radius:6px;border:1px solid transparent}
+#rad-page .rad-feature-card .fc-title{font-size:12px;font-weight:800;color:#0D47A1;text-transform:uppercase;letter-spacing:.4px;margin:0 0 2px;display:block}
 #rad-page .rad-feature-card .fc-sub{font-size:10.5px;color:#64748b;margin:0;display:block}
 /* Icon tile tint per card. A CSS rule outranks the inline stroke="" presentation
    attribute, so the tiles take these colours without touching the markup. */
-#rad-page .rad-feature-card:nth-child(1) svg{stroke:#E11D48;background:#FFF1F2;border-color:#FECDD3}
-#rad-page .rad-feature-card:nth-child(2) svg{stroke:#D97706;background:#FFFBEB;border-color:#FDE68A}
-#rad-page .rad-feature-card:nth-child(3) svg{stroke:#6D28D9;background:#F5F3FF;border-color:#DDD6FE}
-#rad-page .rad-feature-card:nth-child(4) svg{stroke:#15803D;background:#ECFDF5;border-color:#A7F3D0}
+#rad-page .rad-feature-card:nth-child(1) svg{stroke:#D32F2F;background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.2)}
+#rad-page .rad-feature-card:nth-child(2) svg{stroke:#D97706;background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.2)}
+#rad-page .rad-feature-card:nth-child(3) svg{stroke:#6D28D9;background:rgba(124,58,237,.08);border-color:rgba(124,58,237,.2)}
+#rad-page .rad-feature-card:nth-child(4) svg{stroke:#2E7D32;background:rgba(46,125,50,.08);border-color:rgba(46,125,50,.2)}
 
 /* ---- PANELS ---- */
-#rad-page .rad-panel{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+#rad-page .rad-panel{background:#fff;border:1px solid #C0C0C0;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.06)}
 #rad-page .rad-panel + .rad-panel{margin-top:14px}
-#rad-page .rad-panel.is-first{border-radius:12px}
+#rad-page .rad-panel.is-first{border-radius:4px}
 #rad-page .rad-panel-head{background:#fff;padding:14px 16px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-#rad-page .rad-panel-head.dark{background:#1e293b;padding:0}
-#rad-page .rad-panel-head .head-left{display:inline-flex;align-items:center;gap:8px;background:#1b659d;color:#fff;border-radius:8px;padding:8px 12px;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+#rad-page .rad-panel-head.dark{background:linear-gradient(135deg,#0072BC,#0D47A1);padding:0}
+#rad-page .rad-panel-head .head-left{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#0072BC,#0D47A1);color:#fff;border-radius:3px;padding:8px 12px;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.4px;border:1px solid #0B3E8F}
 #rad-page .rad-panel-head svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* ---- ORDER FORM ---- */

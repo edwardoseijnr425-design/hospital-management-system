@@ -1,7 +1,7 @@
 <?php
 // EHMS — Laboratory Management API
 //   GET  ?action=requests                   -> lab requests (with patient info)
-//   GET  ?action=results                    -> finalised results
+//   GET  ?action=results[&patient_id=N]     -> finalised results (optionally one patient)
 //   GET  ?action=stats                      -> pending / in-progress / completed
 //   POST ?action=request                    -> place a lab request
 //   POST ?action=result                     -> record a result for a request
@@ -67,6 +67,9 @@ function labRequests() {
 
 function labResults() {
     $db = Database::getInstance();
+    // Optional patient_id scopes the feed to a single chart (Health Records
+    // clinical summary). Omitting it preserves the original full worklist.
+    $patientId = (int)($_GET['patient_id'] ?? 0);
     $sql = "SELECT lr.*, r.test_type, r.urgency,
                    CONCAT(TRIM(CONCAT(p.first_name, ' ', IFNULL(p.middle_name, ''))), ' ', p.last_name) AS patient_name,
                    p.hospital_number,
@@ -77,9 +80,14 @@ function labResults() {
             JOIN patient_visits v ON v.id = r.visit_id
             JOIN patient_registrations p ON p.id = v.patient_id
             LEFT JOIN users t ON t.id = lr.technician_id
-            LEFT JOIN users vr ON vr.id = lr.verified_by
-            ORDER BY lr.completed_at DESC";
-    $rows = $db->fetchAll($sql);
+            LEFT JOIN users vr ON vr.id = lr.verified_by";
+    $params = [];
+    if ($patientId) {
+        $sql .= " WHERE v.patient_id = ?";
+        $params[] = $patientId;
+    }
+    $sql .= " ORDER BY lr.completed_at DESC";
+    $rows = $db->fetchAll($sql, $params);
     jsonResponse(['success' => true, 'results' => $rows]);
 }
 
