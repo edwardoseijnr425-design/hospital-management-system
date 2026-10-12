@@ -1,0 +1,91 @@
+/* EHMS — shared import/export toolkit (assets/js/data-toolkit.js).
+   Adds a compact Export/Import toolbar above every data table and the
+   bulk-import modal. Colours follow the dashboard palette. */
+
+/* ---------- Per-table toolbar ---------- */
+.dt-toolbar{
+    display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+    margin:0 0 8px;
+}
+.dt-toolbar-label{
+    font-size:.68rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+    color:#64748b;margin-right:2px;
+}
+.dt-btn{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:5px 10px;border:1px solid #cbd5e1;border-radius:5px;
+    background:#fff;color:#334155;font-size:.72rem;font-weight:700;
+    font-family:inherit;cursor:pointer;line-height:1;
+    transition:background-color .12s ease,border-color .12s ease,color .12s ease;
+}
+.dt-btn:hover{background:#eef6ff;border-color:#0b5fa5;color:#0b5fa5}
+.dt-btn svg{width:13px;height:13px;fill:currentColor}
+.dt-btn.dt-import{background:#0b5fa5;border-color:#0b5fa5;color:#fff}
+.dt-btn.dt-import:hover{background:#0a5290;color:#fff}
+
+/* ---------- Import modal ---------- */
+.dt-overlay{
+    position:fixed;inset:0;z-index:3000;
+    background:rgba(15,23,42,.55);
+    display:flex;align-items:flex-start;justify-content:center;
+    padding:30px 16px;overflow:auto;
+}
+.dt-modal{
+    background:#fff;border-radius:10px;width:100%;max-width:940px;
+    box-shadow:0 24px 60px rgba(2,6,23,.32);overflow:hidden;
+}
+.dt-modal-head{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 18px;background:#0b5fa5;color:#fff;
+}
+.dt-modal-head h3{margin:0;font-size:1rem;font-weight:700;letter-spacing:.3px}
+.dt-modal-head .dt-close{
+    border:0;background:transparent;color:#fff;font-size:1.4rem;line-height:1;
+    cursor:pointer;padding:0 4px;
+}
+.dt-modal-body{padding:16px 18px;max-height:62vh;overflow:auto}
+.dt-modal-foot{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 18px;border-top:1px solid #e2e8f0;background:#f8fafc;
+}
+.dt-foot-note{font-size:.74rem;color:#64748b}
+.dt-field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.dt-field label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#475569}
+.dt-field select,.dt-field input[type="file"]{
+    padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;
+    font-family:inherit;font-size:.85rem;background:#fff;color:#0f172a;
+}
+.dt-field select:focus,.dt-field input:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 0 3px rgba(11,95,165,.15)}
+.dt-row{display:flex;gap:14px;flex-wrap:wrap}
+.dt-row > .dt-field{flex:1 1 210px}
+.dt-check{display:flex;align-items:center;gap:7px;font-size:.82rem;color:#334155;margin-bottom:12px}
+.dt-hint{font-size:.75rem;color:#64748b;margin:-4px 0 12px}
+
+.dt-preview-wrap{border:1px solid #e2e8f0;border-radius:8px;overflow:auto;max-height:230px;margin-bottom:14px}
+.dt-preview{border-collapse:collapse;width:100%;font-size:.75rem}
+.dt-preview th,.dt-preview td{border-bottom:1px solid #eef2f7;padding:6px 9px;text-align:left;white-space:nowrap;color:#334155}
+.dt-preview thead th{background:#f1f5f9;position:sticky;top:0;font-weight:700;color:#0f172a}
+
+.dt-map-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}
+.dt-map-item{display:flex;align-items:center;gap:8px;font-size:.78rem}
+.dt-map-item .dt-map-src{
+    flex:1 1 auto;font-weight:700;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.dt-map-item select{
+    flex:1 1 auto;padding:5px 7px;border:1px solid #cbd5e1;border-radius:5px;
+    font-family:inherit;font-size:.75rem;background:#fff;
+}
+.dt-map-item select.dt-unmapped{border-color:#f0b429;background:#fffbeb}
+
+.dt-result{margin-top:14px;border-radius:8px;padding:12px 14px;font-size:.82rem}
+.dt-result.ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46}
+.dt-result.err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+.dt-result ul{margin:8px 0 0 18px;max-height:180px;overflow:auto}
+.dt-result li{margin:2px 0}
+.dt-spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:dt-spin .6s linear infinite;vertical-align:-2px}
+@keyframes dt-spin{to{transform:rotate(360deg)}}
+
+@media (max-width:640px){
+    .dt-map-grid{grid-template-columns:1fr}
+    .dt-modal-body{max-height:none}
+}

@@ -44,6 +44,7 @@ function hcBrandLogo($px = 45) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EHMS - Eddie Healthcare Solutions</title>
     <link rel="stylesheet" href="assets/css/date-picker.css">
+    <link rel="stylesheet" href="assets/css/data-toolkit.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
     <style>
@@ -1071,6 +1072,7 @@ function hcBrandLogo($px = 45) {
 </div>
 
 <script src="assets/js/date-picker.js"></script>
+<script src="assets/js/data-toolkit.js"></script>
 <script>
 /* Server login time (epoch ms) injected by PHP — consumed by initGMTDashboardTimer() */
 window.SERVER_GMT_LOGIN_TIME = <?php echo $loginTimestamp * 1000; ?>;
@@ -1210,6 +1212,7 @@ window.fmtDateTime = fmtDateTime;
             var initFn=window['init'+page.charAt(0).toUpperCase()+page.slice(1).replace(/-([a-z])/g,function(_,c){return c.toUpperCase();})];
             if(typeof initFn==='function') initFn();
             if(window.initCustomDatePickers) initCustomDatePickers(pageContent);
+            if(window.initDataToolkits) initDataToolkits(pageContent);
         }).catch(function(err){
             if(pageContent) pageContent.innerHTML='<div style="background:#fff;border:1px solid #C0C0C0;border-radius:3px;padding:24px;"><p style="color:#C0392B;font-weight:700">Failed to load '+formatTitle(page)+': '+err.message+'</p></div>';
         });
