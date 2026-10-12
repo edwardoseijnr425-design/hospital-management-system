@@ -42,7 +42,11 @@ echo "✓ Reading schema file...\n";
 
 try {
     $sql = file_get_contents($schemaFile);
-    
+
+    // Strip full-line SQL comments before splitting. Comments may contain a
+    // semicolon, which would otherwise break the naive split-by-semicolon below.
+    $sql = preg_replace('/^[ \t]*--.*$/m', '', $sql);
+
     // The schema contains circular foreign keys (users <-> departments),
     // so FK checks must be disabled while tables are created.
     $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");

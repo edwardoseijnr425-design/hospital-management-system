@@ -2,14 +2,25 @@
 -- Inspired by LHIMS workflow
 -- Compatible with Laragon/MySQL (also imports on XAMPP/MariaDB)
 
+-- The schema contains circular foreign keys (users <-> departments), so foreign
+-- key checks are disabled while tables are created and re-enabled at the end of
+-- the file. This also lets the script be re-run safely over an existing database.
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- Drop existing tables if they exist
+DROP TABLE IF EXISTS dhims_indicator_overrides;
 DROP TABLE IF EXISTS audit_trails;
 DROP TABLE IF EXISTS billing_items;
 DROP TABLE IF EXISTS invoices;
+DROP TABLE IF EXISTS admission_payments;
 DROP TABLE IF EXISTS appointments;
 DROP TABLE IF EXISTS messages;
-DROP TABLE IF EXISTS bed_assignments;
+DROP TABLE IF EXISTS clinical_notes;
+DROP TABLE IF EXISTS bed_transfer_history;
+DROP TABLE IF EXISTS draft_admissions;
+DROP TABLE IF EXISTS admissions;
 DROP TABLE IF EXISTS beds;
+DROP TABLE IF EXISTS rooms;
 DROP TABLE IF EXISTS wards;
 DROP TABLE IF EXISTS lab_results;
 DROP TABLE IF EXISTS lab_requests;
@@ -18,7 +29,8 @@ DROP TABLE IF EXISTS radiology_requests;
 DROP TABLE IF EXISTS prescriptions;
 DROP TABLE IF EXISTS medication_dispensing;
 DROP TABLE IF EXISTS pharmacy_inventory;
-DROP TABLE IF EXISTS requisitions;
+DROP TABLE IF EXISTS requisition_items;
+DROP TABLE IF EXISTS inventory_requisitions;
 DROP TABLE IF EXISTS vital_signs;
 DROP TABLE IF EXISTS consultations;
 DROP TABLE IF EXISTS patient_visits;
@@ -27,6 +39,7 @@ DROP TABLE IF EXISTS sponsors;
 DROP TABLE IF EXISTS service_prices;
 DROP TABLE IF EXISTS procedures;
 DROP TABLE IF EXISTS consultation_services;
+DROP TABLE IF EXISTS medical_teams;
 DROP TABLE IF EXISTS departments;
 DROP TABLE IF EXISTS user_profiles;
 DROP TABLE IF EXISTS users;
@@ -663,8 +676,8 @@ CREATE INDEX idx_lab_requests_visit ON lab_requests(visit_id);
 CREATE INDEX idx_lab_requests_status ON lab_requests(status);
 CREATE INDEX idx_radiology_requests_visit ON radiology_requests(visit_id);
 CREATE INDEX idx_radiology_requests_status ON radiology_requests(status);
-CREATE INDEX idx_bed_assignments_bed ON bed_assignments(bed_id);
-CREATE INDEX idx_bed_assignments_status ON bed_assignments(status);
+CREATE INDEX idx_admissions_bed ON admissions(bed_id);
+CREATE INDEX idx_admissions_status ON admissions(status);
 CREATE INDEX idx_invoices_visit ON invoices(visit_id);
 CREATE INDEX idx_invoices_patient ON invoices(patient_id);
 CREATE INDEX idx_invoices_status ON invoices(status);
@@ -728,3 +741,6 @@ INSERT INTO procedures (name, code, category, department_id, description) VALUES
 -- Insert default sponsor (NHIA)
 INSERT INTO sponsors (name, code, type, nhia_status) VALUES
 ('National Health Insurance Authority', 'NHIA', 'nhia', 'active');
+
+-- Re-enable foreign key checks now that every table and its seed data are loaded.
+SET FOREIGN_KEY_CHECKS = 1;
