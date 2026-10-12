@@ -21,6 +21,14 @@ $action = $_GET['action'] ?? 'requests';
 
 requireLogin();
 
+// radiology_requests.status — 'scheduled' sits between pending and in_progress.
+// Declared BEFORE the dispatcher below: PHP executes top-level statements in
+// order and does not hoist const, so a const placed after the dispatch block
+// would be undefined by the time the save handlers run.
+const RAD_REQUEST_STATUSES = ['pending', 'scheduled', 'in_progress', 'completed', 'cancelled'];
+const RAD_URGENCIES        = ['routine', 'urgent', 'emergency'];
+const RAD_RESULT_STATUSES  = ['draft', 'final', 'amended'];
+
 if ($method === 'GET' && $action === 'stats') {
     radiologyStats();
 } elseif ($method === 'GET' && $action === 'results') {
@@ -40,11 +48,6 @@ if ($method === 'GET' && $action === 'stats') {
 } else {
     jsonResponse(['error' => 'Invalid request'], 400);
 }
-
-// radiology_requests.status — 'scheduled' sits between pending and in_progress.
-const RAD_REQUEST_STATUSES = ['pending', 'scheduled', 'in_progress', 'completed', 'cancelled'];
-const RAD_URGENCIES        = ['routine', 'urgent', 'emergency'];
-const RAD_RESULT_STATUSES  = ['draft', 'final', 'amended'];
 
 /**
  * Modality catalogue: single source of truth for both the order form's
