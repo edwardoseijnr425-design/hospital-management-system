@@ -1517,6 +1517,11 @@ window.fmtDateTime = fmtDateTime;
     }
     // ================= DAYS ALERTS (LEFT COUNT) + SYSTEM MESSAGES FEED (RIGHT) =================
     function escHtml(s){ var d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; }
+    // Expose the shared escaper to SPA page fragments, which run via indirect
+    // eval in global scope and cannot see this IIFE's locals (same reason
+    // fmtDate/fmtDateTime are published above). Without this, pages such as
+    // system-activities.php throw "escHtml is not defined".
+    window.escHtml = escHtml;
     function openMessagesPage(){
         var l=document.querySelector('.side-nav .nav-link[data-page="messages"]');
         loadPage('messages', l || null);
