@@ -198,6 +198,7 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
   #docstation .ds-inv{grid-template-columns:1fr}
   #docstation .ds-rx-line .flds{grid-template-columns:1fr 1fr}
   #docstation .ds-consult-grid{grid-template-columns:1fr}
+  #docstation .ds-consult-grid.ds-diagnosis{grid-template-columns:1fr}
 }
 @media (max-width:640px){
   #docstation .ds-tiles{grid-template-columns:1fr 1fr}
@@ -219,6 +220,10 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
 /* Allergies / drug reactions is highlighted as a warning-style field */
 #docstation .ds-fld.warn textarea{background:#FFFBF5;border-color:#F0AD4E}
 #docstation .ds-fld.warn label{color:#B45309}
+/* Diagnosis row (provisional / confirmed / status) on a shaded panel */
+#docstation .ds-consult-grid.ds-diagnosis{grid-template-columns:repeat(3,1fr);background:#F8FAFC;border:1px solid var(--ds-line);border-radius:12px;padding:14px;margin-bottom:10px}
+#docstation .ds-consult-grid.ds-diagnosis .ds-fld{margin-bottom:0}
+#docstation .ds-consult-grid.ds-diagnosis label{color:var(--ds-blue)}
 /* Structured rendering of a saved labelled clinical entry */
 #docstation .ds-note-sec{display:flex;flex-direction:column;gap:2px;margin:0 0 8px;padding-bottom:6px;border-bottom:1px dashed #D9E7F8}
 #docstation .ds-note-sec:last-child{border-bottom:none;margin-bottom:0}
@@ -315,7 +320,16 @@ var DS_NOTE_FIELDS = [
     { key: 'principal_complaints', label: 'PRINCIPAL COMPLAINTS',             plain: 'Principal Complaints' },
     { key: 'on_direct_question',   label: 'ON DIRECT QUESTION',               plain: 'On Direct Question' },
     { key: 'previous_history',     label: 'PREVIOUS HISTORY / MEDICAL HISTORY', plain: 'Previous History / Medical History' },
-    { key: 'allergies',            label: 'ALLERGIES / DRUG REACTIONS',       plain: 'Allergies / Drug Reactions' }
+    { key: 'allergies',            label: 'ALLERGIES / DRUG REACTIONS',       plain: 'Allergies / Drug Reactions' },
+    { key: 'provisional_diagnosis', label: 'PROVISIONAL DIAGNOSIS',           plain: 'Provisional Diagnosis', control: 'input' },
+    { key: 'confirmed_diagnosis',   label: 'CONFIRMED DIAGNOSIS',             plain: 'Confirmed Diagnosis',   control: 'input' },
+    { key: 'diagnosis_status',      label: 'DIAGNOSIS STATUS',                plain: 'Diagnosis Status',      control: 'select', defaultValue: 'NEW',
+      options: [
+          { value: 'NEW',       label: 'NEW' },
+          { value: 'OLD',       label: 'OLD' },
+          { value: 'RECURRING', label: 'RECURRING' },
+          { value: 'CURED',     label: 'CURED' }
+      ] }
 ];
 
 function initDoctorStation() {
@@ -638,9 +652,17 @@ function renderPatientCard(ctx) {
                             placeholder: 'e.g. Penicillin, Sulfa drugs, NSAIDs, food or environmental allergies...'
                         }) + '</div>'
                     + '</div>'
-                    // SEAM: the pasted snippet is truncated after Allergies. The next
-                    // grid rows (examination findings, diagnosis, treatment plan,
-                    // follow-up...) drop in here as more DS_NOTE_FIELDS + ds-consult-grid rows.
+                    + '<div class="ds-consult-grid ds-diagnosis">'
+                        + '<div>' + dsNoteFieldHtml(pid, 'provisional_diagnosis', {
+                            placeholder: 'e.g. Suspected Malaria / Acute Febrile Illness'
+                        }) + '</div>'
+                        + '<div>' + dsNoteFieldHtml(pid, 'confirmed_diagnosis', {
+                            placeholder: 'e.g. Plasmodium Falciparum Malaria'
+                        }) + '</div>'
+                        + '<div>' + dsNoteFieldHtml(pid, 'diagnosis_status', {
+                            required: true
+                        }) + '</div>'
+                    + '</div>'
                     + '<div style="text-align:right;"><button type="button" class="ds-btn primary" onclick="dsSaveDoctorEntry(' + pid + ')"><i class="fa-solid fa-floppy-disk"></i> Save Doctor Entry</button></div>'
                     + '<div style="border-top:1px dashed var(--ds-line);margin:14px 0 12px;"></div>'
                     + '<div class="ds-sec-head" style="border:none;padding:0;margin:0 0 8px;"><h4><i class="fa-solid fa-clock-rotate-left"></i> Clinical Record For This Stay</h4></div>'
@@ -802,12 +824,28 @@ function dsNoteFieldHtml(pid, key, opts) {
     var f = dsNoteField(key);
     if (!f) return '';
     var id = 'dsNote_' + pid + '_' + f.key;
+    var control = opts.control || f.control || 'textarea';
+    var val = opts.value != null ? opts.value : (f.defaultValue != null ? f.defaultValue : '');
+    var field;
+    if (control === 'select') {
+        var choices = opts.options || f.options || [];
+        field = '<select id="' + id + '">' + choices.map(function (o) {
+            return '<option value="' + escHtml(o.value) + '"'
+                + (String(o.value) === String(val) ? ' selected' : '') + '>'
+                + escHtml(o.label) + '</option>';
+        }).join('') + '</select>';
+    } else if (control === 'input') {
+        field = '<input type="text" id="' + id + '" value="' + escHtml(val) + '"'
+            + ' placeholder="' + escHtml(opts.placeholder || '') + '">';
+    } else {
+        field = '<textarea id="' + id + '" rows="3" placeholder="' + escHtml(opts.placeholder || '') + '">'
+            + (opts.value ? escHtml(opts.value) : '')
+            + '</textarea>';
+    }
     return '<div class="ds-fld' + (opts.warn ? ' warn' : '') + '">'
         + '<label for="' + id + '">' + escHtml(f.plain)
         + (opts.required ? ' <span style="color:#C0392B;">*</span>' : '') + '</label>'
-        + '<textarea id="' + id + '" rows="3" placeholder="' + escHtml(opts.placeholder || '') + '">'
-        + (opts.value ? escHtml(opts.value) : '')
-        + '</textarea></div>';
+        + field + '</div>';
 }
 
 function dsReadNoteFields(pid) {
@@ -821,7 +859,12 @@ function dsReadNoteFields(pid) {
 
 function dsHasNoteContent(pid) {
     var fields = dsReadNoteFields(pid);
-    return DS_NOTE_FIELDS.some(function (f) { return !!fields[f.key]; });
+    return DS_NOTE_FIELDS.some(function (f) {
+        // The status select always holds a value, so it does not count as
+        // clinical content for the "nothing entered" guard.
+        if ((f.control || 'textarea') === 'select') return false;
+        return !!fields[f.key];
+    });
 }
 
 function dsClearNoteFields(pid) {
