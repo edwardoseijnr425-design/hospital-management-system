@@ -111,6 +111,9 @@ require_once __DIR__ . '/../../backend/config/config.php';
 #dhi-override-modal .btn-primary:disabled{opacity:.6;cursor:not-allowed}
 #dhi-override-modal .btn-secondary{background:#F1F5F9;color:#34495E;border:1px solid #C0C0C0}
 #dhi-override-modal .btn-secondary:hover{background:#E2E8F0}
+/* Sectioned reports (Ward Admission History): a titled table per section. */
+#dhims-cc .report-section-title{margin:20px 0 8px;font-size:12px;font-weight:800;color:#0F2D59;text-transform:uppercase;letter-spacing:.4px;padding-bottom:6px;border-bottom:2px solid #0b5fa5}
+#dhims-cc .report-section-block:first-child .report-section-title{margin-top:4px}
 @media (max-width:900px){
   #dhims-cc .kpi-grid{grid-template-columns:repeat(2,1fr)}
   #dhims-cc .cat-grid{grid-template-columns:1fr}
@@ -140,6 +143,9 @@ require_once __DIR__ . '/../../backend/config/config.php';
                 <label for="report-type">Report Type</label>
                 <select id="report-type">
                     <option value="">Select Report Type</option>
+                    <option value="ipd_records">IPD Management Records</option>
+                    <option value="ward_admission_history">Ward Admission History</option>
+                    <option value="discharges">Discharges</option>
                     <option value="patient_registrations">Patient Registrations</option>
                     <option value="visits_summary">Visits Summary</option>
                     <option value="consultations_summary">Consultations Summary</option>
@@ -178,6 +184,7 @@ require_once __DIR__ . '/../../backend/config/config.php';
                 <!-- Report data will be loaded here -->
             </table>
         </div>
+        <div id="report-sections"></div>
     </div>
   </div>
 
@@ -814,6 +821,10 @@ function setupEventListeners() {
     document.getElementById('export-report-btn').addEventListener('click', exportReport);
 }
 
+/* Record-level IPD reports: the date range is optional, so blank dates mean
+   "the whole register" rather than an error. */
+const IPD_REPORT_TYPES = ['ipd_records', 'ward_admission_history', 'discharges'];
+
 async function generateReport() {
     const reportType = document.getElementById('report-type').value;
     const dateFrom = document.getElementById('report-date-from').value;
@@ -824,13 +835,17 @@ async function generateReport() {
         return;
     }
     
-    if (!dateFrom || !dateTo) {
+    if (!IPD_REPORT_TYPES.includes(reportType) && (!dateFrom || !dateTo)) {
         showAlert('Please select date range', 'error');
         return;
     }
     
     try {
-        const response = await fetch(`/hms/backend/api/reports.php?type=${reportType}&date_from=${dateFrom}&date_to=${dateTo}`);
+        let url = `/hms/backend/api/reports.php?type=${encodeURIComponent(reportType)}`;
+        if (dateFrom && dateTo) {
+            url += `&date_from=${encodeURIComponent(dateFrom)}&date_to=${encodeURIComponent(dateTo)}`;
+        }
+        const response = await fetch(url);
         const data = await response.json();
         
         if (data.success) {
@@ -844,11 +859,34 @@ async function generateReport() {
     }
 }
 
+function reportEsc(v) {
+    if (v === null || v === undefined) return '';
+    return String(v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// thead+tbody for one dataset. Shared by the main table and each section, so
+// every report (aggregate or record-level) renders identically.
+function reportHeadBodyHTML(rows) {
+    if (!rows || !rows.length) {
+        return '<tbody><tr><td colspan="100%" style="text-align: center;">No data available for this report</td></tr></tbody>';
+    }
+    const headers = Object.keys(rows[0]);
+    return '<thead><tr>' + headers.map(h => `<th>${formatKey(h)}</th>`).join('') + '</tr></thead>' +
+        '<tbody>' + rows.map(row => '<tr>' + headers.map(h => {
+            const v = row[h];
+            return `<td>${(v === null || v === undefined || v === '') ? '-' : reportEsc(v)}</td>`;
+        }).join('') + '</tr>').join('') + '</tbody>';
+}
+
 function displayReport(data) {
     const reportCard = document.getElementById('report-results-card');
     const reportTitle = document.getElementById('report-title');
     const reportSummary = document.getElementById('report-summary');
     const reportTable = document.getElementById('report-table');
+    const reportTableContainer = document.getElementById('report-table-container');
+    const reportSections = document.getElementById('report-sections');
     
     reportCard.style.display = 'block';
     reportTitle.textContent = data.report_title || 'Report Results';
@@ -868,7 +906,7 @@ function displayReport(data) {
                         </svg>
                     </div>
                     <div class="stat-info">
-                        <h3>${value}</h3>
+                        <h3>${reportEsc(value)}</h3>
                         <p>${formatKey(key)}</p>
                     </div>
                 </div>
@@ -877,28 +915,23 @@ function displayReport(data) {
     } else {
         reportSummary.innerHTML = '';
     }
-    
-    // Display table data
-    if (data.data && data.data.length > 0) {
-        const headers = Object.keys(data.data[0]);
-        
-        reportTable.innerHTML = `
-            <thead>
-                <tr>
-                    ${headers.map(header => `<th>${formatKey(header)}</th>`).join('')}
-                </tr>
-            </thead>
-            <tbody>
-                ${data.data.map(row => `
-                    <tr>
-                        ${headers.map(header => `<td>${row[header] || '-'}</td>`).join('')}
-                    </tr>
-                `).join('')}
-            </tbody>
-        `;
-    } else {
-        reportTable.innerHTML = '<tbody><tr><td colspan="100%" style="text-align: center;">No data available for this report</td></tr></tbody>';
+
+    // Sectioned report (e.g. Ward Admission History): one titled table per section.
+    if (data.sections && data.sections.length) {
+        reportTableContainer.style.display = 'none';
+        reportTable.innerHTML = '';
+        reportSections.innerHTML = data.sections.map(section =>
+            '<div class="report-section-block">' +
+                `<h3 class="report-section-title">${reportEsc(section.title)}</h3>` +
+                '<div class="table-container"><table>' + reportHeadBodyHTML(section.data) + '</table></div>' +
+            '</div>'
+        ).join('');
+        return;
     }
+
+    reportSections.innerHTML = '';
+    reportTableContainer.style.display = '';
+    reportTable.innerHTML = reportHeadBodyHTML(data.data);
 }
 
 function formatKey(key) {
@@ -906,34 +939,47 @@ function formatKey(key) {
 }
 
 function exportReport() {
-    const reportTable = document.getElementById('report-table');
     const reportTitle = document.getElementById('report-title').textContent;
     
-    if (!reportTable || reportTable.rows.length === 0) {
+    // Collect every rendered report table — the main one, plus one per section
+    // for sectioned reports like Ward Admission History.
+    const blocks = [];
+    const mainContainer = document.getElementById('report-table-container');
+    const mainTable = document.getElementById('report-table');
+    if (mainContainer && mainContainer.style.display !== 'none' && mainTable && mainTable.rows.length) {
+        blocks.push({ title: null, table: mainTable });
+    }
+    document.querySelectorAll('#report-sections .report-section-block').forEach(block => {
+        const table = block.querySelector('table');
+        const heading = block.querySelector('.report-section-title');
+        if (table && table.rows.length) blocks.push({ title: heading ? heading.textContent : null, table: table });
+    });
+    
+    if (!blocks.length) {
         showAlert('No report data to export', 'error');
         return;
     }
     
-    let csv = [];
-    
-    // Add headers
-    const headers = [];
-    for (let i = 0; i < reportTable.rows[0].cells.length; i++) {
-        headers.push(reportTable.rows[0].cells[i].textContent);
-    }
-    csv.push(headers.join(','));
-    
-    // Add data rows
-    for (let i = 1; i < reportTable.rows.length; i++) {
-        const row = [];
-        for (let j = 0; j < reportTable.rows[i].cells.length; j++) {
-            row.push(reportTable.rows[i].cells[j].textContent);
+    const csvCell = v => '"' + String(v === null || v === undefined ? '' : v).replace(/"/g, '""') + '"';
+    const lines = [];
+    blocks.forEach((block, index) => {
+        if (block.title) {
+            if (index) lines.push('');
+            lines.push(csvCell(block.title));
         }
-        csv.push(row.join(','));
-    }
+        // Skip the single colspan placeholder row of an empty table.
+        if (block.table.rows.length === 1 && block.table.rows[0].cells.length === 1 &&
+            block.table.rows[0].cells[0].colSpan > 1) {
+            return;
+        }
+        for (let i = 0; i < block.table.rows.length; i++) {
+            const cells = Array.from(block.table.rows[i].cells).map(c => c.textContent);
+            lines.push(cells.map(csvCell).join(','));
+        }
+    });
     
     // Create download link
-    const csvFile = new Blob([csv.join('\n')], { type: 'text/csv' });
+    const csvFile = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
     const downloadLink = document.createElement('a');
     downloadLink.download = `${reportTitle.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
     downloadLink.href = window.URL.createObjectURL(csvFile);
@@ -941,5 +987,6 @@ function exportReport() {
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
+    setTimeout(() => window.URL.revokeObjectURL(downloadLink.href), 1000);
 }
 </script>

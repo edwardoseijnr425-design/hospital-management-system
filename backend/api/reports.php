@@ -10,7 +10,15 @@ $type = $_GET['type'] ?? '';
 $dateFrom = $_GET['date_from'] ?? null;
 $dateTo = $_GET['date_to'] ?? null;
 
-if (!$type || !$dateFrom || !$dateTo) {
+if (!$type) {
+    jsonResponse(['error' => 'Report type is required'], 400);
+}
+
+// The IPD reports are record-level and are expected to run over the whole
+// register, so their date range is optional (blank = all records). The
+// aggregate reports are period summaries and still require one.
+$optionalRangeTypes = ['ipd_records', 'ward_admission_history', 'discharges'];
+if (!in_array($type, $optionalRangeTypes, true) && (!$dateFrom || !$dateTo)) {
     jsonResponse(['error' => 'Report type and date range are required'], 400);
 }
 
@@ -41,6 +49,22 @@ switch ($type) {
         break;
     case 'audit_log':
         $result = generateAuditLogReport($db, $dateFrom, $dateTo);
+        break;
+    // IPD record-level reports. They carry patient/clinical detail, so they are
+    // limited to the roles that already own the admissions register
+    // (admissions.php); super_admin passes hasRole(). 'account' keeps the
+    // aggregate reports but must not see named IPD records.
+    case 'ipd_records':
+        requireRole(['admin', 'doctor', 'nurse']);
+        $result = generateIpdRecordsReport($db, $dateFrom, $dateTo);
+        break;
+    case 'ward_admission_history':
+        requireRole(['admin', 'doctor', 'nurse']);
+        $result = generateWardAdmissionHistoryReport($db, $dateFrom, $dateTo);
+        break;
+    case 'discharges':
+        requireRole(['admin', 'doctor', 'nurse']);
+        $result = generateDischargesReport($db, $dateFrom, $dateTo);
         break;
     default:
         jsonResponse(['error' => 'Invalid report type'], 400);
@@ -283,6 +307,205 @@ function generateAuditLogReport($db, $dateFrom, $dateTo) {
         'report_title' => 'Audit Log Report',
         'summary' => $summary,
         'data' => $data
+    ];
+}
+
+/* ============================================================================
+   IPD RECORD-LEVEL REPORTS
+   The three generators below return every matching record (not an aggregate),
+   which the reports page renders row-by-row. A blank date range means "all
+   history"; when both dates are supplied the relevant date column is filtered.
+   ============================================================================ */
+
+// All IPD management records — one row per admission, whatever its status.
+function generateIpdRecordsReport($db, $dateFrom, $dateTo) {
+    $sql = "SELECT
+                a.admission_code AS admission_no,
+                CONCAT_WS(' ', p.first_name, NULLIF(p.middle_name, ''), p.last_name) AS patient_name,
+                p.hospital_number,
+                w.ward_name,
+                w.ward_type,
+                b.bed_number,
+                a.admission_date,
+                a.admission_type,
+                a.admitting_doctor,
+                d.name AS department,
+                a.diagnosis,
+                a.status,
+                a.discharged_at,
+                a.discharge_outcome,
+                a.final_diagnosis,
+                a.follow_up_date,
+                u.full_name AS admitted_by_name
+            FROM admissions a
+            JOIN patient_registrations p ON p.id = a.patient_id
+            JOIN wards w ON w.id = a.ward_id
+            JOIN beds b ON b.id = a.bed_id
+            LEFT JOIN departments d ON d.id = a.department_id
+            LEFT JOIN users u ON u.id = a.admitted_by
+            WHERE 1=1";
+    $params = [];
+    if ($dateFrom && $dateTo) {
+        $sql .= " AND DATE(a.admission_date) BETWEEN ? AND ?";
+        $params[] = $dateFrom;
+        $params[] = $dateTo;
+    }
+    $sql .= " ORDER BY a.admission_date DESC, a.id DESC";
+
+    $data = $db->fetchAll($sql, $params);
+
+    $admitted = 0;
+    $discharged = 0;
+    foreach ($data as $row) {
+        if (strcasecmp((string)$row['status'], 'Discharged') === 0) {
+            $discharged++;
+        } else {
+            $admitted++;
+        }
+    }
+
+    return [
+        'success' => true,
+        'report_title' => 'IPD Management Records',
+        'summary' => [
+            'total_ipd_records' => count($data),
+            'currently_admitted' => $admitted,
+            'discharged' => $discharged,
+        ],
+        'data' => $data,
+    ];
+}
+
+// Ward admission history — two sections: admissions recorded against each
+// ward, and the ward/bed moves (bed_transfer_history) made during a stay.
+function generateWardAdmissionHistoryReport($db, $dateFrom, $dateTo) {
+    $hasRange = $dateFrom && $dateTo;
+
+    $sql = "SELECT
+                w.ward_name,
+                w.ward_type,
+                a.admission_code AS admission_no,
+                CONCAT_WS(' ', p.first_name, NULLIF(p.middle_name, ''), p.last_name) AS patient_name,
+                p.hospital_number,
+                b.bed_number,
+                a.admission_date,
+                a.admission_type,
+                a.status
+            FROM admissions a
+            JOIN patient_registrations p ON p.id = a.patient_id
+            JOIN wards w ON w.id = a.ward_id
+            JOIN beds b ON b.id = a.bed_id
+            WHERE 1=1";
+    $params = [];
+    if ($hasRange) {
+        $sql .= " AND DATE(a.admission_date) BETWEEN ? AND ?";
+        $params[] = $dateFrom;
+        $params[] = $dateTo;
+    }
+    $sql .= " ORDER BY w.ward_name ASC, a.admission_date DESC";
+    $admissions = $db->fetchAll($sql, $params);
+
+    $sql2 = "SELECT
+                t.created_at AS moved_at,
+                a.admission_code AS admission_no,
+                CONCAT_WS(' ', p.first_name, NULLIF(p.middle_name, ''), p.last_name) AS patient_name,
+                p.hospital_number,
+                fw.ward_name AS from_ward,
+                fb.bed_number AS from_bed,
+                tw.ward_name AS to_ward,
+                tb.bed_number AS to_bed,
+                t.reason,
+                u.full_name AS moved_by_name
+            FROM bed_transfer_history t
+            JOIN admissions a ON a.id = t.admission_id
+            JOIN patient_registrations p ON p.id = t.patient_id
+            JOIN wards fw ON fw.id = t.from_ward_id
+            JOIN beds fb ON fb.id = t.from_bed_id
+            JOIN wards tw ON tw.id = t.to_ward_id
+            JOIN beds tb ON tb.id = t.to_bed_id
+            LEFT JOIN users u ON u.id = t.moved_by
+            WHERE 1=1";
+    $params2 = [];
+    if ($hasRange) {
+        $sql2 .= " AND DATE(t.created_at) BETWEEN ? AND ?";
+        $params2[] = $dateFrom;
+        $params2[] = $dateTo;
+    }
+    $sql2 .= " ORDER BY t.created_at DESC";
+    $transfers = $db->fetchAll($sql2, $params2);
+
+    $wards = [];
+    foreach ($admissions as $row) {
+        $wards[$row['ward_name']] = true;
+    }
+
+    return [
+        'success' => true,
+        'report_title' => 'Ward Admission History',
+        'summary' => [
+            'total_admissions' => count($admissions),
+            'total_ward_moves' => count($transfers),
+            'wards_involved' => count($wards),
+        ],
+        'sections' => [
+            ['title' => 'Admissions by Ward', 'data' => $admissions],
+            ['title' => 'Ward / Bed Transfer History', 'data' => $transfers],
+        ],
+    ];
+}
+
+// Discharges — every discharged admission with stay length and outcome.
+function generateDischargesReport($db, $dateFrom, $dateTo) {
+    $sql = "SELECT
+                a.admission_code AS admission_no,
+                CONCAT_WS(' ', p.first_name, NULLIF(p.middle_name, ''), p.last_name) AS patient_name,
+                p.hospital_number,
+                w.ward_name,
+                b.bed_number,
+                a.admission_date,
+                a.discharged_at,
+                TIMESTAMPDIFF(DAY, a.admission_date, a.discharged_at) AS length_of_stay_days,
+                a.discharge_outcome,
+                a.final_diagnosis,
+                a.follow_up_date,
+                a.discharge_notes
+            FROM admissions a
+            JOIN patient_registrations p ON p.id = a.patient_id
+            JOIN wards w ON w.id = a.ward_id
+            JOIN beds b ON b.id = a.bed_id
+            WHERE a.status = 'Discharged'";
+    $params = [];
+    if ($dateFrom && $dateTo) {
+        $sql .= " AND DATE(a.discharged_at) BETWEEN ? AND ?";
+        $params[] = $dateFrom;
+        $params[] = $dateTo;
+    }
+    $sql .= " ORDER BY a.discharged_at DESC, a.id DESC";
+
+    $data = $db->fetchAll($sql, $params);
+
+    $losSum = 0;
+    $losCount = 0;
+    $followUps = 0;
+    foreach ($data as $row) {
+        if ($row['length_of_stay_days'] !== null) {
+            $losSum += (int)$row['length_of_stay_days'];
+            $losCount++;
+        }
+        if (!empty($row['follow_up_date'])) {
+            $followUps++;
+        }
+    }
+
+    return [
+        'success' => true,
+        'report_title' => 'Discharges',
+        'summary' => [
+            'total_discharges' => count($data),
+            'average_length_of_stay_days' => $losCount ? round($losSum / $losCount, 1) : 0,
+            'with_follow_up' => $followUps,
+        ],
+        'data' => $data,
     ];
 }
 ?>
