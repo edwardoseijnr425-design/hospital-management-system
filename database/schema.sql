@@ -180,6 +180,11 @@ CREATE TABLE patient_registrations (
     allergies TEXT,
     sponsor_id INT,
     nhia_number VARCHAR(50),
+    -- NHIA tariff compliance: the Claim Check Code (CCC) returned by the NHIA
+    -- eligibility check at registration, plus the card expiry it was validated
+    -- against. Both nullable and only populated for NHIS patients.
+    claim_check_code VARCHAR(20),
+    nhis_expiry_date DATE,
     registration_date DATE NOT NULL,
     registered_by INT NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,

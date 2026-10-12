@@ -42,9 +42,35 @@ require_once __DIR__ . '/../../backend/config/config.php';
 #register-page .btn-primary:hover{background-color:#004080}
 #register-page .btn-secondary{background-color:#7f8c8d;color:#fff}
 #register-page .btn-secondary:hover{background-color:#636e72}
+/* --- NHIS eligibility + Claim Check Code verification (plain CSS shims for
+      the NHIA tariff-compliance block; this project ships no Tailwind/Alpine) */
+#register-page .nhis-verify-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:stretch}
+#register-page .nhis-verify-btn{white-space:nowrap;justify-content:center;min-width:190px}
+#register-page .nhis-verify-btn[disabled]{opacity:.6;cursor:not-allowed}
+#register-page .nhis-status{margin-top:10px;border-radius:4px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:11px;display:none}
+#register-page .nhis-status-main{display:flex;align-items:center;gap:10px;min-width:0}
+#register-page .nhis-status-title{font-weight:700;margin:0}
+#register-page .nhis-status-sub{margin:2px 0 0;font-size:10px;line-height:1.4}
+#register-page .nhis-badge{font-size:9px;font-weight:700;color:#fff;padding:2px 7px;border-radius:2px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+#register-page .nhis-badge-active{background-color:#1e9e5a}
+#register-page .nhis-badge-inactive{background-color:#c0392b}
+#register-page .nhis-status-active{background-color:#eaf7f0;border:1px solid #a8dcc0}
+#register-page .nhis-status-active .nhis-status-title{color:#14663a}
+#register-page .nhis-status-active .nhis-status-sub{color:#2f7a51}
+#register-page .nhis-status-inactive{background-color:#fdecea;border:1px solid #f0b4ae}
+#register-page .nhis-status-inactive .nhis-status-title{color:#8e2b21}
+#register-page .nhis-status-inactive .nhis-status-sub{color:#a4483c}
+#register-page .nhis-ccc{display:flex;align-items:center;gap:8px;background-color:#fff;border:1px solid #a8dcc0;border-radius:3px;padding:4px 8px}
+#register-page .nhis-ccc-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7c86;white-space:nowrap}
+#register-page .nhis-ccc-value{border:none;background:transparent;font-weight:800;color:#0b5fa5;font-size:12px;letter-spacing:1px;width:110px;outline:none;cursor:default}
+#register-page .nhis-cash-tag{background-color:#f7dcd8;border:1px solid #e2a79f;color:#8e2b21;font-size:9px;font-weight:700;padding:3px 8px;border-radius:2px;text-transform:uppercase;white-space:nowrap}
+#register-page .nhis-src-note{color:#8a6d3b;font-style:italic}
 @media (max-width:768px){
   #register-page .grid-2col{grid-template-columns:1fr}
   #register-page .grid-full{grid-column:span 1}
+  #register-page .nhis-verify-row{grid-template-columns:1fr}
+  #register-page .nhis-verify-btn{min-width:0}
+  #register-page .nhis-status{align-items:flex-start}
 }
 </style><div id="register-page">
 
@@ -182,9 +208,50 @@ require_once __DIR__ . '/../../backend/config/config.php';
             <input type="tel" id="emergencyPhone" class="form-control" placeholder="Next of kin phone number">
           </div>
 
+          <!-- NHIS / NHIA eligibility verification.
+               Plain JS + scoped CSS: this repo ships no Alpine.js or Tailwind.
+               Data comes from backend/api/verify_nhis.php. Clicking Verify fills
+               the hidden claim_check_code / nhis_expiry_date inputs, which are
+               submitted with the registration form below. -->
           <div class="form-group grid-full">
             <label for="nhisNumber">NHIS / Insurance Card Number</label>
-            <input type="text" id="nhisNumber" class="form-control" placeholder="Enter NHIS card number if applicable">
+            <div class="nhis-verify-row">
+              <input type="text" id="nhisNumber" class="form-control" placeholder="Enter NHIS card number, e.g. 202683952" autocomplete="off">
+              <button type="button" id="btnVerifyNhis" class="btn-action btn-primary nhis-verify-btn" onclick="verifyNhis()">
+                <svg viewBox="0 0 24 24" fill="white"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 10H8v-1c0-1.33 2.67-2 4-2s4 .67 4 2v1z"/></svg>
+                <span id="nhisVerifyLabel">Verify NHIS &amp; Get CCC</span>
+              </button>
+            </div>
+
+            <input type="hidden" id="claimCheckCode" name="claim_check_code">
+            <input type="hidden" id="nhisExpiryDate" name="nhis_expiry_date">
+
+            <!-- Active eligibility + auto-generated Claim Check Code -->
+            <div class="nhis-status nhis-status-active" id="nhisActiveBox">
+              <div class="nhis-status-main">
+                <span class="nhis-badge nhis-badge-active">ACTIVE</span>
+                <div>
+                  <p class="nhis-status-title">NHIS Eligibility Confirmed</p>
+                  <p class="nhis-status-sub">Valid until: <b id="nhisExpiryDisplay">—</b> <span id="nhisSourceNote" class="nhis-src-note"></span></p>
+                </div>
+              </div>
+              <div class="nhis-ccc">
+                <span class="nhis-ccc-label">Claim Check Code</span>
+                <input type="text" id="claimCheckCodeDisplay" class="nhis-ccc-value" readonly>
+              </div>
+            </div>
+
+            <!-- Inactive / expired eligibility -->
+            <div class="nhis-status nhis-status-inactive" id="nhisInactiveBox">
+              <div class="nhis-status-main">
+                <span class="nhis-badge nhis-badge-inactive">INACTIVE</span>
+                <div>
+                  <p class="nhis-status-title">NHIS card inactive / expired</p>
+                  <p class="nhis-status-sub" id="nhisInactiveMsg"></p>
+                </div>
+              </div>
+              <span class="nhis-cash-tag">Switch to cash tariff</span>
+            </div>
           </div>
 
         </div>
@@ -216,6 +283,9 @@ function initRegisterPatient() {
     generatePatientId();
     var form = document.getElementById('patientRegistrationForm');
     if (form) form.addEventListener('submit', submitPatientRegistration);
+    // A changed card number invalidates a previously issued Claim Check Code.
+    var nhisInput = document.getElementById('nhisNumber');
+    if (nhisInput) nhisInput.addEventListener('input', clearNhisResult);
 }
 
 /* Auto Patient ID Generator - HMS + current year + 5 random digits (matches system format) */
@@ -242,6 +312,81 @@ function resetForm() {
     if (confirm('Are you sure you want to clear all entered fields?')) {
         document.getElementById('patientRegistrationForm').reset();
         generatePatientId();
+        clearNhisResult();
+    }
+}
+
+/* ================= NHIS ELIGIBILITY & CLAIM CHECK CODE ================= */
+
+/* Clears the verification result UI and the hidden CCC fields. */
+function clearNhisResult() {
+    ['nhisActiveBox', 'nhisInactiveBox'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    ['claimCheckCode', 'nhisExpiryDate', 'claimCheckCodeDisplay', 'nhisInactiveMsg', 'nhisSourceNote'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+        if (el) el.textContent = '';
+    });
+    var exp = document.getElementById('nhisExpiryDisplay');
+    if (exp) exp.textContent = '—';
+}
+
+/* POST the card number to verify_nhis.php and render the result. */
+function verifyNhis() {
+    var number = (document.getElementById('nhisNumber') || {}).value;
+    if (!number || !number.trim()) {
+        if (window.showAlert) showAlert('Please enter the NHIS card number first.', 'error');
+        else alert('Please enter the NHIS card number first.');
+        return;
+    }
+
+    var btn = document.getElementById('btnVerifyNhis');
+    var label = document.getElementById('nhisVerifyLabel');
+    var originalHtml = label ? label.innerHTML : '';
+
+    if (btn) btn.disabled = true;
+    if (label) label.textContent = 'Verifying...';
+
+    var body = new FormData();
+    body.append('nhis_number', number.trim());
+
+    fetch('/hms/backend/api/verify_nhis.php', { method: 'POST', body: body })
+        .then(function (res) { return res.json(); })
+        .then(function (data) { renderNhisResult(data); })
+        .catch(function (err) {
+            console.error('NHIS verification error:', err);
+            if (window.showAlert) showAlert('Verification failed. Please check the server connection.', 'error');
+            else alert('Verification failed. Please check the server connection.');
+        })
+        .finally(function () {
+            if (btn) btn.disabled = false;
+            if (label) label.innerHTML = originalHtml;
+        });
+}
+
+/* Renders the ACTIVE (green, shows CCC) or INACTIVE (red, cash tariff) panel. */
+function renderNhisResult(data) {
+    clearNhisResult();
+
+    var ok = data && data.status === 'success' && data.claim_check_code;
+
+    if (ok) {
+        // Keep the CCC + expiry on the form so they are submitted with the registration.
+        document.getElementById('claimCheckCode').value = data.claim_check_code;
+        document.getElementById('claimCheckCodeDisplay').value = data.claim_check_code;
+        document.getElementById('nhisExpiryDisplay').textContent = data.expiry_date || 'Not on file';
+        if (data.expiry_date) document.getElementById('nhisExpiryDate').value = data.expiry_date;
+        if (data.mock) {
+            document.getElementById('nhisSourceNote').textContent =
+                '(simulated eligibility — no matching patient record; connected to real NHIA data before billing)';
+        }
+        document.getElementById('nhisActiveBox').style.display = 'flex';
+    } else {
+        document.getElementById('nhisInactiveMsg').textContent =
+            (data && data.message) || 'NHIS verification did not return an active eligibility status.';
+        document.getElementById('nhisInactiveBox').style.display = 'flex';
     }
 }/* ================= SUBMIT ================= */
 function rgVal(id) { var el = document.getElementById(id); return el ? el.value : ''; }
@@ -274,7 +419,9 @@ async function submitPatientRegistration(e) {
         address: rgVal('address').trim(),
         emergency_contact_name: rgVal('emergencyName').trim() || null,
         emergency_contact_phone: rgVal('emergencyPhone').trim() || null,
-        nhia_number: rgVal('nhisNumber').trim() || null
+        nhia_number: rgVal('nhisNumber').trim() || null,
+        claim_check_code: rgVal('claimCheckCode').trim() || null,
+        nhis_expiry_date: rgVal('nhisExpiryDate').trim() || null
     };
 
     try {

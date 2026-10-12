@@ -31,6 +31,8 @@ class Patient {
             'allergies'   => trim((string)($data['allergies'] ?? '')) === '' ? null : trim((string)$data['allergies']),
             'sponsor_id' => $data['sponsor_id'] ?? null,
             'nhia_number' => $data['nhia_number'] ?? null,
+            'claim_check_code' => trim((string)($data['claim_check_code'] ?? '')) !== '' ? trim((string)$data['claim_check_code']) : null,
+            'nhis_expiry_date' => trim((string)($data['nhis_expiry_date'] ?? '')) !== '' ? trim((string)$data['nhis_expiry_date']) : null,
             'registration_date' => date('Y-m-d'),
             'registered_by' => getCurrentUserId()
         ];
@@ -52,14 +54,16 @@ class Patient {
         
         $allowedFields = ['first_name', 'middle_name', 'last_name', 'date_of_birth', 'gender', 
                          'phone', 'email', 'address', 'emergency_contact_name', 
-                         'emergency_contact_phone', 'blood_group', 'allergies', 'sponsor_id', 'nhia_number'];
+                         'emergency_contact_phone', 'blood_group', 'allergies', 'sponsor_id',
+                         'nhia_number', 'claim_check_code', 'nhis_expiry_date'];
         
         foreach ($allowedFields as $field) {
             if (isset($data[$field])) {
-                // Allergies is a free-text clinical list. Normalise the blank case
-                // the same way register() does, otherwise clearing the field stores
-                // whitespace and the alert badge renders an empty-looking chip.
-                $updateData[$field] = ($field === 'allergies')
+                // Free-text / generated fields (clinical allergy list, NHIA CCC)
+                // are normalised the same way register() does, otherwise clearing
+                // them stores whitespace and downstream readers render it as data.
+                $normalise = in_array($field, ['allergies', 'claim_check_code', 'nhis_expiry_date'], true);
+                $updateData[$field] = $normalise
                     ? (trim((string)$data[$field]) === '' ? null : trim((string)$data[$field]))
                     : $data[$field];
             }

@@ -7,6 +7,9 @@
 # Database
 *.sql
 !database/schema.sql
+# Schema migrations are project source (applied to existing installs), so keep
+# them tracked. The blanket *.sql rule above is aimed at ad-hoc dumps/exports.
+!database/migrations/*.sql
 
 # Uploads
 frontend/uploads/*
