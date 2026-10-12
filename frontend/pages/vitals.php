@@ -572,6 +572,8 @@ var CURRENT_VITALS_STAFF = <?php echo json_encode($__clinicStaff); ?>;
 var wardsData = [];
 var patientContext = {};   // patient_id -> { bed, summary, latestVisit, visits, vitals }
 var medsCache = {};        // patient_id -> prescription list
+var doctorNotesCache = {};       // patient_id -> clinical notes list (Doctor Station feed)
+var investigationsCache = {};    // patient_id -> combined lab + radiology requests
 var draftTimer = null;
 const DRAFT_KEY = 'hms:vitals-draft';
 
@@ -723,6 +725,8 @@ async function renderWardCards(beds, selectedWardId, searchQ) {
     const container = document.getElementById('wardCardsContainer');
     patientContext = {};
     medsCache = {};
+    doctorNotesCache = {};
+    investigationsCache = {};
     let totalPatients = 0;
 
     if (!beds.length) {
@@ -1046,6 +1050,14 @@ function renderPatientCard(ctx) {
                         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                         <span>Treatment Sheet</span>
                     </button>
+                    <button type="button" class="ct-tab" id="ctTab_${pid}_doctor_notes" data-ct-tab="doctor_notes" role="tab" aria-selected="false" aria-controls="ctPanel_${pid}_doctor_notes" onclick="switchClinicalTab(${pid}, 'doctor_notes')">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span>Doctor Notes &amp; Entries</span>
+                    </button>
+                    <button type="button" class="ct-tab" id="ctTab_${pid}_investigations" data-ct-tab="investigations" role="tab" aria-selected="false" aria-controls="ctPanel_${pid}_investigations" onclick="switchClinicalTab(${pid}, 'investigations')">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v2h3l1 3v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8l1-3h3z"></path><path d="M10 12h4"></path><path d="M10 16h4"></path></svg>
+                        <span>Investigations Requested</span>
+                    </button>
                 </div>
 
                 <!-- PANEL: VITAL SIGNS READINGS -->
@@ -1162,6 +1174,53 @@ function renderPatientCard(ctx) {
             </div>
 
                 </div><!-- /ct-panel treatment -->
+
+                <!-- PANEL: DOCTOR NOTES & ALL ENTRIES (read-only feed from the Doctor Station) -->
+                <div class="ct-panel" id="ctPanel_${pid}_doctor_notes" data-ct-panel="doctor_notes" role="tabpanel" aria-labelledby="ctTab_${pid}_doctor_notes">
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
+                    <h6 class="font-weight-bold text-uppercase mb-0 d-flex align-items-center gap-2" style="color: #0F2D59; font-size: 13px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        Doctor Notes &amp; All Clinical Entries
+                    </h6>
+                    <span class="text-muted" style="font-size: 11px;">Read-only clinical feed from the Doctor Station</span>
+                </div>
+                <div id="doctorNotesList_${pid}">
+                    <p style="color:#94A3B8;font-size:12px;margin:0;">Loading clinical notes...</p>
+                </div>
+            </div>
+
+                </div><!-- /ct-panel doctor_notes -->
+
+                <!-- PANEL: INVESTIGATIONS REQUESTED (lab + radiology) -->
+                <div class="ct-panel" id="ctPanel_${pid}_investigations" data-ct-panel="investigations" role="tabpanel" aria-labelledby="ctTab_${pid}_investigations">
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
+                    <h6 class="font-weight-bold text-uppercase mb-0 d-flex align-items-center gap-2" style="color: #0F2D59; font-size: 13px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2"><path d="M10 2v6l-6 8v6h16v-6l-6-8V2"></path></svg>
+                        Laboratory &amp; Radiology Investigations Requested
+                    </h6>
+                    <span class="text-muted" style="font-size: 11px;">Synced from the Doctor Station</span>
+                </div>
+                <div class="table-responsive rounded border">
+                    <table class="table table-bordered mb-0 align-middle" style="font-size: 12px;">
+                        <thead class="text-uppercase" style="background-color:#E2E8F0;font-size:11px;">
+                            <tr>
+                                <th>DATE REQUESTED</th>
+                                <th>INVESTIGATION / TEST</th>
+                                <th>CATEGORY</th>
+                                <th>ORDERED BY</th>
+                                <th>RESULT STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="investigationsList_${pid}">
+                            <tr><td colspan="5" style="text-align:center;padding:12px;color:#94A3B8;">Loading investigations...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+                </div><!-- /ct-panel investigations -->
             </div><!-- /ct-workspace -->
 
             <!-- SECTION 4: BILLING SUMMARY (collapsible) -->
@@ -1248,6 +1307,8 @@ function fillClinicalData(ctx) {
     const pid = ctx.bed.current_patient_id;
     if (ctx.latestVisit) loadPrescriptions(ctx.latestVisit.id, pid);
     if (ctx.summary && ctx.summary.hospital_number) loadBilling(ctx.summary.hospital_number, pid);
+    loadDoctorNotes(pid);
+    if (ctx.summary && ctx.summary.hospital_number) loadInvestigations(pid, ctx.summary.hospital_number);
     renderNurseNotes(pid);
     renderTreatments(pid);
     renderLastSaved(pid);
@@ -1406,6 +1467,99 @@ function renderTreatments(pid) {
         </tr>`).join('');
 }
 
+/* ============================ DOCTOR NOTES & ENTRIES (read-only feed) ============================ */
+const NOTE_TYPE_LABELS = {
+    'OPD_NOTE': 'OPD Consultation Note',
+    'IPD_NOTE': 'IPD Round Note',
+    'DISCHARGE_SUMMARY': 'Discharge Summary'
+};
+
+async function loadDoctorNotes(pid) {
+    const holder = document.getElementById('doctorNotesList_' + pid);
+    if (!holder) return;
+    try {
+        const r = await fetch('/hms/backend/api/clinical_notes.php?action=list&patient_id=' + pid);
+        const d = await r.json();
+        doctorNotesCache[pid] = (d.success && d.notes) ? d.notes : [];
+    } catch (e) {
+        console.error('Doctor notes load error:', e);
+        doctorNotesCache[pid] = [];
+    }
+    renderDoctorNotes(pid);
+}
+
+function renderDoctorNotes(pid) {
+    const holder = document.getElementById('doctorNotesList_' + pid);
+    if (!holder) return;
+    const list = doctorNotesCache[pid] || [];
+    if (!list.length) {
+        holder.innerHTML = '<p style="color:#94A3B8;font-size:12px;margin:0;">No doctor notes recorded for this patient yet.</p>';
+        return;
+    }
+    holder.innerHTML = list.map(n => `
+        <div class="p-2 mb-2 rounded" style="background:#EFF6FF;border:1px solid #BFDBFE;font-size:12px;">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
+                <span class="font-weight-bold" style="color:#1D4ED8;">${escHtml(n.doctor_name || 'Doctor')}
+                    ${n.note_type ? '<span class="text-muted" style="font-weight:400;"> &middot; ' + escHtml(NOTE_TYPE_LABELS[n.note_type] || n.note_type) + '</span>' : ''}</span>
+                <span class="text-muted" style="font-size:11px;">${escHtml(fmtDateTime(n.created_at))}</span>
+            </div>
+            <div style="white-space:pre-wrap;color:#334155;">${escHtml(n.clinical_note)}</div>
+        </div>`).join('');
+}
+
+/* ============================ INVESTIGATIONS REQUESTED (lab + radiology) ============================ */
+async function loadInvestigations(pid, hospitalNumber) {
+    const tbody = document.getElementById('investigationsList_' + pid);
+    if (!tbody || !hospitalNumber) return;
+    const labP = fetch('/hms/backend/api/lab.php?action=requests').then(r => r.json()).catch(() => ({ success: false }));
+    const radP = fetch('/hms/backend/api/radiology.php?action=requests').then(r => r.json()).catch(() => ({ success: false }));
+    const [lab, rad] = await Promise.all([labP, radP]);
+    const rows = [];
+    if (lab.success && lab.requests) {
+        lab.requests.filter(x => x.hospital_number === hospitalNumber).forEach(x => {
+            rows.push({ kind: 'Laboratory', test: x.test_type, when: x.requested_at, by: x.doctor_name || '--', status: x.status, result_status: x.result_status });
+        });
+    }
+    if (rad.success && rad.requests) {
+        rad.requests.filter(x => x.hospital_number === hospitalNumber).forEach(x => {
+            const test = x.exam_type + (x.body_part ? ' / ' + x.body_part : '');
+            rows.push({ kind: 'Radiology', test: test, when: x.requested_at, by: x.doctor_name || '--', status: x.status, result_status: x.result_status });
+        });
+    }
+    investigationsCache[pid] = rows;
+    renderInvestigations(pid);
+}
+
+function investigationStatusBadge(x) {
+    if (String(x.status || '').toLowerCase() === 'cancelled') {
+        return '<span class="badge bg-danger">Cancelled</span>';
+    }
+    const rs = String(x.result_status || '').toLowerCase();
+    if (rs === 'final' || rs === 'amended') return '<span class="badge bg-success">Result Available</span>';
+    if (rs === 'draft') return '<span class="badge bg-info text-dark">Result Drafted</span>';
+    const label = String(x.status || 'pending').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return '<span class="badge bg-warning text-dark">' + escHtml(label) + '</span>';
+}
+
+function renderInvestigations(pid) {
+    const tbody = document.getElementById('investigationsList_' + pid);
+    if (!tbody) return;
+    const list = investigationsCache[pid] || [];
+    if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:12px;color:#94A3B8;">No investigations requested for this patient yet.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = list.slice()
+        .sort((a, b) => String(b.when || '').localeCompare(String(a.when || '')))
+        .map(x => `
+        <tr>
+            <td class="fw-bold text-secondary">${escHtml(fmtDateTime(x.when))}</td>
+            <td class="fw-bold">${escHtml(x.test)}</td>
+            <td>${escHtml(x.kind)}</td>
+            <td>${escHtml(x.by)}</td>
+            <td>${investigationStatusBadge(x)}</td>
+        </tr>`).join('');
+}
 /* Billing category rollup - groups the invoice line items that are already
    loaded above into the categories a clinician reconciles against.
    item_type is the schema ENUM: consultation, procedure, drug, lab_test,

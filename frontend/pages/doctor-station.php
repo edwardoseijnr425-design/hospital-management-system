@@ -146,6 +146,18 @@
     .ds-inv .kind{display:inline-block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:1px 5px;border-radius:2px;background:#E2E8F0;color:#475569;margin-left:auto}
     .ds-inv label:has(input:checked) .kind{background:#0b5fa5;color:#fff}
 
+    /* ---------- Consultation form tab switcher ----------
+       Plain JS (switchDsTab). This project ships no Alpine.js, so the
+       x-data/x-show/@click bindings from the source design would never fire. */
+    .ds-workspace{margin-bottom:14px}
+    .ds-tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--ds-line);padding-bottom:10px;margin-bottom:14px}
+    .ds-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid transparent;border-radius:8px;background:#EEF2F7;color:#334155;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:background-color .15s ease,color .15s ease,box-shadow .15s ease}
+    .ds-tab:hover{background:#E2E8F0}
+    .ds-tab.active{background:#1B659D;color:#fff;box-shadow:0 2px 6px rgba(15,45,89,.25)}
+    .ds-panel{display:none}
+    .ds-panel.active{display:block}
+    .ds-panel .ds-box:last-child{margin-bottom:0}
+
     /* Drug picker + prescription lines */
     .ds-rx-add{display:flex;gap:7px}
     .ds-rx-add input{flex:1}
@@ -814,12 +826,8 @@ function buildConsultationForm(ctx) {
         + '</div>'
         + '<div class="col">'
 
-            + '<div class="two">'
-                + '<div class="ds-box"><h4><i class="fa-solid fa-comment-medical"></i> Presenting Complaints</h4>'
-                    + '<textarea id="ds-complaints" placeholder="Patient complaints, duration, severity..."></textarea></div>'
-                + '<div class="ds-box"><h4><i class="fa-solid fa-notes-medical"></i> Doctor Notes Update</h4>'
-                    + '<textarea id="ds-doctor-notes" placeholder="Clinical examination findings, systemic review..."></textarea></div>'
-            + '</div>'
+            + '<div class="ds-box"><h4><i class="fa-solid fa-comment-medical"></i> Presenting Complaints</h4>'
+                + '<textarea id="ds-complaints" placeholder="Patient complaints, duration, severity..."></textarea></div>'
 
             + '<div class="ds-box"><h4><i class="fa-solid fa-stethoscope"></i> Condition of the Patient / Provisional Diagnosis</h4>'
                 + '<div class="three">'
@@ -830,21 +838,42 @@ function buildConsultationForm(ctx) {
                 + '</div>'
             + '</div>'
 
-            + '<div class="ds-box"><h4><i class="fa-solid fa-microscope"></i> Investigations / Radiology / Sonography Requests <span class="hint">raise real orders</span></h4>'
-                + '<div class="ds-inv">' + invHtml + '</div></div>'
-
-            + '<div class="ds-box"><h4><i class="fa-solid fa-pills"></i> Prescription (Medication Orders)</h4>'
-                + '<div class="ds-rx-add">'
-                    + '<input type="text" id="ds-drug-search" placeholder="Search stocked drugs by name or code..." list="ds-drug-list" autocomplete="off">'
-                    + '<datalist id="ds-drug-list"></datalist>'
-                    + '<button type="button" id="ds-drug-add"><i class="fa-solid fa-plus"></i> Add</button>'
+            // The three write actions (notes, prescriptions, investigations) share
+            // one tabbed workspace. Plain JS switchDsTab — this project ships no
+            // Alpine.js. Hidden panels keep their inputs in the DOM, so saving
+            // still reads every value.
+            + '<div class="ds-workspace" id="ds-workspace">'
+                + '<div class="ds-tabs" role="tablist" aria-label="Doctor clinical actions">'
+                    + '<button type="button" class="ds-tab active" data-ds-tab="notes" role="tab" aria-selected="true"><i class="fa-solid fa-pen-to-square"></i> Doctor Notes &amp; Clinical Entries</button>'
+                    + '<button type="button" class="ds-tab" data-ds-tab="prescriptions" role="tab" aria-selected="false"><i class="fa-solid fa-pills"></i> Prescribe Medication</button>'
+                    + '<button type="button" class="ds-tab" data-ds-tab="investigations" role="tab" aria-selected="false"><i class="fa-solid fa-microscope"></i> Request Lab / Radiology</button>'
                 + '</div>'
-                + '<div class="ds-rx-hint">Each drug added here creates a prescription row the pharmacy can dispense. Only drugs with stock in hand are listed.</div>'
-                + '<div class="ds-rx-lines" id="ds-rx-lines"></div>'
-                + pendingHtml
-                + '<div class="fld" style="margin-top:11px;"><label for="ds-med-notes">Additional Medication Notes (free text)</label>'
-                    + '<textarea id="ds-med-notes" placeholder="Advice, drugs not stocked, anything the pharmacy must know..." style="min-height:58px;">'
-                    + escHtml(ctx.last_medication_notes || '') + '</textarea></div>'
+
+                + '<div class="ds-panel active" data-ds-panel="notes" role="tabpanel">'
+                    + '<div class="ds-box"><h4><i class="fa-solid fa-notes-medical"></i> Doctor Notes Update</h4>'
+                        + '<textarea id="ds-doctor-notes" placeholder="Clinical examination findings, systemic review..."></textarea></div>'
+                + '</div>'
+
+                + '<div class="ds-panel" data-ds-panel="prescriptions" role="tabpanel">'
+                    + '<div class="ds-box"><h4><i class="fa-solid fa-pills"></i> Prescription (Medication Orders)</h4>'
+                        + '<div class="ds-rx-add">'
+                            + '<input type="text" id="ds-drug-search" placeholder="Search stocked drugs by name or code..." list="ds-drug-list" autocomplete="off">'
+                            + '<datalist id="ds-drug-list"></datalist>'
+                            + '<button type="button" id="ds-drug-add"><i class="fa-solid fa-plus"></i> Add</button>'
+                        + '</div>'
+                        + '<div class="ds-rx-hint">Each drug added here creates a prescription row the pharmacy can dispense. Only drugs with stock in hand are listed.</div>'
+                        + '<div class="ds-rx-lines" id="ds-rx-lines"></div>'
+                        + pendingHtml
+                        + '<div class="fld" style="margin-top:11px;"><label for="ds-med-notes">Additional Medication Notes (free text)</label>'
+                            + '<textarea id="ds-med-notes" placeholder="Advice, drugs not stocked, anything the pharmacy must know..." style="min-height:58px;">'
+                            + escHtml(ctx.last_medication_notes || '') + '</textarea></div>'
+                    + '</div>'
+                + '</div>'
+
+                + '<div class="ds-panel" data-ds-panel="investigations" role="tabpanel">'
+                    + '<div class="ds-box"><h4><i class="fa-solid fa-microscope"></i> Investigations / Radiology / Sonography Requests <span class="hint">raise real orders</span></h4>'
+                        + '<div class="ds-inv">' + invHtml + '</div></div>'
+                + '</div>'
             + '</div>'
 
             + '<div class="ds-box"><h4><i class="fa-solid fa-calendar-days"></i> Follow-Up Calendar</h4>'
@@ -871,6 +900,21 @@ function buildConsultationForm(ctx) {
         + '</div>';
 }
 
+/* Tab switcher for the consultation form's clinical workspace. The form is a
+   single injected instance, so the state lives on fixed data-* attributes. */
+function switchDsTab(section) {
+    const workspace = document.getElementById('ds-workspace');
+    if (!workspace) return;
+    workspace.querySelectorAll('.ds-tab').forEach(btn => {
+        const on = btn.getAttribute('data-ds-tab') === section;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    workspace.querySelectorAll('.ds-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.getAttribute('data-ds-panel') === section);
+    });
+}
+
 function wireConsultationForm() {
     const collapse = document.getElementById('ds-collapse');
     if (collapse) collapse.addEventListener('click', toggleConsultationForm.bind(null, dsForm.admissionId));
@@ -892,6 +936,12 @@ function wireConsultationForm() {
 
     const ward = document.getElementById('ds-ward');
     if (ward) ward.addEventListener('change', loadAvailableBeds);
+
+    // Clinical workspace tabs (notes / prescriptions / investigations). Panels
+    // are toggled by class, so hidden fields still submit their values on save.
+    document.querySelectorAll('#ds-workspace .ds-tab').forEach(btn => {
+        btn.addEventListener('click', () => switchDsTab(btn.getAttribute('data-ds-tab')));
+    });
 
     renderRxLines();
 }
