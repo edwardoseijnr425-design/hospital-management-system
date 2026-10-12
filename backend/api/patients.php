@@ -243,6 +243,8 @@ function getPatientSummary() {
             'gender'          => $patient['gender'] ? ucfirst($patient['gender']) : '',
             'age'             => $patient['age'],
             'blood_group'     => $patient['blood_group'],
+            'nhia_number'     => $patient['nhia_number'],
+            'is_active'       => (int)$patient['is_active'],
             'phone'           => $patient['phone'],
             'address'         => $patient['address'],
             'bed'             => $patient['bed_number'],

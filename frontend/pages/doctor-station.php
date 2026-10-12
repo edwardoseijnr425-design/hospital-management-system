@@ -197,10 +197,33 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
   #docstation .ds-row2{grid-template-columns:1fr}
   #docstation .ds-inv{grid-template-columns:1fr}
   #docstation .ds-rx-line .flds{grid-template-columns:1fr 1fr}
+  #docstation .ds-consult-grid{grid-template-columns:1fr}
 }
 @media (max-width:640px){
   #docstation .ds-tiles{grid-template-columns:1fr 1fr}
 }
+
+/* ---- EXPANDED CLINICAL CONSULTATION FORM + PROFILE STATUS (snippet integration) ---- */
+/* ACTIVE / INACTIVE patient status badge with a live pulse dot */
+#docstation .ds-status-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:9.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;border:1px solid}
+#docstation .ds-status-chip .dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:0 0 auto}
+#docstation .ds-status-chip.on{background:#ECFDF5;color:#047857;border-color:#6EE7B7}
+#docstation .ds-status-chip.on .dot{background:#10B981;animation:dsPulse 1.4s ease-in-out infinite}
+#docstation .ds-status-chip.off{background:#F1F5F9;color:#64748B;border-color:#CBD5E1}
+#docstation .ds-status-chip.off .dot{background:#94A3B8}
+@keyframes dsPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+/* Right column of the patient profile header (allergy chip + refill button) */
+#docstation .ds-patient-right{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+/* Two-column consultation form rows */
+#docstation .ds-consult-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* Allergies / drug reactions is highlighted as a warning-style field */
+#docstation .ds-fld.warn textarea{background:#FFFBF5;border-color:#F0AD4E}
+#docstation .ds-fld.warn label{color:#B45309}
+/* Structured rendering of a saved labelled clinical entry */
+#docstation .ds-note-sec{display:flex;flex-direction:column;gap:2px;margin:0 0 8px;padding-bottom:6px;border-bottom:1px dashed #D9E7F8}
+#docstation .ds-note-sec:last-child{border-bottom:none;margin-bottom:0}
+#docstation .ds-note-sec .k{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1D4ED8}
+#docstation .ds-note-sec .v{color:#334155;font-size:12px;white-space:pre-wrap;line-height:1.5}
 </style>
 
 <div id="docstation" class="ds-wrap">
@@ -276,6 +299,24 @@ var DS_NOTE_LABELS = {
     IPD_NOTE: 'IPD Daily Round Note',
     DISCHARGE_SUMMARY: 'Discharge Summary'
 };
+
+/* Human labels shown in the entry-type select (same keys as DS_NOTE_LABELS). */
+var DS_ENTRY_LABELS = {
+    OPD_NOTE: 'OPD Consultation Entry',
+    IPD_NOTE: 'IPD Daily Clinical Round Note',
+    DISCHARGE_SUMMARY: 'Discharge Summary Note'
+};
+
+/* The structured consultation fields on the expanded Doctor Notes form. Each
+   entry maps a form field id (dsNote_<pid>_<key>) to the uppercase section
+   label used inside the saved clinical note, so the record can be re-parsed
+   when a doctor taps "Refill Previous Visit Entries". */
+var DS_NOTE_FIELDS = [
+    { key: 'principal_complaints', label: 'PRINCIPAL COMPLAINTS',             plain: 'Principal Complaints' },
+    { key: 'on_direct_question',   label: 'ON DIRECT QUESTION',               plain: 'On Direct Question' },
+    { key: 'previous_history',     label: 'PREVIOUS HISTORY / MEDICAL HISTORY', plain: 'Previous History / Medical History' },
+    { key: 'allergies',            label: 'ALLERGIES / DRUG REACTIONS',       plain: 'Allergies / Drug Reactions' }
+];
 
 function initDoctorStation() {
     var findBtn = document.getElementById('dsFindBtn');
@@ -480,6 +521,18 @@ function dischargeBadgeHtml(adm) {
     return '<span class="ds-admchip ' + cls + '">' + escHtml(label) + '</span>';
 }
 
+/* ACTIVE / INACTIVE patient status badge shown next to the ID chip. A live
+   admission (or a patient with no admission record yet) reads ACTIVE, with a
+   pulsing green dot; anything discharged/inactive reads INACTIVE. */
+function dsStatusChip(adm, isActive) {
+    var status = String((adm && adm.status) || '').toLowerCase();
+    var active = (isActive === undefined || isActive === 1)
+        && (status === 'admitted' || status === '' || !adm);
+    return active
+        ? '<span class="ds-status-chip on"><span class="dot"></span>Patient Status: Active</span>'
+        : '<span class="ds-status-chip off"><span class="dot"></span>Patient Status: Inactive</span>';
+}
+
 function renderPatientCard(ctx) {
     var row = ctx.row;
     var s = ctx.summary || {};
@@ -489,7 +542,8 @@ function renderPatientCard(ctx) {
 
     var demoLine = escHtml(s.gender || row.gender || '--') + ' | '
         + ((s.age != null ? s.age : row.age) != null ? escHtml(s.age != null ? s.age : row.age) + ' Yrs' : '--')
-        + ' | Genotype: -- | Blood Group: ' + escHtml(s.blood_group || '--');
+        + ' | Genotype: -- | Blood Group: ' + escHtml(s.blood_group || '--')
+        + (s.nhia_number ? ' | NHIS No: ' + escHtml(s.nhia_number) : '');
 
     var allergy = (s.allergies && String(s.allergies).trim())
         ? '<span class="ds-allergy"><i class="fa-solid fa-triangle-exclamation"></i> Allergy: ' + escHtml(s.allergies) + '</span>'
@@ -524,12 +578,15 @@ function renderPatientCard(ctx) {
                 + '<div>'
                     + '<div class="nm"><h4>' + escHtml(row.patient_name || 'PATIENT') + '</h4>'
                         + '<span class="ds-idchip">ID: ' + escHtml(row.hospital_number || '--') + '</span>'
-                        + dischargeBadgeHtml(adm) + '</div>'
+                        + dsStatusChip(adm, s.is_active) + dischargeBadgeHtml(adm) + '</div>'
                     + '<div class="demo">' + demoLine + '</div>'
                     + '<a class="ds-link" onclick="dsGoAdmissions()">Discharge from Admissions</a>'
                 + '</div>'
             + '</div>'
-            + '<div>' + allergy + '</div>'
+            + '<div class="ds-patient-right">'
+                + allergy
+                + '<button type="button" class="ds-btn outline sm" onclick="dsRefillPrevious(' + pid + ')"><i class="fa-solid fa-rotate-left"></i> Refill Previous Visit Entries</button>'
+            + '</div>'
         + '</div>'
 
         // Latest vitals
@@ -555,14 +612,35 @@ function renderPatientCard(ctx) {
                 + '<div class="ds-sec">'
                     + '<div class="ds-sec-head"><h4><i class="fa-solid fa-pen-to-square"></i> Doctor Clinical Round Notes &amp; Discharge Summary</h4>'
                         + '<span class="hint">Saved against this stay under your name</span></div>'
-                    + '<div class="ds-fld"><label for="dsNoteType_' + pid + '">Entry Type</label>'
+                    + '<div class="ds-fld">'
+                        + '<label for="dsNoteType_' + pid + '">ENTRY TYPE *</label>'
                         + '<select id="dsNoteType_' + pid + '">'
                             + '<option value="IPD_NOTE" selected>IPD Daily Clinical Round Note</option>'
-                            + '<option value="OPD_NOTE">OPD Consultation Note</option>'
-                            + '<option value="DISCHARGE_SUMMARY">Discharge Summary</option>'
+                            + '<option value="OPD_NOTE">OPD Consultation Entry</option>'
+                            + '<option value="DISCHARGE_SUMMARY">Discharge Summary Note</option>'
                         + '</select></div>'
-                    + '<div class="ds-fld"><label for="dsNoteText_' + pid + '">Clinical Notes / Recommendations</label>'
-                        + '<textarea id="dsNoteText_' + pid + '" placeholder="Enter clinical observations, diagnoses, treatment plan or discharge instructions…"></textarea></div>'
+                    + '<div class="ds-consult-grid">'
+                        + '<div>' + dsNoteFieldHtml(pid, 'principal_complaints', {
+                            required: true,
+                            placeholder: 'Record the patient\u2019s primary symptoms, duration and main presentation...'
+                        }) + '</div>'
+                        + '<div>' + dsNoteFieldHtml(pid, 'on_direct_question', {
+                            placeholder: 'Document targeted questions asked, e.g. fever, chills, cough, chest pain, nausea...'
+                        }) + '</div>'
+                    + '</div>'
+                    + '<div class="ds-consult-grid">'
+                        + '<div>' + dsNoteFieldHtml(pid, 'previous_history', {
+                            placeholder: 'Past medical, surgical, chronic illnesses or family history...'
+                        }) + '</div>'
+                        + '<div>' + dsNoteFieldHtml(pid, 'allergies', {
+                            warn: true,
+                            value: s.allergies || '',
+                            placeholder: 'e.g. Penicillin, Sulfa drugs, NSAIDs, food or environmental allergies...'
+                        }) + '</div>'
+                    + '</div>'
+                    // SEAM: the pasted snippet is truncated after Allergies. The next
+                    // grid rows (examination findings, diagnosis, treatment plan,
+                    // follow-up...) drop in here as more DS_NOTE_FIELDS + ds-consult-grid rows.
                     + '<div style="text-align:right;"><button type="button" class="ds-btn primary" onclick="dsSaveDoctorEntry(' + pid + ')"><i class="fa-solid fa-floppy-disk"></i> Save Doctor Entry</button></div>'
                     + '<div style="border-top:1px dashed var(--ds-line);margin:14px 0 12px;"></div>'
                     + '<div class="ds-sec-head" style="border:none;padding:0;margin:0 0 8px;"><h4><i class="fa-solid fa-clock-rotate-left"></i> Clinical Record For This Stay</h4></div>'
@@ -707,6 +785,141 @@ function fillClinicalData(ctx) {
     renderSavedStamp(pid);
 }
 
+/* ---------- Expanded consultation form (snippet-driven, plain JS) ---------- */
+
+// Field lookup by key.
+function dsNoteField(key) {
+    var found = null;
+    DS_NOTE_FIELDS.forEach(function (f) { if (f.key === key) found = f; });
+    return found;
+}
+
+// One textarea field for the consultation form. Textareas are tagged by id
+// (dsNote_<pid>_<key>) so composition and refill stay data-driven; rows for the
+// truncated snippet simply register more DS_NOTE_FIELDS entries.
+function dsNoteFieldHtml(pid, key, opts) {
+    opts = opts || {};
+    var f = dsNoteField(key);
+    if (!f) return '';
+    var id = 'dsNote_' + pid + '_' + f.key;
+    return '<div class="ds-fld' + (opts.warn ? ' warn' : '') + '">'
+        + '<label for="' + id + '">' + escHtml(f.plain)
+        + (opts.required ? ' <span style="color:#C0392B;">*</span>' : '') + '</label>'
+        + '<textarea id="' + id + '" rows="3" placeholder="' + escHtml(opts.placeholder || '') + '">'
+        + (opts.value ? escHtml(opts.value) : '')
+        + '</textarea></div>';
+}
+
+function dsReadNoteFields(pid) {
+    var out = {};
+    DS_NOTE_FIELDS.forEach(function (f) {
+        var el = document.getElementById('dsNote_' + pid + '_' + f.key);
+        out[f.key] = el ? el.value.trim() : '';
+    });
+    return out;
+}
+
+function dsHasNoteContent(pid) {
+    var fields = dsReadNoteFields(pid);
+    return DS_NOTE_FIELDS.some(function (f) { return !!fields[f.key]; });
+}
+
+function dsClearNoteFields(pid) {
+    DS_NOTE_FIELDS.forEach(function (f) {
+        var el = document.getElementById('dsNote_' + pid + '_' + f.key);
+        if (el) el.value = '';
+    });
+}
+
+// Build the labelled clinical-note block from the form fields. Only sections
+// with content are written; the entry type heads the block.
+function dsComposeClinicalNote(pid, type) {
+    var fields = dsReadNoteFields(pid);
+    var lines = [];
+    lines.push('ENTRY TYPE: ' + (DS_ENTRY_LABELS[type] || type));
+    DS_NOTE_FIELDS.forEach(function (f) {
+        if (fields[f.key]) lines.push(f.label + ':\n' + fields[f.key]);
+    });
+    return lines.join('\n\n');
+}
+
+// Reverse of the above: split a saved block into its labelled sections so the
+// record renders neatly and "Refill" can pull a previous entry back into the
+// form. Old free-text notes (no headers) come through as { raw: ... }.
+function dsParseNoteBlock(text) {
+    var sections = {};
+    if (!text) return sections;
+    var lines = String(text).split(/\r?\n/);
+    var current = null, buf = [];
+    lines.forEach(function (line) {
+        var m = line.match(/^([A-Z][A-Z0-9 /()._-]+):\s*(.*)$/);
+        var key = null;
+        if (m) {
+            var label = m[1].trim();
+            DS_NOTE_FIELDS.forEach(function (f) { if (f.label === label) key = f.key; });
+            if (!key && label === 'ENTRY TYPE') key = 'entry_type';
+        }
+        if (key) {
+            if (current) sections[current] = buf.join('\n').trim();
+            current = key;
+            buf = m[2] ? [m[2]] : [];
+        } else {
+            buf.push(line);
+        }
+    });
+    if (current) {
+        sections[current] = buf.join('\n').trim();
+    } else {
+        // No known header found - plain legacy note.
+        sections.raw = text.trim();
+    }
+    return sections;
+}
+
+function dsRenderNoteText(text) {
+    var parts = dsParseNoteBlock(text);
+    if (parts.raw) return '<div class="txt">' + escHtml(parts.raw) + '</div>';
+    var html = '';
+    if (parts.entry_type) {
+        html += '<div class="ds-note-sec"><span class="k">Entry Type</span><span class="v">' + escHtml(parts.entry_type) + '</span></div>';
+    }
+    DS_NOTE_FIELDS.forEach(function (f) {
+        if (parts[f.key]) {
+            html += '<div class="ds-note-sec"><span class="k">' + escHtml(f.plain) + '</span><div class="v">' + escHtml(parts[f.key]) + '</div></div>';
+        }
+    });
+    return '<div class="txt">' + html + '</div>';
+}
+
+// Fill the consultation form with the most recent previous clinical entry:
+// its labelled sections populate the fields (allergies fall back to the
+// patient's stored allergies when the note has none).
+function dsRefillPrevious(pid) {
+    var list = dsNotesCache[pid] || [];
+    if (!list.length) {
+        showAlert('No previous clinical entries to refill from.', 'info');
+        return;
+    }
+    var prev = list[0];
+    var parts = dsParseNoteBlock(prev.clinical_note);
+    var filled = 0;
+    (DS_NOTE_FIELDS).forEach(function (f) {
+        var el = document.getElementById('dsNote_' + pid + '_' + f.key);
+        if (!el || !parts[f.key]) return;
+        el.value = parts[f.key];
+        filled++;
+    });
+    if (parts.entry_type && DS_ENTRY_LABELS[prev.note_type]) {
+        var t = document.getElementById('dsNoteType_' + pid);
+        if (t) t.value = prev.note_type;
+    }
+    if (!filled && !parts.raw) {
+        showAlert('The last entry has no structured fields to refill.', 'info');
+        return;
+    }
+    showAlert('Previous entry refilled into the form.', 'success');
+}
+
 /* ---------- Clinical notes (tab 1) ---------- */
 async function loadClinicalNotes(pid) {
     try {
@@ -733,7 +946,7 @@ function renderClinicalNotes(pid) {
             + '<div class="top"><span class="who">' + escHtml(n.doctor_name || 'Doctor')
                 + ' <span style="font-weight:400;color:#64748B;">&middot; ' + escHtml(DS_NOTE_LABELS[n.note_type] || n.note_type) + '</span></span>'
                 + '<span class="when">' + escHtml(fmtDateTime(n.created_at)) + '</span></div>'
-            + '<div class="txt">' + escHtml(n.clinical_note) + '</div>'
+            + dsRenderNoteText(n.clinical_note)
             + '<div style="text-align:right;margin-top:6px;"><button type="button" class="rm" onclick="dsDeleteNote(' + n.id + ',' + pid + ')">Delete</button></div>'
             + '</div>';
     }).join('');
@@ -742,9 +955,9 @@ function renderClinicalNotes(pid) {
 async function dsSaveDoctorEntry(pid) {
     var row = dsInpatients.filter(function (p) { return String(p.patient_id) === String(pid); })[0];
     if (!row) return;
-    var text = (document.getElementById('dsNoteText_' + pid).value || '').trim();
-    if (!text) { showAlert('Enter the clinical notes before saving.', 'error'); return; }
+    if (!dsHasNoteContent(pid)) { showAlert('Enter at least one clinical field before saving.', 'error'); return; }
     var type = document.getElementById('dsNoteType_' + pid).value;
+    var text = dsComposeClinicalNote(pid, type);
 
     try {
         var res = await fetch('/hms/backend/api/clinical_notes.php?action=create', {
@@ -759,7 +972,23 @@ async function dsSaveDoctorEntry(pid) {
         });
         var data = await res.json();
         if (!data.success) throw new Error(data.error || 'Could not save the entry.');
-        document.getElementById('dsNoteText_' + pid).value = '';
+
+        // Allergies are a standing patient fact: when the field differs from
+        // what the record holds, sync it. Non-fatal if the sync fails.
+        var summary = (dsContext[pid] || {}).summary || {};
+        var storedAllergy = String(summary.allergies || '') === '' ? '' : String(summary.allergies);
+        var newAllergy = dsReadNoteFields(pid).allergies;
+        if (newAllergy !== storedAllergy) {
+            try {
+                await fetch('/hms/backend/api/patients.php?id=' + pid, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ allergies: newAllergy || '' })
+                });
+            } catch (e) { console.error('Allergy sync error:', e); }
+        }
+
+        dsClearNoteFields(pid);
         showAlert((DS_NOTE_LABELS[type] || 'Clinical entry') + ' saved.', 'success');
         markSaved(pid);
         await loadClinicalNotes(pid);
@@ -1120,7 +1349,7 @@ function dsReadDraft(pid) {
 function dsSaveDraft(pid) {
     var payload = {
         noteType: (document.getElementById('dsNoteType_' + pid) || {}).value || 'IPD_NOTE',
-        noteText: (document.getElementById('dsNoteText_' + pid) || {}).value || '',
+        noteFields: dsReadNoteFields(pid),
         rx: dsCollectRx(pid),
         savedAt: new Date().toISOString()
     };
@@ -1131,15 +1360,15 @@ function dsSaveDraft(pid) {
 }
 
 async function dsSaveOrUpdate(pid) {
-    var text = (document.getElementById('dsNoteText_' + pid).value || '').trim();
+    var noteContent = dsHasNoteContent(pid);
     var lines = dsCollectedLinesExist(pid);
     var invCount = document.querySelectorAll('#dsInvCat_' + pid + ' .ds-inv-check:checked').length;
 
-    if (!text && !lines && !invCount) {
-        showAlert('Nothing to save — write a note, prescribe a drug or tick an investigation.', 'error');
+    if (!noteContent && !lines && !invCount) {
+        showAlert('Nothing to save — write a clinical entry, prescribe a drug or tick an investigation.', 'error');
         return;
     }
-    if (text) await dsSaveDoctorEntry(pid);
+    if (noteContent) await dsSaveDoctorEntry(pid);
     if (lines) await dsSavePrescription(pid);
     if (invCount) await dsSaveInvestigations(pid);
     try { localStorage.removeItem(dsDraftKey(pid)); } catch (e) {}
@@ -1173,7 +1402,7 @@ function dsOpenMedicalRecords(pid) {
             return '<div class="ds-note-item">'
                 + '<div class="top"><span class="who">' + escHtml(DS_NOTE_LABELS[n.note_type] || n.note_type) + ' &middot; ' + escHtml(n.doctor_name || 'Doctor') + '</span>'
                 + '<span class="when">' + escHtml(fmtDateTime(n.created_at)) + '</span></div>'
-                + '<div class="txt">' + escHtml(n.clinical_note) + '</div></div>';
+                + dsRenderNoteText(n.clinical_note) + '</div>';
         }).join('')
         : '<div class="ds-empty">No clinical entries recorded for this stay yet.</div>';
 
