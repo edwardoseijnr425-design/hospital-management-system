@@ -29,8 +29,15 @@ switch ($type) {
         $services = [];
         break;
     case 'radiology':
-        // For radiology, similar to lab tests
-        $services = [];
+        // Imaging exams are catalogue strings, not table rows, so the exam name
+        // itself is the identifier (returned as `id`). Prices key on service_ref.
+        foreach (radiologyCatalogueFlat() as $exam) {
+            $services[] = [
+                'id'   => $exam['exam_type'],
+                'name' => $exam['exam_type'],
+                'code' => strtoupper($exam['modality']),
+            ];
+        }
         break;
     default:
         jsonResponse(['error' => 'Invalid service type'], 400);

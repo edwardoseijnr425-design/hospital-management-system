@@ -12,55 +12,44 @@ $__radStaff = getCurrentUserName() ?: 'STAFF';
 $__radRole  = getCurrentUserRole() ?: 'STAFF';
 
 // ---- Imaging modality catalogue (single source of truth) -------------------
-// Mirrors backend/api/radiology.php?action=catalogue and the studies the Doctor
-// Station already writes (consultation_form.php). Add a study here and it appears
-// in the order form automatically.
-$__radCatalog = [
-    'xray' => [
-        ['Chest X-Ray (PA & Lateral)',    'Chest'],
-        ['Chest X-Ray (Single View)',     'Chest'],
-        ['Abdominal X-Ray (Plain)',       'Abdomen'],
-        ['Pelvic X-Ray',                  'Pelvis'],
-        ['X-Ray of the Skull',            'Head'],
-        ['Spine X-Ray (Lumbar)',          'Lumbar Spine'],
-        ['Extremity X-Ray',               'Extremity'],
-    ],
-    'ultrasound' => [
-        ['Abdominal Ultrasound',          'Abdomen'],
-        ['Obstetric Ultrasound',          'Abdomen / Pelvis'],
-        ['Pelvic Ultrasound',             'Pelvis'],
-        ['Thyroid Ultrasound',            'Neck'],
-        ['Breast Ultrasound',             'Breast'],
-        ['Renal Ultrasound (KUB)',        'Abdomen'],
-    ],
-    'ct' => [
-        ['CT Head (Brain)',               'Head'],
-        ['CT Chest (High Resolution)',    'Chest'],
-        ['CT Abdomen & Pelvis (Contrast)','Abdomen / Pelvis'],
-        ['CT Spine (Lumbar / Cervical)',  'Spine'],
-    ],
-    'mri' => [
-        ['MRI Brain',                     'Head'],
-        ['MRI Lumbar Spine',              'Lumbar Spine'],
-        ['MRI Knee',                      'Knee'],
-        ['MRI Abdomen',                   'Abdomen'],
-    ],
-    'mammography' => [
-        ['Mammogram (Bilateral)',         'Breast'],
-        ['Mammogram (Unilateral)',        'Breast'],
-    ],
-    'fluoroscopy' => [
-        ['Barium Swallow',                'Chest / Oesophagus'],
-        ['Barium Meal',                   'Abdomen'],
-        ['IV Urography',                  'Abdomen / Pelvis'],
-    ],
-];
-// Flatten for the two-step (modality -> [{exam, body_part}]) dropdown.
+// Shared with backend/api/radiology.php and the Service Prices picker via
+// radiologyCatalogueData() in backend/includes/functions.php. Add a study
+// there and it appears here automatically.
+$__radCatalog = radiologyCatalogueData();
+
+// Active imaging prices, keyed by exam name, so the order form can show a
+// study's price the moment it is picked. Managed on the Service Prices page
+// (service_type='radiology', keyed on service_ref).
+$__radPrice = [];
+try {
+    foreach (Database::getInstance()->fetchAll(
+        "SELECT service_ref, price, currency
+           FROM service_prices
+          WHERE service_type = 'radiology' AND is_active = 1
+          ORDER BY effective_date ASC, id ASC"
+    ) as $__pr) {
+        if ($__pr['service_ref'] !== null && $__pr['service_ref'] !== '') {
+            $__radPrice[$__pr['service_ref']] = [
+                'price'    => (float)$__pr['price'],
+                'currency' => $__pr['currency'] ?: 'GHS',
+            ];
+        }
+    }
+} catch (Exception $__e) {
+    $__radPrice = [];
+}
+// Flatten for the two-step (modality -> [{exam, body_part}]) dropdown, tagging
+// each study with its configured price (null when none is set).
 $__radStudyData = [];
 foreach ($__radCatalog as $__mod => $__studies) {
     $__radStudyData[$__mod] = [];
     foreach ($__studies as $__s) {
-        $__radStudyData[$__mod][] = ['exam_type' => $__s[0], 'body_part' => $__s[1]];
+        $__radStudyData[$__mod][] = [
+            'exam_type' => $__s[0],
+            'body_part' => $__s[1],
+            'price'     => $__radPrice[$__s[0]]['price'] ?? null,
+            'currency'  => $__radPrice[$__s[0]]['currency'] ?? null,
+        ];
     }
 }
 ?>
@@ -343,7 +332,7 @@ foreach ($__radCatalog as $__mod => $__studies) {
 
         <div class="rad-field span-3">
           <label for="radStudy">Examination to be Performed <span class="req">*</span></label>
-          <select id="radStudy" onchange="syncRadBodyPart()" required>
+          <select id="radStudy" onchange="syncRadBodyPart(); updateRadPrice();" required>
             <option value="">-- Select Modality First --</option>
           </select>
         </div>
@@ -365,6 +354,11 @@ foreach ($__radCatalog as $__mod => $__studies) {
             <option value="urgent">Urgent</option>
             <option value="emergency">STAT / Emergency</option>
           </select>
+        </div>
+
+        <div class="rad-field">
+          <label for="radPrice">Exam Price</label>
+          <input type="text" id="radPrice" readonly value="&mdash;" title="Set on the Service Prices page (Radiology)">
         </div>
 
         <div class="rad-field span-6">
@@ -572,6 +566,18 @@ var RAD_MODALITY_OF = (function () {
     return out;
 })();
 
+/* exam_type -> configured price (from the Service Prices page), for the order
+   form's auto-filled price field. Studies with no price are simply absent. */
+var RAD_PRICE_OF = (function () {
+    var out = {};
+    Object.keys(radStudiesData).forEach(function (mod) {
+        radStudiesData[mod].forEach(function (s) {
+            if (s.price != null) out[s.exam_type] = s;
+        });
+    });
+    return out;
+})();
+
 var radVisits = [];
 var radData = [];
 var radView = 'worklist';
@@ -699,6 +705,21 @@ function updateRadStudies() {
             study.appendChild(opt);
         });
     }
+    updateRadPrice();
+}
+
+/* Show the picked study's configured price, or say so when none is set. */
+function updateRadPrice() {
+    var study = document.getElementById('radStudy');
+    var out = document.getElementById('radPrice');
+    if (!study || !out) return;
+    var name = study.value || '';
+    var p = RAD_PRICE_OF[name];
+    if (p) {
+        out.value = (p.currency || 'GHS') + ' ' + Number(p.price).toFixed(2);
+    } else {
+        out.value = name ? 'No price set' : '\u2014';
+    }
 }
 
 /* The region is carried by the catalogue entry. Laterality is only offered for
@@ -751,7 +772,11 @@ async function handleRadEntrySubmit(e) {
         });
         var d = await r.json();
         if (d.success) {
-            showAlert('Imaging order submitted: ' + study + '.', 'success');
+            var msg = 'Imaging order submitted: ' + study + '.';
+            if (d.charge && d.price != null) {
+                msg += ' ' + (d.currency || 'GHS') + ' ' + Number(d.price).toFixed(2) + ' added to the bill.';
+            }
+            showAlert(msg, 'success');
             document.getElementById('radEntryForm').reset();
             document.getElementById('radUrgency').value = 'routine';
             updateRadStudies();

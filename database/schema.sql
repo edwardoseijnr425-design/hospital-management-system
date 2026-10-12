@@ -127,7 +127,12 @@ CREATE TABLE procedures (
 CREATE TABLE service_prices (
     id INT AUTO_INCREMENT PRIMARY KEY,
     service_type ENUM('consultation', 'procedure', 'drug', 'lab_test', 'radiology', 'other') NOT NULL,
+    -- Numeric key for catalogue-backed services (consultation/procedure/drug).
+    -- 0 for services identified by a name instead (radiology exam, lab test).
     service_id INT NOT NULL,
+    -- Name key for services with no numeric catalogue row. Radiology and lab
+    -- exams are catalogue strings, not table rows, so they price on this.
+    service_ref VARCHAR(120) DEFAULT NULL,
     price DECIMAL(10, 2) NOT NULL,
     copay_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     currency VARCHAR(3) DEFAULT 'GHS',

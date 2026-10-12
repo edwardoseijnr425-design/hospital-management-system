@@ -161,6 +161,10 @@
 <script>
 let pricesData = [];
 
+// Service types whose "service" is identified by name rather than a numeric id
+// (radiology exams, lab tests). Their price is stored in service_ref.
+const NAME_KEYED_TYPES = ['radiology', 'lab_test'];
+
 async function initPrices() {
     await loadServices();
     await loadPrices();
@@ -182,7 +186,10 @@ async function loadServices() {
             
             if (data.success) {
                 data.services.forEach(service => {
-                    select.innerHTML += `<option value="${service.id}">${service.name} (${service.code})</option>`;
+                    const opt = document.createElement('option');
+                    opt.value = service.id;
+                    opt.textContent = service.code ? `${service.name} (${service.code})` : service.name;
+                    select.appendChild(opt);
                 });
             }
         } catch (error) {
@@ -275,7 +282,7 @@ function openPriceModal(price = null) {
         
         // Set service after load
         setTimeout(() => {
-            document.getElementById('price-service').value = price.service_id;
+            document.getElementById('price-service').value = price.service_ref || price.service_id;
         }, 100);
     } else {
         title.textContent = 'Add Service Price';
@@ -294,6 +301,13 @@ async function handlePriceSubmit(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
     const priceId = document.getElementById('price-id').value;
+
+    // Name-keyed services (radiology exam / lab test) carry their identifier in
+    // service_ref with a zero service_id; everything else keys on service_id.
+    if (NAME_KEYED_TYPES.includes(data.service_type)) {
+        data.service_ref = data.service_id;
+        data.service_id = 0;
+    }
     
     try {
         const url = priceId 

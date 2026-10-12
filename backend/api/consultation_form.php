@@ -548,7 +548,7 @@ function raiseInvestigation($db, $visitId, $key, &$counts) {
         [$visitId, $name]
     );
     if ($dupe) { $counts['skipped']++; return false; }
-    $db->insert('radiology_requests', [
+    $radId = $db->insert('radiology_requests', [
         'visit_id'    => $visitId,
         'doctor_id'   => $doctorId,
         'exam_type'   => $name,
@@ -556,6 +556,13 @@ function raiseInvestigation($db, $visitId, $key, &$counts) {
         'urgency'     => 'routine',
         'status'      => 'pending',
     ]);
+    // Auto-charge the imaging study to the visit's bill when a price is set on
+    // the Service Prices page. Runs inside the consultation transaction, so a
+    // billing failure rolls the whole save back rather than half-writing.
+    $priced = resolveRadiologyPrice($name);
+    if ($priced) {
+        chargeServiceToVisit($visitId, 'radiology', $radId, 'Radiology: ' . $name, (float)$priced['price']);
+    }
     $counts['radiology']++;
     return true;
 }

@@ -56,46 +56,7 @@ if ($method === 'GET' && $action === 'stats') {
  * suggestion is generated server-side from this list.
  */
 function radiologyCatalogue() {
-    $cat = [
-        'xray' => [
-            ['Chest X-Ray (PA & Lateral)', 'Chest'],
-            ['Chest X-Ray (Single View)', 'Chest'],
-            ['Abdominal X-Ray (Plain)', 'Abdomen'],
-            ['Pelvic X-Ray', 'Pelvis'],
-            ['X-Ray of the Skull', 'Head'],
-            ['Spine X-Ray (Lumbar)', 'Lumbar Spine'],
-            ['Extremity X-Ray', 'Extremity'],
-        ],
-        'ultrasound' => [
-            ['Abdominal Ultrasound', 'Abdomen'],
-            ['Obstetric Ultrasound', 'Abdomen / Pelvis'],
-            ['Pelvic Ultrasound', 'Pelvis'],
-            ['Thyroid Ultrasound', 'Neck'],
-            ['Breast Ultrasound', 'Breast'],
-            ['Renal Ultrasound (KUB)', 'Abdomen'],
-        ],
-        'ct' => [
-            ['CT Head (Brain)', 'Head'],
-            ['CT Chest (High Resolution)', 'Chest'],
-            ['CT Abdomen & Pelvis (Contrast)', 'Abdomen / Pelvis'],
-            ['CT Spine (Lumbar / Cervical)', 'Spine'],
-        ],
-        'mri' => [
-            ['MRI Brain', 'Head'],
-            ['MRI Lumbar Spine', 'Lumbar Spine'],
-            ['MRI Knee', 'Knee'],
-            ['MRI Abdomen', 'Abdomen'],
-        ],
-        'mammography' => [
-            ['Mammogram (Bilateral)', 'Breast'],
-            ['Mammogram (Unilateral)', 'Breast'],
-        ],
-        'fluoroscopy' => [
-            ['Barium Swallow', 'Chest / Oesophagus'],
-            ['Barium Meal', 'Abdomen'],
-            ['IV Urography', 'Abdomen / Pelvis'],
-        ],
-    ];
+    $cat = radiologyCatalogueData();
     $out = [];
     foreach ($cat as $mod => $studies) {
         $out[$mod] = [];
@@ -230,21 +191,52 @@ function createRadiologyRequest() {
     $urgency = in_array($data['urgency'] ?? '', RAD_URGENCIES, true) ? $data['urgency'] : 'routine';
     $bodyPart = trim($data['body_part'] ?? '');
     $indication = trim($data['clinical_indication'] ?? '');
+    $examType = trim($data['exam_type']);
+    $visitId = (int)$data['visit_id'];
 
     $db = Database::getInstance();
     try {
+        $db->beginTransaction();
+
         $id = $db->insert('radiology_requests', [
-            'visit_id'            => (int)$data['visit_id'],
+            'visit_id'            => $visitId,
             'doctor_id'           => getCurrentUserId(),
-            'exam_type'           => trim($data['exam_type']),
+            'exam_type'           => $examType,
             'body_part'           => $bodyPart === '' ? null : $bodyPart,
             'clinical_indication' => $indication === '' ? null : $indication,
             'urgency'             => $urgency,
             'status'              => 'pending',
         ]);
-        logAudit('CREATE', 'radiology_requests', $id, null, ['exam_type' => $data['exam_type']]);
-        jsonResponse(['success' => true, 'request_id' => $id]);
+        logAudit('CREATE', 'radiology_requests', $id, null, ['exam_type' => $examType]);
+
+        // Auto-charge: post the exam's Service Price to the visit's bill when
+        // one is configured. The request itself is still saved when no price
+        // exists, so ordering is never blocked by missing billing setup.
+        $priced = resolveRadiologyPrice($examType);
+        $charge = null;
+        if ($priced) {
+            $charge = chargeServiceToVisit(
+                $visitId,
+                'radiology',
+                $id,
+                'Radiology: ' . $examType,
+                (float)$priced['price']
+            );
+        }
+
+        $db->commit();
+
+        jsonResponse([
+            'success'    => true,
+            'request_id' => $id,
+            'price'      => $priced ? (float)$priced['price'] : null,
+            'currency'   => $priced['currency'] ?? 'GHS',
+            'charge'     => $charge,
+        ]);
     } catch (Exception $e) {
+        if ($db->getConnection()->inTransaction()) {
+            $db->rollback();
+        }
         error_log("Radiology request error: " . $e->getMessage());
         jsonResponse(['error' => 'Failed to create radiology request'], 500);
     }
