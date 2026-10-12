@@ -90,10 +90,37 @@ function getSponsor() {
     ]);
 }
 
+/* Columns this API is allowed to write. Whitelisting keeps arbitrary
+   client-supplied keys out of the generated SQL and gives one place to
+   normalise values. */
+function sponsorWriteData($data) {
+    $columns  = ['name', 'code', 'type', 'contact_person', 'phone', 'email', 'address', 'is_active', 'nhia_status', 'expiry_date'];
+    /* MySQL runs in STRICT_TRANS_TABLES, which rejects '' for the nhia_status
+       ENUM and the expiry_date DATE column. The HTML form sends "" for every
+       untouched optional input, so trim and convert those to NULL. */
+    $nullable = ['contact_person', 'phone', 'email', 'address', 'nhia_status', 'expiry_date'];
+
+    $out = [];
+    foreach ($columns as $col) {
+        if (!array_key_exists($col, $data)) {
+            continue;
+        }
+        $value = $data[$col];
+        if (is_string($value)) {
+            $value = trim($value);
+            if ($value === '' && in_array($col, $nullable, true)) {
+                $value = null;
+            }
+        }
+        $out[$col] = $value;
+    }
+    return $out;
+}
+
 function createSponsor() {
     requireRole(['super_admin', 'admin']);
     
-    $data = getPostData();
+    $data = sponsorWriteData(getPostData());
     
     $requiredFields = ['name', 'code', 'type'];
     $errors = validateRequired($data, $requiredFields);
@@ -112,7 +139,10 @@ function createSponsor() {
             'success' => true,
             'sponsor_id' => $sponsorId
         ]);
-    } catch (Exception $e) {
+    } catch (PDOException $e) {
+        if (($e->errorInfo[1] ?? null) === 1062) {
+            jsonResponse(['error' => 'A sponsor with that code already exists.'], 409);
+        }
         error_log("Sponsor creation error: " . $e->getMessage());
         jsonResponse(['error' => 'Sponsor creation failed'], 500);
     }
@@ -127,7 +157,10 @@ function updateSponsor() {
         jsonResponse(['error' => 'Sponsor ID is required'], 400);
     }
     
-    $data = getPostData();
+    $data = sponsorWriteData(getPostData());
+    if (empty($data)) {
+        jsonResponse(['error' => 'No valid fields supplied'], 400);
+    }
     $db = Database::getInstance();
     
     try {
@@ -136,7 +169,10 @@ function updateSponsor() {
         logAudit('UPDATE', 'sponsors', $sponsorId, $oldData, $data);
         
         jsonResponse(['success' => true]);
-    } catch (Exception $e) {
+    } catch (PDOException $e) {
+        if (($e->errorInfo[1] ?? null) === 1062) {
+            jsonResponse(['error' => 'A sponsor with that code already exists.'], 409);
+        }
         error_log("Sponsor update error: " . $e->getMessage());
         jsonResponse(['error' => 'Sponsor update failed'], 500);
     }
