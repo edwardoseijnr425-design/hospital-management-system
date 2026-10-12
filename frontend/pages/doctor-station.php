@@ -186,6 +186,19 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
 #docstation-modal .ds-note-item .when{font-size:10.5px;color:#94A3B8}
 #docstation-modal .ds-note-item .txt{white-space:pre-wrap;color:#334155;font-size:12px;line-height:1.5}
 #docstation-modal .ds-empty{color:#94A3B8;font-size:12px;padding:10px;text-align:center}
+#docstation-modal .ds-note-sec{display:flex;flex-direction:column;gap:2px;margin:0 0 8px;padding-bottom:6px;border-bottom:1px dashed #D9E7F8}
+#docstation-modal .ds-note-sec:last-child{border-bottom:none;margin-bottom:0}
+#docstation-modal .ds-note-sec .k{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1D4ED8}
+#docstation-modal .ds-note-sec .v{color:#334155;font-size:12px;white-space:pre-wrap;line-height:1.5}
+#docstation-modal .ds-note-diag{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:9px;margin-top:8px}
+#docstation-modal .ds-note-diag .k{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#94A3B8;margin-bottom:2px}
+#docstation-modal .ds-note-diag .k.blue{color:#1B659D}
+#docstation-modal .ds-note-diag .v{font-weight:700;color:#1E293B;font-size:12px}
+#docstation-modal .ds-status-badge{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:2px 9px;border-radius:6px;border:1px solid}
+#docstation-modal .ds-status-badge.new{background:#ECFDF5;color:#047857;border-color:#6EE7B7}
+#docstation-modal .ds-status-badge.old{background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE}
+#docstation-modal .ds-status-badge.recurring{background:#FFFBEB;color:#B45309;border-color:#FCD34D}
+#docstation-modal .ds-status-badge.cured{background:#F0FDFA;color:#0F766E;border-color:#5EEAD4}
 #docstation-modal .ds-sec-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--ds-line);padding-bottom:9px;margin-bottom:12px}
 #docstation-modal .ds-sec-head h4{margin:0;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--ds-blue);display:flex;align-items:center;gap:7px}
 #docstation .ds-save-state{font-size:10.5px;color:#15803D;display:none;align-items:center;gap:5px}
@@ -196,9 +209,11 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
   #docstation .ds-tiles{grid-template-columns:repeat(2,1fr)}
   #docstation .ds-row2{grid-template-columns:1fr}
   #docstation .ds-inv{grid-template-columns:1fr}
+  #docstation .ds-inv-group .ds-inv{grid-template-columns:1fr}
   #docstation .ds-rx-line .flds{grid-template-columns:1fr 1fr}
   #docstation .ds-consult-grid{grid-template-columns:1fr}
   #docstation .ds-consult-grid.ds-diagnosis{grid-template-columns:1fr}
+  #docstation .ds-note-diag{grid-template-columns:1fr}
 }
 @media (max-width:640px){
   #docstation .ds-tiles{grid-template-columns:1fr 1fr}
@@ -229,6 +244,47 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
 #docstation .ds-note-sec:last-child{border-bottom:none;margin-bottom:0}
 #docstation .ds-note-sec .k{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1D4ED8}
 #docstation .ds-note-sec .v{color:#334155;font-size:12px;white-space:pre-wrap;line-height:1.5}
+/* Diagnosis block inside a saved entry (provisional / confirmed / status) */
+#docstation .ds-note-diag{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#fff;border:1px solid var(--ds-line);border-radius:8px;padding:9px;margin-top:8px}
+#docstation .ds-note-diag .k{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#94A3B8;margin-bottom:2px}
+#docstation .ds-note-diag .k.blue{color:var(--ds-blue)}
+#docstation .ds-note-diag .v{font-weight:700;color:#1E293B;font-size:12px}
+#docstation .ds-status-badge{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:2px 9px;border-radius:6px;border:1px solid}
+#docstation .ds-status-badge.new{background:#ECFDF5;color:#047857;border-color:#6EE7B7}
+#docstation .ds-status-badge.old{background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE}
+#docstation .ds-status-badge.recurring{background:#FFFBEB;color:#B45309;border-color:#FCD34D}
+#docstation .ds-status-badge.cured{background:#F0FDFA;color:#0F766E;border-color:#5EEAD4}
+/* Clinical record header: collapsible title + sort / collapse tools */
+#docstation .ds-rec-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--ds-line);padding-bottom:6px;margin-bottom:10px}
+#docstation .ds-rec-title{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none}
+#docstation .ds-rec-title i{color:var(--ds-blue);font-size:13px}
+#docstation .ds-rec-title h4{margin:0;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--ds-blue);display:flex;align-items:center;gap:8px}
+#docstation .ds-rec-count{background:#F1F5F9;color:#475569;font-size:10px;font-weight:800;padding:1px 8px;border-radius:999px}
+#docstation .ds-rec-hint{font-size:10px;font-weight:700;color:#94A3B8;text-transform:none;letter-spacing:0}
+#docstation .ds-rec-tools{display:flex;align-items:center;gap:6px}
+#docstation .ds-rec-sort{background:#F1F5F9;border:1px solid var(--ds-line);color:#334155;border-radius:8px;padding:5px 10px;font-size:10.5px;font-weight:800;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+#docstation .ds-rec-sort:hover{background:#E2E8F0}
+#docstation .ds-rec-sort i{color:var(--ds-blue)}
+#docstation .ds-rec-sort.asc i{color:#94A3B8}
+#docstation .ds-rec-chev{background:transparent;border:none;color:#94A3B8;cursor:pointer;font-size:13px;padding:3px 5px;line-height:1}
+#docstation .ds-rec-chev:hover{color:#475569}
+#docstation .ds-rec-list.hidden{display:none}
+/* ---- MODALITY TICK-BOX SELECTOR (Request Test) ---- */
+#docstation .ds-mod-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+#docstation .ds-mod{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--ds-line);border-radius:8px;background:#F8FAFC;cursor:pointer;font-size:12px;font-weight:700;color:#334155;user-select:none;transition:background .15s ease,border-color .15s ease}
+#docstation .ds-mod:hover{background:#F1F5F9}
+#docstation .ds-mod.on{background:#EAF2FB;border-color:var(--ds-blue);color:var(--ds-blue)}
+#docstation .ds-mod input{accent-color:var(--ds-blue);width:15px;height:15px;cursor:pointer}
+#docstation .ds-mod .mod-ic{color:var(--ds-blue);font-size:13px}
+#docstation .ds-mod .mod-cnt{margin-left:auto;font-size:9px;font-weight:800;background:#E2E8F0;color:#475569;border-radius:999px;padding:1px 8px;min-width:22px;text-align:center}
+#docstation .ds-mod.on .mod-cnt{background:var(--ds-blue);color:#fff}
+#docstation .ds-inv-group{border:1px solid var(--ds-line);border-radius:10px;padding:10px;background:#fff}
+#docstation .ds-inv-group + .ds-inv-group{margin-top:10px}
+#docstation .ds-inv-group-top{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#475569;margin:0 0 8px}
+#docstation .ds-inv-group-top i{color:var(--ds-blue)}
+#docstation .ds-inv-group .ds-inv{grid-template-columns:1fr 1fr;gap:8px}
+#docstation .ds-other-spec{display:flex;gap:8px;margin-top:10px;align-items:center}
+#docstation .ds-other-spec .ds-input{flex:1}
 </style>
 
 <div id="docstation" class="ds-wrap">
@@ -297,6 +353,7 @@ var dsInvCache = {};          // pid -> investigations rows
 var dsConsultCache = {};      // pid -> consultation_form context (lazy)
 var dsRx = {};                // pid -> [drug lines]
 var dsDrugs = {};             // pid -> [stocked drugs]
+var dsNotesUi = {};           // pid -> { open: bool, desc: bool } clinical-record view state
 var dsSearchTimer = null;
 
 var DS_NOTE_LABELS = {
@@ -330,6 +387,21 @@ var DS_NOTE_FIELDS = [
           { value: 'RECURRING', label: 'RECURRING' },
           { value: 'CURED',     label: 'CURED' }
       ] }
+];
+
+/* The diagnosis fields are grouped into their own panel when a saved entry is
+   rendered, with the status shown as a coloured badge. */
+var DS_DIAG_KEYS = ['provisional_diagnosis', 'confirmed_diagnosis', 'diagnosis_status'];
+var DS_STATUS_CLASS = { NEW: 'new', OLD: 'old', RECURRING: 'recurring', CURED: 'cured' };
+
+/* Modality tick-box row on the Request Test block. `kind` matches the kind tag
+   on the investigation catalogue, so the master boxes and the grouped checklists
+   stay in lock-step. */
+var DS_INV_MODALITIES = [
+    { kind: 'lab',        label: 'Lab',                     groupLabel: 'Laboratory Tests',        icon: 'fa-flask-vial', tag: 'LAB' },
+    { kind: 'radiology',  label: 'Radiology',               groupLabel: 'Radiology / X-Ray',       icon: 'fa-x-ray',      tag: 'IMAGING' },
+    { kind: 'ultrasound', label: 'Ultrasound / Sonography', groupLabel: 'Ultrasound / Sonography', icon: 'fa-wave-square', tag: 'SONO' },
+    { kind: 'other',      label: 'Other',                   groupLabel: 'Other / Specialist',      icon: 'fa-stethoscope', tag: 'OTHER' }
 ];
 
 function initDoctorStation() {
@@ -412,7 +484,7 @@ async function loadDoctorStation() {
 
 async function renderCards() {
     var container = document.getElementById('dsCards');
-    dsContext = {}; dsNotesCache = {}; dsMedsCache = {}; dsInvCache = {}; dsConsultCache = {}; dsRx = {}; dsDrugs = {};
+    dsContext = {}; dsNotesCache = {}; dsMedsCache = {}; dsInvCache = {}; dsConsultCache = {}; dsRx = {}; dsDrugs = {}; dsNotesUi = {};
 
     if (!dsInpatients.length) {
         container.innerHTML = '<div class="ds-card"><div class="ds-card-pad" style="text-align:center;color:#64748B;font-size:13px;">No patients currently admitted in the selected ward.</div></div>';
@@ -665,8 +737,21 @@ function renderPatientCard(ctx) {
                     + '</div>'
                     + '<div style="text-align:right;"><button type="button" class="ds-btn primary" onclick="dsSaveDoctorEntry(' + pid + ')"><i class="fa-solid fa-floppy-disk"></i> Save Doctor Entry</button></div>'
                     + '<div style="border-top:1px dashed var(--ds-line);margin:14px 0 12px;"></div>'
-                    + '<div class="ds-sec-head" style="border:none;padding:0;margin:0 0 8px;"><h4><i class="fa-solid fa-clock-rotate-left"></i> Clinical Record For This Stay</h4></div>'
-                    + '<div id="dsNotesList_' + pid + '"><div class="ds-empty">Loading clinical record…</div></div>'
+                    + '<div class="ds-rec-head">'
+                        + '<div class="ds-rec-title" onclick="dsToggleNotes(' + pid + ')">'
+                            + '<i class="fa-solid fa-clock-rotate-left"></i>'
+                            + '<h4><span>Clinical Record For This Stay</span>'
+                                + '<span class="ds-rec-count" id="dsNotesCount_' + pid + '">0</span>'
+                                + '<span class="ds-rec-hint" id="dsNotesHint_' + pid + '"></span></h4>'
+                        + '</div>'
+                        + '<div class="ds-rec-tools">'
+                            + '<button type="button" class="ds-rec-sort" id="dsNotesSort_' + pid + '" onclick="dsToggleNotesSort(' + pid + ')">'
+                                + '<i class="fa-solid fa-arrow-down-9-1"></i><span>Sorted: Newest First (DESC)</span></button>'
+                            + '<button type="button" class="ds-rec-chev" id="dsNotesChev_' + pid + '" onclick="dsToggleNotes(' + pid + ')" aria-label="Collapse clinical record">'
+                                + '<i class="fa-solid fa-chevron-up"></i></button>'
+                        + '</div>'
+                    + '</div>'
+                    + '<div id="dsNotesList_' + pid + '" class="ds-rec-list"><div class="ds-empty">Loading clinical record…</div></div>'
                 + '</div>'
             + '</div>'
 
@@ -730,7 +815,9 @@ function renderPatientCard(ctx) {
                     + '<div class="ds-table-wrap" style="margin-bottom:14px;"><table class="ds-table"><thead><tr>'
                         + '<th>Date Requested</th><th>Investigation / Test</th><th>Category</th><th>Ordered By</th><th>Result Status</th>'
                         + '</tr></thead><tbody id="dsInvBody_' + pid + '"><tr><td colspan="5" class="ds-empty">Loading investigations…</td></tr></tbody></table></div>'
-                    + '<div class="ds-fld"><label>+ Request Test</label><div class="ds-inv" id="dsInvCat_' + pid + '"><div class="ds-empty">Loading investigation catalogue…</div></div></div>'
+                    + '<div class="ds-fld"><label>+ Request Test — Tick the modality, then select the tests</label>'
+                        + '<div class="ds-mod-row" id="dsModRow_' + pid + '"></div>'
+                        + '<div class="ds-inv" id="dsInvCat_' + pid + '"><div class="ds-empty">Loading investigation catalogue…</div></div></div>'
                     + '<div style="text-align:right;margin-top:12px;"><button type="button" class="ds-btn green" onclick="dsSaveInvestigations(' + pid + ')"><i class="fa-solid fa-floppy-disk"></i> Save Requests</button></div>'
                 + '</div>'
             + '</div>'
@@ -927,11 +1014,35 @@ function dsRenderNoteText(text) {
         html += '<div class="ds-note-sec"><span class="k">Entry Type</span><span class="v">' + escHtml(parts.entry_type) + '</span></div>';
     }
     DS_NOTE_FIELDS.forEach(function (f) {
+        // The diagnosis fields are grouped into their own panel below.
+        if (DS_DIAG_KEYS.indexOf(f.key) !== -1) return;
         if (parts[f.key]) {
             html += '<div class="ds-note-sec"><span class="k">' + escHtml(f.plain) + '</span><div class="v">' + escHtml(parts[f.key]) + '</div></div>';
         }
     });
+    var hasDiag = DS_DIAG_KEYS.some(function (k) { return !!parts[k]; });
+    if (hasDiag) {
+        html += '<div class="ds-note-diag">'
+            + dsDiagCell('Provisional Diagnosis', parts.provisional_diagnosis, false)
+            + dsDiagCell('Confirmed Diagnosis', parts.confirmed_diagnosis, false)
+            + dsDiagCell('Diagnosis Status', parts.diagnosis_status, true)
+            + '</div>';
+    }
     return '<div class="txt">' + html + '</div>';
+}
+
+// One cell of the saved-entry diagnosis panel. The status renders as a
+// colour-coded badge; the two diagnoses render as plain text.
+function dsDiagCell(label, value, isStatus) {
+    var inner;
+    if (isStatus) {
+        inner = value
+            ? '<span class="ds-status-badge ' + (DS_STATUS_CLASS[String(value).toUpperCase()] || 'old') + '">' + escHtml(value) + '</span>'
+            : '<span class="v">&mdash;</span>';
+    } else {
+        inner = '<span class="v">' + escHtml(value || '\u2014') + '</span>';
+    }
+    return '<div><span class="k' + (isStatus ? '' : ' blue') + '">' + escHtml(label) + '</span>' + inner + '</div>';
 }
 
 // Fill the consultation form with the most recent previous clinical entry:
@@ -976,10 +1087,59 @@ async function loadClinicalNotes(pid) {
     renderClinicalNotes(pid);
 }
 
+/* View state for the collapsible, sortable clinical record (defaults: open,
+   newest first — matching the API's own DESC ordering). */
+function dsNotesState(pid) {
+    if (!dsNotesUi[pid]) dsNotesUi[pid] = { open: true, desc: true };
+    return dsNotesUi[pid];
+}
+
+function dsToggleNotes(pid) {
+    var st = dsNotesState(pid);
+    st.open = !st.open;
+    renderClinicalNotes(pid);
+}
+
+function dsToggleNotesSort(pid) {
+    var st = dsNotesState(pid);
+    st.desc = !st.desc;
+    renderClinicalNotes(pid);
+}
+
 function renderClinicalNotes(pid) {
     var holder = document.getElementById('dsNotesList_' + pid);
     if (!holder) return;
-    var list = dsNotesCache[pid] || [];
+    var st = dsNotesState(pid);
+
+    // Sort a copy so the cache keeps the API's own order for "refill previous".
+    var list = (dsNotesCache[pid] || []).slice();
+    list.sort(function (a, b) {
+        var ta = String(a.created_at || ''), tb = String(b.created_at || '');
+        if (ta === tb) return (Number(b.id) || 0) - (Number(a.id) || 0);
+        return ta < tb ? -1 : 1;
+    });
+    if (st.desc) list.reverse();
+
+    // Header reflects the current state.
+    var hint = document.getElementById('dsNotesHint_' + pid);
+    if (hint) hint.textContent = st.open ? 'Click to Hide' : 'Click to Expand';
+    var count = document.getElementById('dsNotesCount_' + pid);
+    if (count) count.textContent = list.length;
+    var sortBtn = document.getElementById('dsNotesSort_' + pid);
+    if (sortBtn) {
+        sortBtn.classList.toggle('asc', !st.desc);
+        var sic = sortBtn.querySelector('i');
+        if (sic) sic.className = 'fa-solid ' + (st.desc ? 'fa-arrow-down-9-1' : 'fa-arrow-up-1-9');
+        var slbl = sortBtn.querySelector('span');
+        if (slbl) slbl.textContent = st.desc ? 'Sorted: Newest First (DESC)' : 'Sorted: Oldest First (ASC)';
+    }
+    var chev = document.getElementById('dsNotesChev_' + pid);
+    if (chev) {
+        var cic = chev.querySelector('i');
+        if (cic) cic.className = 'fa-solid ' + (st.open ? 'fa-chevron-up' : 'fa-chevron-down');
+    }
+    holder.classList.toggle('hidden', !st.open);
+
     if (!list.length) {
         holder.innerHTML = '<div class="ds-empty">No clinical entries recorded for this stay yet.</div>';
         return;
@@ -1107,18 +1267,96 @@ async function ensureConsultContext(pid) {
 
 function renderInvCatalogue(pid) {
     var holder = document.getElementById('dsInvCat_' + pid);
+    var modRow = document.getElementById('dsModRow_' + pid);
     if (!holder) return;
     var ctx = dsConsultCache[pid];
     var inv = (ctx && ctx.investigations) ? ctx.investigations : [];
     if (!inv.length) {
         holder.innerHTML = '<div class="ds-empty">No investigations are configured.</div>';
+        if (modRow) modRow.innerHTML = '';
         return;
     }
-    holder.innerHTML = inv.map(function (i) {
-        return '<label><input type="checkbox" class="ds-inv-check" data-ds-inv="' + pid + '" value="' + escHtml(i.key) + '">'
-            + '<span>' + escHtml(i.label) + '</span>'
-            + '<span class="kind">' + escHtml(i.kind === 'lab' ? 'Lab' : 'Imaging') + '</span></label>';
+
+    // Sort the catalogue under its modality (kind).
+    var groups = {};
+    DS_INV_MODALITIES.forEach(function (m) { groups[m.kind] = []; });
+    inv.forEach(function (i) {
+        if (!groups[i.kind]) groups[i.kind] = [];
+        groups[i.kind].push(i);
+    });
+
+    // Modality master tick boxes — ticking one selects every test in its group.
+    if (modRow) {
+        modRow.innerHTML = DS_INV_MODALITIES.map(function (m) {
+            var n = (groups[m.kind] || []).length;
+            return '<label class="ds-mod" id="dsMod_' + pid + '_' + m.kind + '">'
+                + '<input type="checkbox" class="ds-mod-check" data-ds-mod="' + m.kind + '" onchange="dsToggleMod(' + pid + ',\'' + m.kind + '\',this.checked)">'
+                + '<i class="fa-solid ' + m.icon + ' mod-ic"></i>'
+                + '<span>' + escHtml(m.label) + '</span>'
+                + '<span class="mod-cnt" id="dsModCnt_' + pid + '_' + m.kind + '">' + n + '</span>'
+                + '</label>';
+        }).join('');
+    }
+
+    // Grouped test checklists, one panel per modality. The Other panel also
+    // carries a free-text box so the doctor can request anything not preset.
+    holder.innerHTML = DS_INV_MODALITIES.map(function (m) {
+        var items = groups[m.kind] || [];
+        var isOther = m.kind === 'other';
+        var body = items.map(function (i) {
+            return '<label><input type="checkbox" class="ds-inv-check" data-ds-inv="' + pid + '" data-ds-grp="' + m.kind + '" value="' + escHtml(i.key) + '">'
+                + '<span>' + escHtml(i.label) + '</span>'
+                + '<span class="kind">' + escHtml(m.tag) + '</span></label>';
+        }).join('');
+        if (!items.length && isOther) {
+            body = '<div class="ds-empty" style="padding:10px;">No presets — type any procedure below.</div>';
+        }
+        if (!items.length && !isOther) return '';
+        return '<div class="ds-inv-group" data-ds-grp-block="' + m.kind + '">'
+            + '<div class="ds-inv-group-top"><i class="fa-solid ' + m.icon + '"></i> ' + escHtml(m.groupLabel) + '</div>'
+            + '<div class="ds-inv">' + body + '</div>'
+            + (isOther
+                ? '<div class="ds-other-spec"><input type="text" id="dsOtherText_' + pid + '" class="ds-input" placeholder="Or type any other test / procedure, e.g. ECG, Spirometry…"></div>'
+                : '')
+            + '</div>';
     }).join('');
+
+    dsSyncModMasters(pid);
+    if (!holder.getAttribute('data-ds-inv-bound')) {
+        holder.setAttribute('data-ds-inv-bound', '1');
+        holder.addEventListener('change', function (e) {
+            if (e.target && e.target.classList && e.target.classList.contains('ds-inv-check')) {
+                dsSyncModMasters(pid);
+            }
+        });
+    }
+}
+
+// Master tick toggles every test underneath that modality.
+function dsToggleMod(pid, kind, checked) {
+    document.querySelectorAll('#dsInvCat_' + pid + ' [data-ds-grp="' + kind + '"]').forEach(function (c) {
+        c.checked = !!checked;
+    });
+    dsSyncModMasters(pid);
+}
+
+// Keep the master state truthful: checked when ALL tests in its group are
+// checked (master with one test behaves like that test), lit up whenever any
+// are ticked, and the count badge shows selected / total.
+function dsSyncModMasters(pid) {
+    DS_INV_MODALITIES.forEach(function (m) {
+        var box = document.getElementById('dsMod_' + pid + '_' + m.kind);
+        var cnt = document.getElementById('dsModCnt_' + pid + '_' + m.kind);
+        var checks = document.querySelectorAll('#dsInvCat_' + pid + ' [data-ds-grp="' + m.kind + '"]');
+        var total = checks.length, on = 0;
+        checks.forEach(function (c) { if (c.checked) on++; });
+        if (cnt) cnt.textContent = on ? (on + '/' + total) : String(total);
+        if (box) {
+            box.classList.toggle('on', !!on);
+            var master = box.querySelector('.ds-mod-check');
+            if (master) master.checked = total > 0 && on === total;
+        }
+    });
 }
 
 async function dsAddDrug(pid) {
@@ -1228,8 +1466,9 @@ async function loadInvestigations(pid, hospitalNumber) {
     try {
         var labP = fetch('/hms/backend/api/lab.php?action=requests').then(function (r) { return r.json(); }).catch(function () { return { success: false }; });
         var radP = fetch('/hms/backend/api/radiology.php?action=requests').then(function (r) { return r.json(); }).catch(function () { return { success: false }; });
-        var out = await Promise.all([labP, radP]);
-        var lab = out[0], rad = out[1];
+        var othP = fetch('/hms/backend/api/consultation_form.php?action=other_requests').then(function (r) { return r.json(); }).catch(function () { return { success: false }; });
+        var out = await Promise.all([labP, radP, othP]);
+        var lab = out[0], rad = out[1], oth = out[2];
         if (lab.success && lab.requests) {
             lab.requests.filter(function (x) { return x.hospital_number === hospitalNumber; }).forEach(function (x) {
                 rows.push({ kind: 'Laboratory', test: x.test_type, when: x.requested_at, by: x.doctor_name || '--', status: x.status, result_status: x.result_status });
@@ -1239,6 +1478,11 @@ async function loadInvestigations(pid, hospitalNumber) {
             rad.requests.filter(function (x) { return x.hospital_number === hospitalNumber; }).forEach(function (x) {
                 var test = x.exam_type + (x.body_part ? ' / ' + x.body_part : '');
                 rows.push({ kind: 'Radiology', test: test, when: x.requested_at, by: x.doctor_name || '--', status: x.status, result_status: x.result_status });
+            });
+        }
+        if (oth.success && oth.requests) {
+            oth.requests.filter(function (x) { return x.hospital_number === hospitalNumber; }).forEach(function (x) {
+                rows.push({ kind: 'Other', test: x.request_type, when: x.requested_at, by: x.doctor_name || '--', status: x.status, result_status: null });
             });
         }
     } catch (e) { console.error('Investigations load error:', e); }
@@ -1281,12 +1525,18 @@ async function dsSaveInvestigations(pid) {
     if (!ctx) { showAlert('Could not load the patient context.', 'error'); return; }
     var keys = [];
     document.querySelectorAll('#dsInvCat_' + pid + ' .ds-inv-check').forEach(function (c) { if (c.checked) keys.push(c.value); });
-    if (!keys.length) { showAlert('Tick at least one investigation to request.', 'error'); return; }
-    await dsPostConsultation(pid, ctx, {
+    var otherText = ((document.getElementById('dsOtherText_' + pid) || {}).value || '').trim();
+    if (!keys.length && !otherText) {
+        showAlert('Tick a test — or type one under Other — before saving.', 'error');
+        return;
+    }
+    var payload = {
         diagnosis_status: 'New',
         doctor_notes: 'Investigations requested from the Doctor Station.',
         investigations: keys
-    });
+    };
+    if (otherText) payload.other_requests = [otherText];
+    await dsPostConsultation(pid, ctx, payload);
 }
 
 /* ---------- Shared consultation POST (prescriptions + investigations) ---------- */
@@ -1301,6 +1551,7 @@ async function dsPostConsultation(pid, ctx, overrides) {
         medication_notes: overrides.medication_notes || '',
         allergies: allergies,
         investigations: overrides.investigations || [],
+        other_requests: overrides.other_requests || [],
         prescriptions: overrides.prescriptions || [],
         save_as_draft: false
     };
@@ -1317,13 +1568,17 @@ async function dsPostConsultation(pid, ctx, overrides) {
             if (data.created.prescriptions) parts.push(data.created.prescriptions + ' prescription' + (data.created.prescriptions === 1 ? '' : 's'));
             if (data.created.lab) parts.push(data.created.lab + ' lab request' + (data.created.lab === 1 ? '' : 's'));
             if (data.created.radiology) parts.push(data.created.radiology + ' imaging request' + (data.created.radiology === 1 ? '' : 's'));
+            if (data.created.other) parts.push(data.created.other + ' other request' + (data.created.other === 1 ? '' : 's'));
         }
         showAlert('Saved' + (parts.length ? ' \u00B7 ' + parts.join(' \u00B7 ') : '') + '.', 'success');
         markSaved(pid);
         if (overrides.prescriptions) { dsRx[pid] = []; renderRxLines(pid); }
-        if (overrides.investigations) {
+        if (overrides.investigations || overrides.other_requests) {
             var cat = document.getElementById('dsInvCat_' + pid);
             if (cat) cat.querySelectorAll('.ds-inv-check').forEach(function (c) { c.checked = false; });
+            var oth = document.getElementById('dsOtherText_' + pid);
+            if (oth) oth.value = '';
+            dsSyncModMasters(pid);
         }
         var row = dsInpatients.filter(function (p) { return String(p.patient_id) === String(pid); })[0];
         if (row) loadInvestigations(pid, row.hospital_number);
@@ -1406,14 +1661,15 @@ async function dsSaveOrUpdate(pid) {
     var noteContent = dsHasNoteContent(pid);
     var lines = dsCollectedLinesExist(pid);
     var invCount = document.querySelectorAll('#dsInvCat_' + pid + ' .ds-inv-check:checked').length;
+    var otherText = ((document.getElementById('dsOtherText_' + pid) || {}).value || '').trim() !== '';
 
-    if (!noteContent && !lines && !invCount) {
+    if (!noteContent && !lines && !invCount && !otherText) {
         showAlert('Nothing to save — write a clinical entry, prescribe a drug or tick an investigation.', 'error');
         return;
     }
     if (noteContent) await dsSaveDoctorEntry(pid);
     if (lines) await dsSavePrescription(pid);
-    if (invCount) await dsSaveInvestigations(pid);
+    if (invCount || otherText) await dsSaveInvestigations(pid);
     try { localStorage.removeItem(dsDraftKey(pid)); } catch (e) {}
 }
 

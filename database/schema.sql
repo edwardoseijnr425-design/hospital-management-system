@@ -397,6 +397,26 @@ CREATE TABLE radiology_requests (
     FOREIGN KEY (doctor_id) REFERENCES users(id)
 );
 
+-- Other / Specialist Investigation Requests (Doctor Station)
+-- Tests that are neither laboratory work nor imaging on the radiology desk —
+-- ECG, spirometry, specialist referrals etc. The doctor picks an "Other"
+-- modality on the Request Test block and either ticks a preset or types a
+-- free-text procedure; each becomes one row here, visible back in the Doctor
+-- Station's Investigations table.
+CREATE TABLE other_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    visit_id INT NOT NULL,
+    doctor_id INT NOT NULL,
+    request_type VARCHAR(100) NOT NULL,
+    notes TEXT,
+    status ENUM('pending', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (visit_id) REFERENCES patient_visits(id),
+    FOREIGN KEY (doctor_id) REFERENCES users(id),
+    INDEX idx_other_requests_visit (visit_id),
+    INDEX idx_other_requests_status (status)
+);
+
 -- Radiology Results
 CREATE TABLE radiology_results (
     id INT AUTO_INCREMENT PRIMARY KEY,

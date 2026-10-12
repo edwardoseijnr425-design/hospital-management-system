@@ -39,16 +39,29 @@ requireRole(['super_admin', 'admin', 'doctor']);
 
 // The investigation checkboxes on the form. Each entry is
 // [kind, name written to the request, body_part for radiology].
-// Lab work goes to lab_requests; imaging goes to radiology_requests. Both
-// tables already exist, so each checkbox raises a real order that the lab and
-// radiology desks pick up, rather than a line of free text.
+// Lab work goes to lab_requests; imaging (radiology AND ultrasound/sonography)
+// goes to radiology_requests; the "Other" modality goes to other_requests. All
+// three tables exist, so each checkbox raises a real order that the respective
+// desk picks up, rather than a line of free text.
 const CONSULTATION_INVESTIGATIONS = [
+    // Laboratory
     'lab:Malaria Parasite / RDT' => ['lab', 'Malaria Parasite / RDT', ''],
     'lab:Full Blood Count (FBC)' => ['lab', 'Full Blood Count (FBC)', ''],
     'lab:Urinalysis'             => ['lab', 'Urinalysis', ''],
     'lab:Widal Test (Typhoid)'   => ['lab', 'Widal Test (Typhoid)', ''],
+    'lab:Blood Sugar (RBS / FBS)' => ['lab', 'Blood Sugar (RBS / FBS)', ''],
+    // Radiology
     'radiology:Chest X-Ray'      => ['radiology', 'Chest X-Ray', 'Chest'],
     'radiology:Abdominal Scan'   => ['radiology', 'Abdominal Scan', 'Abdomen'],
+    // Ultrasound / Sonography (performed by the imaging desk, recorded here
+    // with an ultrasound-specific body part so it reads clearly on the desk)
+    'ultrasound:Abdominal Ultrasound' => ['ultrasound', 'Abdominal Ultrasound', 'Abdomen'],
+    'ultrasound:Pelvic Ultrasound'    => ['ultrasound', 'Pelvic Ultrasound', 'Pelvis'],
+    'ultrasound:Obstetric Scan'       => ['ultrasound', 'Obstetric Scan', 'Obstetric'],
+    // Other / specialist (ECG, spirometry, ...) — one row per preset; the
+    // doctor can also type a free-text procedure which is saved alongside.
+    'other:ECG'                        => ['other', 'ECG', ''],
+    'other:Spirometry'                 => ['other', 'Spirometry / PFT', ''],
 ];
 
 // Separator used to round-trip the free-text medication notes inside
@@ -84,6 +97,8 @@ if ($method === 'GET' && $action === 'drugs') {
     searchDrugs();
 } elseif ($method === 'GET' && $action === 'context') {
     formContext();
+} elseif ($method === 'GET' && $action === 'other_requests') {
+    otherRequests();
 } elseif ($method === 'POST' && $action === 'save') {
     saveEncounter();
 } else {
@@ -332,6 +347,21 @@ function saveEncounter() {
         jsonResponse(['error' => 'Unknown investigation requested: ' . implode(', ', $unknown)], 400);
     }
 
+    // Free-text "Other" modality requests (ECG, spirometry, any procedure the
+    // doctor types in) are validated here rather than in raiseInvestigation
+    // because they are not catalogue-preset keys.
+    $otherRequests = [];
+    if (is_array($data['other_requests'] ?? null)) {
+        foreach ($data['other_requests'] as $otherText) {
+            $otherText = trim((string)$otherText);
+            if ($otherText === '') continue;
+            if (mb_strlen($otherText) > 100) {
+                jsonResponse(['error' => 'Each "Other" test must be 100 characters or fewer'], 400);
+            }
+            $otherRequests[] = mb_substr($otherText, 0, 100);
+        }
+    }
+
     // Prescription lines from the drug picker.
     $rxLines = is_array($data['prescriptions'] ?? null) ? $data['prescriptions'] : [];
     $rxDrugIds = [];
@@ -390,10 +420,13 @@ function saveEncounter() {
         $db->update('patient_registrations', ['allergies' => $allergies === '' ? null : $allergies], 'id = ?', [$patientId]);
 
         $counts = [
-            'lab' => 0, 'radiology' => 0, 'prescriptions' => 0, 'skipped' => 0,
+            'lab' => 0, 'radiology' => 0, 'other' => 0, 'prescriptions' => 0, 'skipped' => 0,
         ];
         foreach ($investigationKeys as $key) {
             raiseInvestigation($db, $visitId, $key, $counts);
+        }
+        foreach ($otherRequests as $otherText) {
+            raiseOtherRequest($db, $visitId, $otherText, $counts);
         }
 
         foreach ($rxLines as $line) {
@@ -422,6 +455,7 @@ function saveEncounter() {
             'visit_id'      => $visitId,
             'lab_requests'  => $counts['lab'],
             'radiology_requests' => $counts['radiology'],
+            'other_requests'=> $counts['other'],
             'prescriptions' => $counts['prescriptions'],
             'appointment_id'=> $appointmentId,
             'draft'         => $draft,
@@ -435,6 +469,7 @@ function saveEncounter() {
             'created'          => [
                 'lab'          => $counts['lab'],
                 'radiology'    => $counts['radiology'],
+                'other'        => $counts['other'],
                 'prescriptions'=> $counts['prescriptions'],
             ],
             'skipped_duplicates' => $counts['skipped'],
@@ -542,29 +577,95 @@ function raiseInvestigation($db, $visitId, $key, &$counts) {
         return true;
     }
 
+    // Both radiology and ultrasound / sonography studies are imaging, so they
+    // land on the radiology desk. The exam_type carries the modality in the
+    // name ("Abdominal Ultrasound" vs "Chest X-Ray") so the desk reads it fine.
+    if ($kind === 'radiology' || $kind === 'ultrasound') {
+        $dupe = $db->fetchOne(
+            "SELECT id FROM radiology_requests
+             WHERE visit_id = ? AND exam_type = ? AND status IN ('pending','scheduled') LIMIT 1",
+            [$visitId, $name]
+        );
+        if ($dupe) { $counts['skipped']++; return false; }
+        $radId = $db->insert('radiology_requests', [
+            'visit_id'    => $visitId,
+            'doctor_id'   => $doctorId,
+            'exam_type'   => $name,
+            'body_part'   => $bodyPart === '' ? null : $bodyPart,
+            'urgency'     => 'routine',
+            'status'      => 'pending',
+        ]);
+        // Auto-charge the imaging study to the visit's bill when a price is set
+        // on the Service Prices page. Runs inside the consultation transaction,
+        // so a billing failure rolls the whole save back rather than half-writing.
+        $priced = resolveRadiologyPrice($name);
+        if ($priced) {
+            chargeServiceToVisit($visitId, 'radiology', $radId, 'Radiology: ' . $name, (float)$priced['price']);
+        }
+        $counts['radiology']++;
+        return true;
+    }
+
+    // The "Other" modality (ECG, spirometry, any specialist procedure) is not
+    // lab work and not imaging, so it gets its own row in other_requests.
     $dupe = $db->fetchOne(
-        "SELECT id FROM radiology_requests
-         WHERE visit_id = ? AND exam_type = ? AND status IN ('pending','scheduled') LIMIT 1",
+        "SELECT id FROM other_requests
+         WHERE visit_id = ? AND request_type = ? AND status = 'pending' LIMIT 1",
         [$visitId, $name]
     );
     if ($dupe) { $counts['skipped']++; return false; }
-    $radId = $db->insert('radiology_requests', [
-        'visit_id'    => $visitId,
-        'doctor_id'   => $doctorId,
-        'exam_type'   => $name,
-        'body_part'   => $bodyPart === '' ? null : $bodyPart,
-        'urgency'     => 'routine',
-        'status'      => 'pending',
+    $db->insert('other_requests', [
+        'visit_id'     => $visitId,
+        'doctor_id'    => $doctorId,
+        'request_type' => $name,
+        'status'       => 'pending',
     ]);
-    // Auto-charge the imaging study to the visit's bill when a price is set on
-    // the Service Prices page. Runs inside the consultation transaction, so a
-    // billing failure rolls the whole save back rather than half-writing.
-    $priced = resolveRadiologyPrice($name);
-    if ($priced) {
-        chargeServiceToVisit($visitId, 'radiology', $radId, 'Radiology: ' . $name, (float)$priced['price']);
-    }
-    $counts['radiology']++;
+    $counts['other']++;
     return true;
+}
+
+// Free-text "Other" modality request (the box under the Other group on the
+// Request Test block). Same duplicate guard as raiseInvestigation — one open
+// order per visit per text.
+function raiseOtherRequest($db, $visitId, $text, &$counts) {
+    $doctorId = getCurrentUserId();
+    $dupe = $db->fetchOne(
+        "SELECT id FROM other_requests
+         WHERE visit_id = ? AND request_type = ? AND status = 'pending' LIMIT 1",
+        [$visitId, $text]
+    );
+    if ($dupe) { $counts['skipped']++; return false; }
+    $db->insert('other_requests', [
+        'visit_id'     => $visitId,
+        'doctor_id'    => $doctorId,
+        'request_type' => $text,
+        'status'       => 'pending',
+    ]);
+    $counts['other']++;
+    return true;
+}
+
+// Listing used by the Doctor Station's Investigations table — shaped like the
+// lab/radiology requests lists so the station can merge the three sources.
+function otherRequests() {
+    $db = Database::getInstance();
+    $sql = "SELECT r.*,
+                   CONCAT(TRIM(CONCAT(p.first_name, ' ', IFNULL(p.middle_name, ''))), ' ', p.last_name) AS patient_name,
+                   p.hospital_number,
+                   v.visit_number,
+                   IFNULL(u.full_name, '') AS doctor_name
+            FROM other_requests r
+            JOIN patient_visits v ON v.id = r.visit_id
+            JOIN patient_registrations p ON p.id = v.patient_id
+            LEFT JOIN users u ON u.id = r.doctor_id
+            WHERE 1=1";
+    $params = [];
+    if (!empty($_GET['status'])) {
+        $sql .= " AND r.status = ?";
+        $params[] = $_GET['status'];
+    }
+    $sql .= " ORDER BY r.requested_at DESC";
+    jsonResponse(['success' => true, 'requests' => $db->fetchAll($sql, $params)]);
 }
 
 // One drug per row, because prescriptions.drug_id is a required foreign key —
