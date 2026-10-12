@@ -47,6 +47,14 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
 #vitals-page .bill-toggle.open .chev{transform:rotate(180deg)}
 #vitals-page .bill-panel{display:none;padding:12px;border:1px solid #E2E8F0;border-top:none;border-radius:0 0 6px 6px}
 #vitals-page .bill-panel.show{display:block}
+/* ---------- Clinical workspace tabs (plain JS toggle; this project ships no Alpine.js) ---------- */
+#vitals-page .ct-tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid #E2E8F0;padding-bottom:10px;margin-bottom:14px}
+#vitals-page .ct-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid transparent;border-radius:8px;background-color:#F1F5F9;color:#334155;font-size:12px;font-weight:700;cursor:pointer;transition:background-color .15s ease,color .15s ease,box-shadow .15s ease}
+#vitals-page .ct-tab:hover{background-color:#E2E8F0}
+#vitals-page .ct-tab.active{background-color:#1B659D;color:#fff;box-shadow:0 2px 6px rgba(15,45,89,.25)}
+#vitals-page .ct-tab svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;flex:0 0 auto}
+#vitals-page .ct-panel{display:none}
+#vitals-page .ct-panel.active{display:block}
 /* ---------- Billing category rollup ---------- */
 #vitals-page .bill-rollup{margin-top:8px;border:1px solid #E2E8F0;border-radius:6px;overflow:hidden}
 #vitals-page .bill-rollup-head{display:flex;align-items:center;gap:6px;padding:6px 10px;background-color:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#0F2D59}
@@ -837,6 +845,22 @@ function toggleBillingPanel(pid) {
     btn.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 
+/* Tab switcher for the clinical workspace (vitals / medication / notes /
+   treatment). Scoped to the card's workspace element so multiple patient
+   cards on the page never affect each other's active tab. */
+function switchClinicalTab(pid, section) {
+    const workspace = document.getElementById('ctWorkspace_' + pid);
+    if (!workspace) return;
+    workspace.querySelectorAll('.ct-tab').forEach(function (btn) {
+        const on = btn.getAttribute('data-ct-tab') === section;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    workspace.querySelectorAll('.ct-panel').forEach(function (panel) {
+        panel.classList.toggle('active', panel.getAttribute('data-ct-panel') === section);
+    });
+}
+
 function plausibleVital(v, field) {
     if (!v || v[field] === null || v[field] === undefined || v[field] === '') return null;
     const n = Number(v[field]);
@@ -1001,6 +1025,31 @@ function renderPatientCard(ctx) {
                 ${latestVitalTiles(readings)}
             </div>
 
+            <!-- CLINICAL WORKSPACE: tabbed sections driven by switchClinicalTab()
+                 (plain JS — this project ships no Alpine.js, so declarative
+                 x-show/@click bindings would silently never fire). -->
+            <div class="ct-workspace" id="ctWorkspace_${pid}">
+                <div class="ct-tabs" role="tablist" aria-label="Clinical sections">
+                    <button type="button" class="ct-tab active" id="ctTab_${pid}_vitals" data-ct-tab="vitals" role="tab" aria-selected="true" aria-controls="ctPanel_${pid}_vitals" onclick="switchClinicalTab(${pid}, 'vitals')">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                        <span>Vital Signs Readings</span>
+                    </button>
+                    <button type="button" class="ct-tab" id="ctTab_${pid}_meds" data-ct-tab="meds" role="tab" aria-selected="false" aria-controls="ctPanel_${pid}_meds" onclick="switchClinicalTab(${pid}, 'meds')">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="7" width="12" height="14" rx="2"></rect><path d="M9 3h6v4H9z"></path></svg>
+                        <span>Prescribed Medication</span>
+                    </button>
+                    <button type="button" class="ct-tab" id="ctTab_${pid}_notes" data-ct-tab="notes" role="tab" aria-selected="false" aria-controls="ctPanel_${pid}_notes" onclick="switchClinicalTab(${pid}, 'notes')">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                        <span>Nurses / Midwives Notes</span>
+                    </button>
+                    <button type="button" class="ct-tab" id="ctTab_${pid}_treatment" data-ct-tab="treatment" role="tab" aria-selected="false" aria-controls="ctPanel_${pid}_treatment" onclick="switchClinicalTab(${pid}, 'treatment')">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        <span>Treatment Sheet</span>
+                    </button>
+                </div>
+
+                <!-- PANEL: VITAL SIGNS READINGS -->
+                <div class="ct-panel active" id="ctPanel_${pid}_vitals" data-ct-panel="vitals" role="tabpanel" aria-labelledby="ctTab_${pid}_vitals">
             <!-- VITAL SIGNS READINGS -->
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
@@ -1032,6 +1081,10 @@ function renderPatientCard(ctx) {
                 </div>
             </div>
 
+                </div><!-- /ct-panel vitals -->
+
+                <!-- PANEL: PRESCRIBED MEDICATION -->
+                <div class="ct-panel" id="ctPanel_${pid}_meds" data-ct-panel="meds" role="tabpanel" aria-labelledby="ctTab_${pid}_meds">
             <!-- SECTION 1: PRESCRIBED MEDICATION -->
             <div class="mb-4">
                 <h6 class="font-weight-bold text-uppercase mb-2 d-flex align-items-center gap-2" style="color: #0F2D59; font-size: 13px;">
@@ -1056,6 +1109,10 @@ function renderPatientCard(ctx) {
                 </div>
             </div>
 
+                </div><!-- /ct-panel meds -->
+
+                <!-- PANEL: NURSES / MIDWIVES NOTES -->
+                <div class="ct-panel" id="ctPanel_${pid}_notes" data-ct-panel="notes" role="tabpanel" aria-labelledby="ctTab_${pid}_notes">
             <!-- SECTION 2: NURSES / MIDWIVES NOTES -->
             <div class="mb-4">
                 <h6 class="font-weight-bold text-uppercase mb-2 d-flex align-items-center gap-2" style="color: #0F2D59; font-size: 13px;">
@@ -1073,6 +1130,10 @@ function renderPatientCard(ctx) {
                 </div>
             </div>
 
+                </div><!-- /ct-panel notes -->
+
+                <!-- PANEL: TREATMENT SHEET -->
+                <div class="ct-panel" id="ctPanel_${pid}_treatment" data-ct-panel="treatment" role="tabpanel" aria-labelledby="ctTab_${pid}_treatment">
             <!-- SECTION 3: TREATMENT SHEET -->
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
@@ -1099,6 +1160,9 @@ function renderPatientCard(ctx) {
                     </table>
                 </div>
             </div>
+
+                </div><!-- /ct-panel treatment -->
+            </div><!-- /ct-workspace -->
 
             <!-- SECTION 4: BILLING SUMMARY (collapsible) -->
             <div class="mb-4">
