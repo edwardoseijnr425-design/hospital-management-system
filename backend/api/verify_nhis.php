@@ -170,6 +170,9 @@ function nhisVerifyRespond(array $info, $nhisNumber) {
     jsonResponse([
         'status'          => 'success',
         'claim_check_code' => $claimCheckCode,
+        // Alias kept for the compact reconfirmation toolbar on consultations /
+        // billing pages, which reads ccc_code rather than claim_check_code.
+        'ccc_code'        => $claimCheckCode,
         'expiry_date'     => $info['expiry_date'] ?? null,
         'nhia_status'     => $info['nhia_status'] ?? 'active',
         'source'          => $info['source'] ?? 'database',

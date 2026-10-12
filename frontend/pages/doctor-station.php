@@ -285,6 +285,9 @@
                 <span id="ds-bar-bed">&mdash;</span>
             </div>
 
+            <!-- NHIS status reconfirmation before a clinical entry is saved. -->
+            <?php include __DIR__ . '/_nhis_verify_toolbar.php'; ?>
+
             <div class="ds-warn" id="ds-summary-warn">
                 <i class="fa-solid fa-triangle-exclamation"></i>
                 A discharge summary already exists for this stay. Saving another entry of this type is blocked &mdash;

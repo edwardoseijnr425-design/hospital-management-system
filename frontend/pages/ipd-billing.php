@@ -165,6 +165,9 @@
                 Account Management first, or this payment will be a deposit against nothing.
             </div>
 
+            <!-- Reconfirm NHIS eligibility before recording an NHIA payment. -->
+            <?php include __DIR__ . '/_nhis_verify_toolbar.php'; ?>
+
             <div class="form-group" style="margin-bottom:14px;">
                 <label for="ib-pay-type">PAYMENT TYPE *</label>
                 <select id="ib-pay-type">
