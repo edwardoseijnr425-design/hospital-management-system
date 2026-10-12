@@ -1,1274 +1,1213 @@
+<?php
+// Doctor Station — clinical workspace for admitted patients.
+// Layout mirrors the Nurses Station (vitals.php): ward filter panel, WARD DETAILS
+// bar, then one card per in-patient. Each card carries the six-tab clinical
+// workspace (Doctor Notes, Vitals, Prescriptions, Nurse Notes, Treatment,
+// Investigations). Doctor write actions are preserved:
+//   * Doctor Notes tab  -> clinical_notes.php (OPD / IPD / Discharge Summary)
+//   * Prescriptions tab -> consultation_form.php (drug orders)
+//   * Investigations tab-> consultation_form.php (lab + radiology requests)
+// The shell (dashboard.php) already authenticated the session.
+require_once __DIR__ . '/../../backend/config/config.php';
+$__clinicStaff = getCurrentUserName() ?: 'Staff';
+?>
 <style>
-    /* ============ DOCTOR STATION : OPD/IPD notes & discharge summaries ============
-       Scoped under #docstation. The shell supplies card/card-body/table/btn/
-       modal/form-group, so only the station-specific pieces are defined here. */
-    #docstation{--ds-red:#C0392B;--ds-ink:#0F2D59;--ds-mute:#64748B;--ds-line:#DCE4EC}
-    #docstation .mb-2{margin-bottom:.5rem}
-    #docstation .mb-3{margin-bottom:1rem}
-    #docstation .mb-4{margin-bottom:1.5rem}
-    #docstation .gap-2{gap:.5rem}
-    #docstation .flex{display:flex}
-    #docstation .wrap{flex-wrap:wrap}
-    #docstation .items-center{align-items:center}
-    #docstation .justify-between{justify-content:space-between}
-    #docstation .text-muted{color:var(--ds-mute)}
-    #docstation .fw-bold{font-weight:700}
-    #docstation .text-uppercase{text-transform:uppercase}
-    #docstation .small{font-size:12px}
-    #docstation .container-fluid{padding:0}
+/* ================= DOCTOR STATION WORKSPACE (scoped under #docstation) =================
+   Plain CSS. The project ships no Bootstrap/Alpine/Tailwind; the shell supplies a
+   few utility shims but everything the station needs is defined here. */
+#docstation,#docstation *{box-sizing:border-box}
+#docstation{--ds-red:#C0392B;--ds-blue:#1B659D;--ds-ink:#0F2D59;--ds-mute:#64748B;--ds-line:#E2E8F0;--ds-bg:#F4F7F9}
+#docstation{font-family:inherit;color:#334155}
+#docstation .ds-wrap{padding:0}
 
-    /* Red station banner, as in the pasted design */
-    #ds-banner{background:var(--ds-red);color:#fff;border-radius:5px;padding:10px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-    #ds-banner h5{margin:0;font-size:13px;font-weight:800;letter-spacing:.3px;text-transform:uppercase}
-    #ds-banner .ds-sub{font-size:11px;opacity:.9;margin-top:2px}
-    #ds-banner .ds-nav{background:#fff;color:var(--ds-red);border:none;border-radius:4px;padding:7px 13px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-    #ds-banner .ds-nav:hover{background:#F8D7D3}
+/* ---------- Top filter panel ---------- */
+#docstation .ds-filter{background:#fff;border:1px solid var(--ds-line);border-radius:10px;box-shadow:0 1px 2px rgba(15,45,89,.06);padding:14px;margin-bottom:14px}
+#docstation .ds-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#docstation .ds-field{min-width:0}
+#docstation .ds-label{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#64748B;margin-bottom:5px}
+#docstation .ds-select,#docstation .ds-input{width:100%;padding:8px 10px;border:1px solid #CBD5E1;border-radius:8px;background:#F8FAFC;font-size:13px;font-weight:600;color:#334155;font-family:inherit;outline:none}
+#docstation .ds-select:focus,#docstation .ds-input:focus{border-color:var(--ds-blue);box-shadow:0 0 0 2px rgba(27,101,157,.18)}
+#docstation .ds-actions-row{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+#docstation .ds-btn{border:1px solid transparent;border-radius:8px;padding:8px 18px;font-size:12px;font-weight:800;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase}
+#docstation .ds-btn:disabled{opacity:.55;cursor:not-allowed}
+#docstation .ds-btn.light{background:#F1F5F9;color:#334155;border-color:#E2E8F0}
+#docstation .ds-btn.light:hover{background:#E2E8F0}
+#docstation .ds-btn.primary{background:var(--ds-blue);color:#fff}
+#docstation .ds-btn.primary:hover{background:#155380}
+#docstation .ds-btn.red{background:var(--ds-red);color:#fff}
+#docstation .ds-btn.red:hover{background:#96281B}
+#docstation .ds-btn.green{background:#15803D;color:#fff}
+#docstation .ds-btn.green:hover{background:#12682f}
+#docstation .ds-btn.outline{background:#fff;color:var(--ds-blue);border-color:var(--ds-blue)}
+#docstation .ds-btn.outline:hover{background:#F1F8FD}
+#docstation .ds-btn.sm{padding:6px 12px;font-size:11px}
 
-    /* Stat strip: in-patients, notes written, summaries awaiting discharge */
-    #ds-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
-    #ds-stats .s{background:#fff;border:1px solid var(--ds-line);border-left:4px solid var(--ds-red);border-radius:5px;padding:10px 12px}
-    #ds-stats .s .lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ds-mute)}
-    #ds-stats .s .val{font-size:21px;font-weight:800;color:var(--ds-ink);line-height:1.2;margin-top:3px}
-    #ds-stats .s .sub{font-size:10.5px;color:var(--ds-mute)}
-    #ds-stats .s.notes{border-left-color:#0b5fa5}
-    #ds-stats .s.sum{border-left-color:#B9770E}
-    #ds-stats .s.dis{border-left-color:#1E7A34}
+/* ---------- WARD DETAILS bar ---------- */
+#docstation .ds-ward-summary{text-align:center;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#475569;font-size:11px;margin:4px 0 12px}
+#docstation .ds-ward-summary strong{color:var(--ds-blue)}
+#docstation .ds-ward-summary .muted{color:#1E293B}
 
-    #ds-search{width:280px}
-    #ds-table td{vertical-align:middle}
-    #ds-table .ds-code{font-family:Consolas,'Courier New',monospace;font-weight:700;color:var(--ds-ink);font-size:11px}
-    #ds-table .ds-name{font-weight:700;color:#1E293B}
-    #ds-table .ds-note-count{font-size:10.5px;color:var(--ds-mute);margin-top:2px}
-    #ds-table .ds-actions{display:flex;gap:5px;flex-wrap:wrap}
-    #ds-table .ds-actions button{font-size:10px;padding:4px 8px;border-radius:3px;border:1px solid #CBD5E1;background:#fff;color:#334155;cursor:pointer;font-family:inherit;font-weight:600;display:inline-flex;align-items:center;gap:4px}
-    #ds-table .ds-actions button.primary{background:var(--ds-red);border-color:var(--ds-red);color:#fff}
-    #ds-table .ds-actions button.primary:hover{background:#96281B}
-    #ds-table .ds-actions button:hover{background:#F1F5F9}
-    #ds-table .ds-actions button.primary:hover{background:#96281B}
-    #ds-table .ds-actions button.view:hover{background:#E7F3FC}
-    #ds-table .ds-actions button.consult{background:#1E7A34;border-color:#1E7A34;color:#fff}
-    #ds-table .ds-actions button.consult:hover{background:#16602a}
-    #ds-empty{padding:22px;text-align:center;color:#8A94A6;font-size:12px}
+/* ---------- Card ---------- */
+#docstation .ds-card{background:#fff;border:1px solid var(--ds-line);border-radius:12px;box-shadow:0 1px 3px rgba(15,45,89,.08);margin-bottom:18px;overflow:hidden}
+#docstation .ds-card-pad{padding:14px}
 
-    /* Entry modal */
-    #ds-note-modal .modal-content{max-width:720px !important}
-    #ds-note-modal .ds-head{background:var(--ds-red);color:#fff;margin:-16px -16px 16px;padding:12px 16px;border-radius:4px 4px 0 0}
-    #ds-note-modal .ds-head h3{margin:0;font-size:14px;font-weight:800;letter-spacing:.3px}
-    #ds-note-modal .ds-head .ds-head-sub{font-size:11.5px;opacity:.92;margin-top:3px}
-    #ds-note-modal label{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#64748B;margin-bottom:5px}
-    #ds-note-modal select,#ds-note-modal textarea{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;font-family:inherit;background:#fff;color:#222;box-sizing:border-box}
-    #ds-note-modal textarea{resize:vertical;min-height:130px;line-height:1.5}
-    #ds-note-modal select:focus,#ds-note-modal textarea:focus{outline:none;border-color:var(--ds-red);box-shadow:0 0 4px rgba(192,57,43,.22)}
-    #ds-note-modal .ds-type-hint{font-size:10.5px;color:#8A94A6;margin-top:5px}
-    #ds-note-modal .ds-patient-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#F1F5F9;border:1px solid #C9D4E0;border-radius:4px;padding:9px 12px;margin-bottom:14px;font-size:12px;color:#334155;flex-wrap:wrap}
-    #ds-note-modal .ds-patient-bar b{color:#0b5fa5}
-    #ds-note-modal .ds-warn{background:#FEF5E0;border:1px solid #F0AD4E;border-left:4px solid #f0ad4e;color:#8A5A00;border-radius:4px;padding:9px 11px;font-size:11.5px;margin-bottom:14px;display:none}
-    #ds-note-modal .ds-warn.show{display:block}
-    #ds-note-modal .ds-summary-only{display:none}
-    #ds-note-modal .ds-summary-only.show{display:block}
-    #ds-note-modal .ds-foot-note{font-size:10.5px;color:#8A94A6;margin-top:6px}
+/* Ward + quick actions bar */
+#docstation .ds-wardbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;background:#fff;border:1px solid var(--ds-line);border-radius:10px;box-shadow:0 1px 2px rgba(15,45,89,.06);padding:12px 14px;margin-bottom:12px}
+#docstation .ds-wardbar .left{display:flex;align-items:center;gap:8px}
+#docstation .ds-wardbar .left i{color:var(--ds-blue);font-size:15px}
+#docstation .ds-wardbar h3{margin:0;font-size:14px;font-weight:800;color:#1E293B}
+#docstation .ds-bedchip{background:#E2E8F0;color:#334155;font-weight:800;font-size:10px;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.4px}
+#docstation .ds-wardbar .right{display:flex;gap:8px;flex-wrap:wrap}
 
-    /* Notes history drawer inside the modal */
-    #ds-history{border:1px solid var(--ds-line);border-radius:5px;overflow:hidden;margin-top:14px}
-    #ds-history .hd{background:#E6EEF5;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#222;padding:7px 9px;border-bottom:2px solid #b2c8de;display:flex;justify-content:space-between;gap:8px;align-items:center}
-    #ds-history .bd{max-height:200px;overflow-y:auto}
-    #ds-history table{width:100%;border-collapse:collapse;font-size:11px}
-    #ds-history th{background:#F1F5F9;font-size:9.5px;text-transform:uppercase;letter-spacing:.3px;color:#475569;padding:5px 8px;text-align:left;border-bottom:1px solid #E1E8F0;position:sticky;top:0}
-    #ds-history td{padding:6px 8px;border-bottom:1px solid #EEF2F7;vertical-align:top}
-    #ds-history .nt{font-weight:700;font-size:9.5px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
-    #ds-history .nt.opd{color:#0b5fa5}
-    #ds-history .nt.ipd{color:#1E7A34}
-    #ds-history .nt.dsum{color:#B9770E}
-    #ds-history .txt{color:#334155;white-space:pre-wrap;line-height:1.45;max-height:96px;overflow-y:auto}
-    #ds-history .meta{font-size:10px;color:#8A94A6;margin-top:3px;white-space:nowrap}
-    #ds-history .rm{background:#fff;border:1px solid #F0B7B2;color:#C0392B;border-radius:3px;font-size:9.5px;font-weight:700;padding:3px 6px;cursor:pointer;font-family:inherit;white-space:nowrap}
-    #ds-history .rm:hover{background:#FDECEA}
-    #ds-history .empty{padding:14px;text-align:center;color:#8A94A6}
+/* Red STATION MANAGEMENT banner */
+#docstation .ds-banner{background:var(--ds-red);color:#fff;border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+#docstation .ds-banner h3{margin:0;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
+#docstation .ds-banner h3 i{color:#FCD34D}
+#docstation .ds-banner .sub{font-size:10.5px;color:#FEE2E2;margin-top:3px}
+#docstation .ds-banner .hn{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:800;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 
-    /* ---------- Inline consultation form (expanded under a patient row) ---------- */
-    #ds-expand > td{padding:0 !important;border-top:none}
-    .ds-form{background:#F8FAFC;border-top:3px solid var(--ds-red);padding:16px 18px}
+/* Patient details card */
+#docstation .ds-patient{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid var(--ds-line);border-radius:10px;box-shadow:0 1px 2px rgba(15,45,89,.06);padding:14px;margin-bottom:12px}
+#docstation .ds-patient .who{display:flex;align-items:center;gap:12px}
+#docstation .ds-avatar{width:44px;height:44px;border-radius:50%;background:var(--ds-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto;box-shadow:0 1px 2px rgba(15,45,89,.25)}
+#docstation .ds-patient .nm{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#docstation .ds-patient .nm h4{margin:0;font-size:14px;font-weight:800;text-transform:uppercase;color:#1E293B}
+#docstation .ds-idchip{background:var(--ds-blue);color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:.3px}
+#docstation .ds-admchip{background:#F1F5F9;color:#475569;border:1px solid #CBD5E1;font-size:10px;font-weight:800;padding:2px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.3px}
+#docstation .ds-admchip.discharged{background:#DCFCE7;color:#15803D;border-color:#86EFAC}
+#docstation .ds-admchip.died{background:#FEE2E2;color:#B91C1C;border-color:#FCA5A5}
+#docstation .ds-admchip.absconded{background:#FEF3C7;color:#B45309;border-color:#FCD34D}
+#docstation .ds-patient .demo{font-size:11px;color:#64748B;margin-top:3px}
+#docstation .ds-patient .demo b{color:#334155}
+#docstation .ds-link{color:var(--ds-blue);font-weight:700;font-size:11px;text-decoration:none;cursor:pointer;display:inline-block;margin-top:3px}
+#docstation .ds-link:hover{text-decoration:underline}
+#docstation .ds-allergy{display:inline-flex;align-items:center;gap:5px;background:#FEF5E0;border:1px solid #F0AD4E;color:#8A5A00;font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:6px}
 
-    /* Patient identity strip */
-    .ds-ident{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--ds-line);border-radius:6px;padding:14px 16px;margin-bottom:14px}
-    .ds-ident .who{display:flex;align-items:center;gap:12px}
-    .ds-ident .avatar{width:52px;height:52px;border-radius:50%;background:#FDECEA;border:2px solid #F0B7B2;color:var(--ds-red);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;flex-shrink:0}
-    .ds-ident .nm{font-weight:800;font-size:16px;color:#1E293B;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .ds-ident .hn{background:#E7F3FC;border:1px solid #A9CDE8;color:#0b5fa5;font-family:Consolas,'Courier New',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:3px}
-    .ds-ident .facts{font-size:11.5px;color:#64748B;margin-top:4px;line-height:1.6}
-    .ds-ident .facts b{color:#334155}
-    .ds-alert{display:inline-flex;align-items:center;gap:5px;background:#FEF5E0;border:1px solid #F0AD4E;color:#8A5A00;font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:4px}
-    .ds-stay{display:inline-flex;align-items:center;gap:5px;background:#E8F5EC;border:1px solid #9CD3AC;color:#1E7A34;font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:4px}
+/* Latest vitals tiles */
+#docstation .ds-vitals{background:#fff;border:1px solid var(--ds-line);border-radius:10px;box-shadow:0 1px 2px rgba(15,45,89,.06);padding:14px;margin-bottom:12px}
+#docstation .ds-vitals .head{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#94A3B8;margin-bottom:10px}
+#docstation .ds-vitals .head .ttl{font-weight:800;text-transform:uppercase;color:var(--ds-blue);display:flex;align-items:center;gap:6px}
+#docstation .ds-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+#docstation .ds-tile{background:#F8FAFC;border:1px solid var(--ds-line);border-radius:8px;padding:10px;text-align:center}
+#docstation .ds-tile .k{display:block;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#94A3B8}
+#docstation .ds-tile .v{font-size:14px;font-weight:800;color:#1E293B}
+#docstation .ds-tile.none .v{color:#B6BECB;font-weight:600;font-size:11.5px}
 
-    .ds-form .cols{display:grid;grid-template-columns:1fr 1.7fr;gap:14px}
-    .ds-form .col{display:flex;flex-direction:column;gap:14px;min-width:0}
-    .ds-box{background:#fff;border:1px solid var(--ds-line);border-radius:6px;padding:13px 15px}
-    .ds-box > h4{margin:0 0 10px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--ds-red);display:flex;align-items:center;gap:6px}
-    .ds-box > h4 .hint{margin-left:auto;font-weight:600;color:#94A3B8;letter-spacing:0;text-transform:none;font-size:10px}
+/* ---------- Clinical workspace tabs ---------- */
+#docstation .ds-tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--ds-line);padding-bottom:10px;margin-bottom:14px}
+#docstation .ds-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid transparent;border-radius:8px;background:#F1F5F9;color:#334155;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:background-color .15s,color .15s,box-shadow .15s}
+#docstation .ds-tab:hover{background:#E2E8F0}
+#docstation .ds-tab.active{background:var(--ds-blue);color:#fff;box-shadow:0 2px 6px rgba(15,45,89,.25)}
+#docstation .ds-tab i{font-size:12px}
+#docstation .ds-panel{display:none}
+#docstation .ds-panel.active{display:block}
 
-    .ds-form label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#64748B;margin-bottom:4px}
-    .ds-form input[type=text],.ds-form input[type=number],.ds-form input[type=datetime-local],.ds-form select,.ds-form textarea{width:100%;padding:7px 9px;border:1px solid #C9D4E0;border-radius:4px;font-size:12px;font-family:inherit;background:#fff;color:#1E293B;box-sizing:border-box}
-    .ds-form textarea{resize:vertical;min-height:74px;line-height:1.5}
-    .ds-form input:focus,.ds-form select:focus,.ds-form textarea:focus{outline:none;border-color:var(--ds-red);box-shadow:0 0 4px rgba(192,57,43,.18)}
-    .ds-form .fld{margin-bottom:10px}
-    .ds-form .fld:last-child{margin-bottom:0}
-    .ds-form .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .ds-form .three{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+/* Panels content */
+#docstation .ds-sec{border:1px solid var(--ds-line);border-radius:10px;padding:14px;background:#fff}
+#docstation .ds-sec-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--ds-line);padding-bottom:9px;margin-bottom:12px}
+#docstation .ds-sec-head h4{margin:0;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--ds-blue);display:flex;align-items:center;gap:7px}
+#docstation .ds-sec-head .hint{font-size:10.5px;color:#94A3B8;font-weight:600}
 
-    /* Vitals tiles */
-    .ds-vitals{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-    .ds-vitals .v{background:#F8FAFC;border:1px solid var(--ds-line);border-radius:4px;padding:7px 9px}
-    .ds-vitals .v .k{font-size:9.5px;color:#94A3B8;display:block;text-transform:uppercase;letter-spacing:.3px}
-    .ds-vitals .v .n{font-size:13.5px;font-weight:800;color:#1E293B}
-    .ds-vitals .v.none .n{color:#B6BECB;font-weight:600;font-size:11.5px}
-    .ds-vitals .when{font-size:10px;color:#94A3B8;margin-top:8px;border-top:1px dashed var(--ds-line);padding-top:7px}
-    .ds-vitals .flagged{color:#B9770E;font-size:10px;margin-top:6px;line-height:1.45}
+#docstation textarea,#docstation input[type=text],#docstation input[type=number],#docstation select{width:100%;padding:8px 10px;border:1px solid #CBD5E1;border-radius:8px;font-size:12.5px;font-family:inherit;background:#fff;color:#1E293B;outline:none}
+#docstation textarea{resize:vertical;min-height:90px;line-height:1.5}
+#docstation textarea:focus,#docstation input:focus,#docstation select:focus{border-color:var(--ds-blue);box-shadow:0 0 0 2px rgba(27,101,157,.15)}
+#docstation .ds-fld{margin-bottom:10px}
+#docstation .ds-fld:last-child{margin-bottom:0}
+#docstation .ds-fld label{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#64748B;margin-bottom:4px}
+#docstation .ds-row2{display:grid;grid-template-columns:1.6fr 1fr;gap:10px}
 
-    /* History list */
-    .ds-hist{max-height:168px;overflow-y:auto;border:1px solid #EDF1F5;border-radius:4px}
-    .ds-hist .h{padding:7px 9px;border-bottom:1px solid #F1F5F9;font-size:11px;color:#475569}
-    .ds-hist .h:last-child{border-bottom:none}
-    .ds-hist .h .w{font-weight:700;color:#1E293B}
-    .ds-hist .h .w span{font-weight:600;color:#64748B}
-    .ds-hist .h .txt{white-space:pre-wrap;line-height:1.45;margin-top:2px}
-    .ds-hist .none{padding:12px;text-align:center;color:#94A3B8;font-size:11px}
+/* Tables */
+#docstation .ds-table-wrap{overflow-x:auto;border:1px solid var(--ds-line);border-radius:8px}
+#docstation table.ds-table{width:100%;border-collapse:collapse;font-size:12px}
+#docstation table.ds-table th{background:#F1F5F9;color:#475569;font-size:10px;text-transform:uppercase;letter-spacing:.4px;text-align:left;padding:8px 10px;border-bottom:1px solid var(--ds-line);white-space:nowrap}
+#docstation table.ds-table td{padding:8px 10px;border-bottom:1px solid #EEF2F7;vertical-align:middle;color:#334155}
+#docstation table.ds-table tr:last-child td{border-bottom:none}
+#docstation .ds-pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800;border:1px solid}
+#docstation .ds-pill.ok{background:#DCFCE7;color:#15803D;border-color:#86EFAC}
+#docstation .ds-pill.warn{background:#FEF3C7;color:#B45309;border-color:#FCD34D}
+#docstation .ds-pill.bad{background:#FEE2E2;color:#B91C1C;border-color:#FCA5A5}
+#docstation .ds-pill.info{background:#E0F2FE;color:#0369A1;border-color:#7DD3FC}
 
-    /* Allergy input carries the standing-allergy warning */
-    .ds-allergy-wrap{position:relative}
-    .ds-allergy-wrap input{border-color:#F0AD4E;background:#FFFDF7}
-    .ds-allergy-note{font-size:10px;color:#8A5A00;margin-top:4px}
+/* Clinical notes feed (tab 1) */
+#docstation .ds-note-item{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px;margin-bottom:8px}
+#docstation .ds-note-item .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+#docstation .ds-note-item .who{font-weight:800;color:#1D4ED8;font-size:11.5px}
+#docstation .ds-note-item .when{font-size:10.5px;color:#94A3B8}
+#docstation .ds-note-item .txt{white-space:pre-wrap;color:#334155;font-size:12px;line-height:1.5}
+#docstation .ds-note-item .rm{background:#fff;border:1px solid #F0B7B2;color:#C0392B;border-radius:4px;font-size:10px;font-weight:800;padding:3px 8px;cursor:pointer;font-family:inherit}
+#docstation .ds-note-item .rm:hover{background:#FDECEA}
+#docstation .ds-empty{color:#94A3B8;font-size:12px;padding:10px;text-align:center}
 
-    /* Investigation checkboxes */
-    .ds-inv{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
-    .ds-inv label{display:flex;align-items:center;gap:7px;background:#F8FAFC;border:1px solid var(--ds-line);border-radius:4px;padding:7px 9px;font-size:11.5px;color:#334155;text-transform:none;letter-spacing:0;font-weight:600;margin:0;cursor:pointer}
-    .ds-inv label:hover{background:#F1F5F9}
-    .ds-inv label:has(input:checked){background:#E7F3FC;border-color:#A9CDE8;color:#0b5fa5}
-    .ds-inv .kind{display:inline-block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:1px 5px;border-radius:2px;background:#E2E8F0;color:#475569;margin-left:auto}
-    .ds-inv label:has(input:checked) .kind{background:#0b5fa5;color:#fff}
+/* Prescription builder */
+#docstation .ds-rx-add{display:flex;gap:8px}
+#docstation .ds-rx-add input{flex:1}
+#docstation .ds-rx-add .ds-btn{flex:0 0 auto}
+#docstation .ds-rx-hint{font-size:10.5px;color:#94A3B8;margin-top:6px}
+#docstation .ds-rx-lines{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+#docstation .ds-rx-line{border:1px solid var(--ds-line);border-radius:8px;padding:9px;background:#F8FAFC}
+#docstation .ds-rx-line .top{display:flex;align-items:center;gap:8px}
+#docstation .ds-rx-line .top b{font-size:12.5px;color:#1E293B}
+#docstation .ds-rx-line .top .gen{font-size:10.5px;color:#64748B}
+#docstation .ds-rx-line .top .rm{margin-left:auto;background:#fff;border:1px solid #F0B7B2;color:#C0392B;border-radius:4px;font-size:10px;font-weight:800;padding:3px 8px;cursor:pointer;font-family:inherit}
+#docstation .ds-rx-line .flds{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+#docstation .ds-rx-line .flds label{font-size:9.5px}
+#docstation .ds-rx-line .flds input{padding:6px 8px;font-size:11.5px}
+#docstation .ds-rx-empty{font-size:11.5px;color:#94A3B8;text-align:center;padding:12px;border:1px dashed var(--ds-line);border-radius:8px}
 
-    /* ---------- Consultation form tab switcher ----------
-       Plain JS (switchDsTab). This project ships no Alpine.js, so the
-       x-data/x-show/@click bindings from the source design would never fire. */
-    .ds-workspace{margin-bottom:14px}
-    .ds-tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--ds-line);padding-bottom:10px;margin-bottom:14px}
-    .ds-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid transparent;border-radius:8px;background:#EEF2F7;color:#334155;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:background-color .15s ease,color .15s ease,box-shadow .15s ease}
-    .ds-tab:hover{background:#E2E8F0}
-    .ds-tab.active{background:#1B659D;color:#fff;box-shadow:0 2px 6px rgba(15,45,89,.25)}
-    .ds-panel{display:none}
-    .ds-panel.active{display:block}
-    .ds-panel .ds-box:last-child{margin-bottom:0}
+/* Investigations catalogue */
+#docstation .ds-inv{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+#docstation .ds-inv label{display:flex;align-items:center;gap:8px;background:#F8FAFC;border:1px solid var(--ds-line);border-radius:8px;padding:8px 10px;font-size:12px;color:#334155;font-weight:600;cursor:pointer;text-transform:none;letter-spacing:0}
+#docstation .ds-inv label:hover{background:#F1F5F9}
+#docstation .ds-inv label .kind{margin-left:auto;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:1px 6px;border-radius:3px;background:#E2E8F0;color:#475569}
+#docstation .ds-inv input:checked + span + .kind{background:var(--ds-blue);color:#fff}
 
-    /* Drug picker + prescription lines */
-    .ds-rx-add{display:flex;gap:7px}
-    .ds-rx-add input{flex:1}
-    .ds-rx-add button{flex-shrink:0;background:var(--ds-red);border:1px solid var(--ds-red);color:#fff;border-radius:4px;padding:0 13px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
-    .ds-rx-add button:hover{background:#96281B}
-    .ds-rx-hint{font-size:10px;color:#94A3B8;margin-top:5px}
-    .ds-rx-lines{margin-top:10px;display:flex;flex-direction:column;gap:6px}
-    .ds-rx-line{border:1px solid var(--ds-line);border-radius:4px;padding:8px 9px;background:#F8FAFC}
-    .ds-rx-line .top{display:flex;align-items:center;gap:8px}
-    .ds-rx-line .top b{font-size:12px;color:#1E293B}
-    .ds-rx-line .top .gen{font-size:10.5px;color:#64748B}
-    .ds-rx-line .top .rm{margin-left:auto;background:#fff;border:1px solid #F0B7B2;color:#C0392B;border-radius:3px;font-size:9.5px;font-weight:700;padding:3px 7px;cursor:pointer;font-family:inherit}
-    .ds-rx-line .top .rm:hover{background:#FDECEA}
-    .ds-rx-line .flds{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:7px}
-    .ds-rx-line .flds input{padding:5px 7px;font-size:11px}
-    .ds-rx-line .flds label{font-size:9px;margin-bottom:3px}
-    .ds-rx-empty{font-size:11px;color:#94A3B8;text-align:center;padding:10px;border:1px dashed var(--ds-line);border-radius:4px}
-    .ds-pending{margin-top:10px;border-top:1px dashed var(--ds-line);padding-top:8px}
-    .ds-pending .pd{font-size:10.5px;color:#475569;line-height:1.6}
-    .ds-pending .pd b{color:#1E293B}
+/* Footer */
+#docstation .ds-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--ds-line);background:#fff}
+#docstation .ds-footer .log{font-size:11px;color:#64748B}
+#docstation .ds-footer .btns{display:flex;gap:8px;flex-wrap:wrap}
 
-    /* Admit toggle */
-    .ds-admit{border:1px solid var(--ds-line);border-radius:5px;padding:11px 13px;background:#fff}
-    .ds-admit label.chk{display:flex;align-items:center;gap:8px;font-size:12px;color:#334155;text-transform:none;letter-spacing:0;font-weight:700;margin:0 0 9px;cursor:pointer}
-    .ds-admit .wardgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-    .ds-admit.is-admitted{background:#F0FDF4;border-color:#9CD3AC}
-    .ds-admit .note{font-size:10.5px;color:#1E7A34;margin-top:8px;line-height:1.5}
+/* Modal (Medical Records) — the shell has a .modal base, we scope our extra bits */
+#docstation-modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:2000;padding:16px}
+#docstation-modal.show{display:flex}
+#docstation-modal .dm-box{background:#fff;border-radius:12px;max-width:760px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(2,6,23,.35)}
+#docstation-modal .dm-head{background:var(--ds-red);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+#docstation-modal .dm-head h3{margin:0;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.4px}
+#docstation-modal .dm-head .x{background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1}
+#docstation-modal .dm-body{padding:16px;overflow-y:auto}
+#docstation-modal .dm-foot{padding:12px 16px;border-top:1px solid var(--ds-line);text-align:right}
+/* The modal sits outside #docstation, so re-declare the tokens and the small set
+   of station classes it reuses (buttons, note cards, section heads, empty state). */
+#docstation-modal{--ds-blue:#1B659D;--ds-line:#E2E8F0}
+#docstation-modal .ds-btn{border:1px solid #E2E8F0;border-radius:8px;padding:8px 18px;font-size:12px;font-weight:800;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;background:#F1F5F9;color:#334155}
+#docstation-modal .ds-btn:hover{background:#E2E8F0}
+#docstation-modal .ds-note-item{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px;margin-bottom:8px}
+#docstation-modal .ds-note-item .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+#docstation-modal .ds-note-item .who{font-weight:800;color:#1D4ED8;font-size:11.5px}
+#docstation-modal .ds-note-item .when{font-size:10.5px;color:#94A3B8}
+#docstation-modal .ds-note-item .txt{white-space:pre-wrap;color:#334155;font-size:12px;line-height:1.5}
+#docstation-modal .ds-empty{color:#94A3B8;font-size:12px;padding:10px;text-align:center}
+#docstation-modal .ds-sec-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--ds-line);padding-bottom:9px;margin-bottom:12px}
+#docstation-modal .ds-sec-head h4{margin:0;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--ds-blue);display:flex;align-items:center;gap:7px}
+#docstation .ds-save-state{font-size:10.5px;color:#15803D;display:none;align-items:center;gap:5px}
+#docstation .ds-save-state.show{display:inline-flex}
 
-    /* Action bar */
-    .ds-actions-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding-top:13px;border-top:1px solid var(--ds-line);flex-wrap:wrap}
-    .ds-actions-bar .note{font-size:10.5px;color:#8A94A6}
-    .ds-actions-bar .btns{display:flex;gap:8px;flex-wrap:wrap}
-    .ds-btn{border-radius:4px;padding:8px 15px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;border:1px solid transparent}
-    .ds-btn.grey{background:#E2E8F0;border-color:#CBD5E1;color:#475569}
-    .ds-btn.grey:hover{background:#CBD5E1}
-    .ds-btn.blue{background:#E7F3FC;border-color:#A9CDE8;color:#0b5fa5}
-    .ds-btn.blue:hover{background:#D3E8F8}
-    .ds-btn.red{background:var(--ds-red);border-color:var(--ds-red);color:#fff}
-    .ds-btn.red:hover{background:#96281B}
-    .ds-btn:disabled{opacity:.55;cursor:not-allowed}
-    .ds-saving{display:none;font-size:10.5px;color:#64748B;align-items:center;gap:6px}
-    .ds-saving.show{display:inline-flex}
-
-    /* Print: show only the consultation summary, hide the whole station. */
-    #ds-print-area{display:none}
-    @media print{
-        body *{visibility:hidden}
-        #ds-print-area,#ds-print-area *{visibility:visible}
-        #ds-print-area{display:block;position:absolute;left:0;top:0;width:100%;padding:16px;font-size:11.5pt;color:#000}
-        #ds-print-area h1{font-size:15pt;margin:0 0 2px}
-        #ds-print-area .sub{font-size:9.5pt;color:#444;margin-bottom:12px}
-        #ds-print-area h2{font-size:10pt;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #999;padding-bottom:3px;margin:14px 0 6px}
-        #ds-print-area .kv{width:100%;border-collapse:collapse}
-        #ds-print-area .kv td{padding:3px 6px;border-bottom:1px dotted #ccc;vertical-align:top}
-        #ds-print-area .kv td:first-child{width:180px;font-weight:bold;color:#333}
-        #ds-print-area .pre{white-space:pre-wrap;line-height:1.5}
-        #ds-print-area ul{margin:4px 0;padding-left:20px}
-    }
-
-    @media (max-width:900px){
-        .ds-form .cols{grid-template-columns:1fr}
-        .ds-form .three{grid-template-columns:1fr}
-        .ds-rx-line .flds{grid-template-columns:1fr 1fr}
-    }
-    @media (max-width:640px){
-        #ds-banner{flex-direction:column;align-items:flex-start}
-        #ds-search{width:100%}
-    }
+@media (max-width:900px){
+  #docstation .ds-grid2{grid-template-columns:1fr}
+  #docstation .ds-tiles{grid-template-columns:repeat(2,1fr)}
+  #docstation .ds-row2{grid-template-columns:1fr}
+  #docstation .ds-inv{grid-template-columns:1fr}
+  #docstation .ds-rx-line .flds{grid-template-columns:1fr 1fr}
+}
+@media (max-width:640px){
+  #docstation .ds-tiles{grid-template-columns:1fr 1fr}
+}
 </style>
 
-<div id="docstation" class="container-fluid">
-    <!-- Station banner -->
-    <div id="ds-banner">
-        <div>
-            <h5><i class="fa-solid fa-user-doctor"></i> Doctor Station &mdash; OPD/IPD Notes &amp; Discharge Summaries</h5>
-            <div class="ds-sub">Clinical entries are written against the patient's stay and appear on the discharge record.</div>
-        </div>
-        <button type="button" class="ds-nav" id="ds-back-to-admissions"><i class="fa-solid fa-arrow-left"></i> Admissions</button>
+<div id="docstation" class="ds-wrap">
+
+  <!-- 1. TOP WARD / PATIENT SEARCH FILTER PANEL -->
+  <div class="ds-filter">
+    <div class="ds-grid2">
+      <div class="ds-field">
+        <label class="ds-label" for="dsWardType">Type Of Ward</label>
+        <select class="ds-select" id="dsWardType">
+          <option value="By Ward" selected>By Ward</option>
+        </select>
+      </div>
+      <div class="ds-field">
+        <label class="ds-label" for="dsWard">Wards</label>
+        <select class="ds-select" id="dsWard">
+          <option value="">-- All Wards --</option>
+        </select>
+      </div>
     </div>
 
-    <!-- Stats -->
-    <div id="ds-stats">
-        <div class="s"><div class="lbl">In-Patients</div><div class="val" id="ds-stat-inpatients">&mdash;</div><div class="sub">currently admitted</div></div>
-        <div class="s notes"><div class="lbl">Round Notes Written</div><div class="val" id="ds-stat-notes">&mdash;</div><div class="sub">IPD daily notes</div></div>
-        <div class="s sum"><div class="lbl">Summaries Awaiting</div><div class="val" id="ds-stat-summaries">&mdash;</div><div class="sub">no discharge summary yet</div></div>
-        <div class="s dis"><div class="lbl">Stays With Summary</div><div class="val" id="ds-stat-done">&mdash;</div><div class="sub">ready for discharge</div></div>
+    <div class="ds-field" style="margin-top:12px;">
+      <label class="ds-label" for="dsSearch">Search Patient (IPD / Wards)</label>
+      <input type="text" class="ds-input" id="dsSearch" placeholder="Search by name, hospital number or bed — e.g. HMS202683952 or BED-MED-01">
     </div>
 
-    <!-- In-patient list -->
-    <div class="card">
-        <div class="card-header">
-            <h2><i class="fa-solid fa-stethoscope"></i> Current In-Patients &mdash; Clinical Entries</h2>
-            <div class="flex items-center gap-2 wrap">
-                <input type="text" id="ds-search" class="form-control" placeholder="Search patient, hospital no., ward or bed..." style="padding:6px 9px;border:1px solid #C9D4E0;border-radius:4px;font-size:12px;font-family:inherit;background:#fff;">
-                <select id="ds-filter-entry" style="padding:6px 9px;border:1px solid #C9D4E0;border-radius:4px;font-size:12px;font-family:inherit;background:#fff;">
-                    <option value="ALL">All Entries</option>
-                    <option value="OPD_NOTE">OPD Consultation Note</option>
-                    <option value="IPD_NOTE">IPD Daily Round Note</option>
-                    <option value="DISCHARGE_SUMMARY">Discharge Summary</option>
-                </select>
-                <button class="btn btn-secondary btn-sm" id="ds-refresh-btn"><i class="fa-solid fa-rotate"></i> Refresh</button>
-            </div>
-        </div>
-        <div class="card-body">
-            <div class="table-container">
-                <table id="ds-table">
-                    <thead>
-                        <tr>
-                            <th>Hospital No.</th>
-                            <th>Patient</th>
-                            <th>Ward / Bed</th>
-                            <th>Admitted</th>
-                            <th>Diagnosis</th>
-                            <th>Clinical Record</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ds-table-body">
-                        <tr><td colspan="7" style="text-align:center;">Loading in-patients...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="ds-actions-row">
+      <button type="button" class="ds-btn light" id="dsClearBtn">Clear</button>
+      <button type="button" class="ds-btn primary" id="dsFindBtn">Find Patient</button>
     </div>
+  </div>
+
+  <!-- 2. WARD SUMMARY BAR -->
+  <div class="ds-ward-summary">
+    Ward Details &bull; Total Patient(s): <strong id="dsTotalPatients">0</strong>
+    &nbsp;|&nbsp; Partial Discharged Patient(s): <span class="muted" id="dsPartialDischarged">0</span>
+  </div>
+
+  <!-- 3. PATIENT CARDS -->
+  <div id="dsCards">
+    <div class="ds-card"><div class="ds-card-pad" style="text-align:center;color:#64748B;font-size:13px;">Loading admitted patients…</div></div>
+  </div>
 </div>
 
-<!-- Clinical Entry Modal -->
-<div class="modal" id="ds-note-modal">
-    <div class="modal-content">
-        <div class="ds-head">
-            <h3>CLINICAL ENTRY</h3>
-            <div class="ds-head-sub" id="ds-note-patient">&mdash;</div>
-        </div>
-        <div class="modal-body">
-            <div class="ds-patient-bar">
-                <span id="ds-bar-admission">&mdash;</span>
-                <span id="ds-bar-bed">&mdash;</span>
-            </div>
-
-            <!-- NHIS status reconfirmation before a clinical entry is saved. -->
-            <?php include __DIR__ . '/_nhis_verify_toolbar.php'; ?>
-
-            <div class="ds-warn" id="ds-summary-warn">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                A discharge summary already exists for this stay. Saving another entry of this type is blocked &mdash;
-                the patient still has to be discharged from the Admissions page.
-            </div>
-
-            <div class="form-group mb-3">
-                <label for="ds-note-type">ENTRY TYPE *</label>
-                <select id="ds-note-type">
-                    <option value="OPD_NOTE">OPD Consultation Note</option>
-                    <option value="IPD_NOTE" selected>IPD Daily Clinical Round Note</option>
-                    <option value="DISCHARGE_SUMMARY">Discharge Summary</option>
-                </select>
-                <div class="ds-type-hint" id="ds-type-hint">Daily progress note for this admission. Appears on the patient's clinical record.</div>
-            </div>
-
-            <div class="form-group mb-2">
-                <label for="ds-note-text">CLINICAL NOTES / RECOMMENDATIONS *</label>
-                <textarea id="ds-note-text" placeholder="Enter clinical observations, diagnosis, treatment plan, or discharge summary..."></textarea>
-                <div class="ds-foot-note">Saved against admission <span id="ds-foot-code">—</span> under your name, with a timestamp.</div>
-            </div>
-
-            <div id="ds-history">
-                <div class="hd">
-                    <span>CLINICAL RECORD FOR THIS STAY</span>
-                    <span id="ds-history-count">0 entries</span>
-                </div>
-                <div class="bd" id="ds-history-body">
-                    <div class="empty">Loading...</div>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" id="ds-cancel-note">Close</button>
-            <button class="btn btn-primary" id="ds-save-note"><i class="fa-solid fa-check"></i> Save Clinical Entry</button>
-        </div>
+<!-- MEDICAL RECORDS MODAL -->
+<div id="docstation-modal">
+  <div class="dm-box">
+    <div class="dm-head">
+      <h3><i class="fa-solid fa-file-medical"></i> Medical Records</h3>
+      <button type="button" class="x" onclick="dsCloseModal()">&times;</button>
     </div>
+    <div class="dm-body" id="dsModalBody"></div>
+    <div class="dm-foot"><button type="button" class="ds-btn light" onclick="dsCloseModal()">Close</button></div>
+  </div>
 </div>
-
-<!-- Off-screen summary used only for printing a consultation; hidden on screen. -->
-<div id="ds-print-area"></div>
 
 <script>
-let dsInpatients = [];
-let dsNotes = [];
-let dsTarget = null;
-let dsSearchTimer = null;
+var DS_STAFF = <?php echo json_encode($__clinicStaff); ?>;
 
-const DS_TYPE_LABELS = {
+var dsWards = [];
+var dsInpatients = [];        // rows from clinical_notes.php?action=inpatients
+var dsContext = {};           // pid -> { summary, latestVisit, vitals, admission }
+var dsNotesCache = {};        // pid -> clinical notes
+var dsMedsCache = {};         // pid -> prescriptions
+var dsInvCache = {};          // pid -> investigations rows
+var dsConsultCache = {};      // pid -> consultation_form context (lazy)
+var dsRx = {};                // pid -> [drug lines]
+var dsDrugs = {};             // pid -> [stocked drugs]
+var dsSearchTimer = null;
+
+var DS_NOTE_LABELS = {
     OPD_NOTE: 'OPD Consultation Note',
     IPD_NOTE: 'IPD Daily Round Note',
     DISCHARGE_SUMMARY: 'Discharge Summary'
 };
-const DS_TYPE_HINTS = {
-    OPD_NOTE: 'Outpatient consultation note for this patient. Stored with the visit when one is linked.',
-    IPD_NOTE: 'Daily progress note for this admission. Appears on the patient’s clinical record.',
-    DISCHARGE_SUMMARY: 'Written on the admission as its discharge summary. The patient is still discharged from the Admissions page, not here.'
-};
 
 function initDoctorStation() {
-    document.getElementById('ds-refresh-btn').addEventListener('click', loadInpatients);
-    document.getElementById('ds-cancel-note').addEventListener('click', closeNoteModal);
-    document.getElementById('ds-save-note').addEventListener('click', saveClinicalNote);
-    document.getElementById('ds-note-type').addEventListener('change', onNoteTypeChange);
+    var findBtn = document.getElementById('dsFindBtn');
+    var clearBtn = document.getElementById('dsClearBtn');
+    var wardSel = document.getElementById('dsWard');
+    var search = document.getElementById('dsSearch');
 
-    const back = document.getElementById('ds-back-to-admissions');
-    if (back) back.addEventListener('click', () => navigateTo('admissions'));
-
-    const filter = document.getElementById('ds-filter-entry');
-    if (filter) filter.addEventListener('change', renderInpatients);
-
-    const search = document.getElementById('ds-search');
+    if (findBtn) findBtn.addEventListener('click', loadDoctorStation);
+    if (clearBtn) clearBtn.addEventListener('click', function () {
+        document.getElementById('dsWard').value = '';
+        document.getElementById('dsSearch').value = '';
+        loadDoctorStation();
+    });
+    if (wardSel) wardSel.addEventListener('change', loadDoctorStation);
     if (search) {
-        search.addEventListener('input', () => {
+        search.addEventListener('input', function () {
             clearTimeout(dsSearchTimer);
-            dsSearchTimer = setTimeout(loadInpatients, 300);
+            dsSearchTimer = setTimeout(loadDoctorStation, 300);
         });
+        search.addEventListener('keydown', function (e) { if (e.key === 'Enter') loadDoctorStation(); });
     }
 
-    loadInpatients();
+    loadWards().then(loadDoctorStation);
 }
 
-async function loadInpatients() {
-    const tbody = document.getElementById('ds-table-body');
-    const q = document.getElementById('ds-search').value.trim();
+/* ============================ WARDS ============================ */
+async function loadWards() {
+    try {
+        var res = await fetch('/hms/backend/api/wards.php');
+        var data = await res.json();
+        dsWards = (data.success && data.wards) ? data.wards : [];
+        var sel = document.getElementById('dsWard');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">-- All Wards --</option>' +
+            dsWards.map(function (w) { return '<option value="' + w.id + '">' + escHtml(w.ward_name) + '</option>'; }).join('');
+    } catch (e) {
+        console.error('Wards load error:', e);
+    }
+}
 
-    const params = new URLSearchParams();
+function dsWardName(wardId) {
+    var w = dsWards.filter(function (x) { return String(x.id) === String(wardId); })[0];
+    return w ? w.ward_name : '';
+}
+
+/* ============================ IN-PATIENT LIST ============================ */
+async function loadDoctorStation() {
+    var container = document.getElementById('dsCards');
+    if (!container) return;
+    container.innerHTML = '<div class="ds-card"><div class="ds-card-pad" style="text-align:center;color:#64748B;font-size:13px;">Searching wards… please wait.</div></div>';
+
+    var wardId = document.getElementById('dsWard').value;
+    var q = document.getElementById('dsSearch').value.trim();
+
+    var params = new URLSearchParams();
     params.set('action', 'inpatients');
     if (q) params.set('q', q);
 
     try {
-        const response = await fetch('/hms/backend/api/clinical_notes.php?' + params.toString());
-        const data = await response.json();
-        if (!data.success) throw new Error(data.error || 'Failed to load in-patients');
-
+        var res = await fetch('/hms/backend/api/clinical_notes.php?' + params.toString());
+        var data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed to load admitted patients');
         dsInpatients = data.inpatients || [];
-        renderInpatients();
-        renderStationStats();
-    } catch (error) {
-        console.error('Doctor station load error:', error);
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Failed to load in-patients</td></tr>';
-    }
-}
-
-function renderInpatients() {
-    const tbody = document.getElementById('ds-table-body');
-    if (!tbody) return;
-
-    // The entry-type filter narrows what each stay shows in its record column;
-    // a stay with no entry of that type is hidden rather than shown empty.
-    const filter = document.getElementById('ds-filter-entry').value;
-    if (filter === 'ALL') {
-        tbody.innerHTML = dsInpatients.length
-            ? dsInpatients.map(inpatientRow).join('')
-            : '<tr><td colspan="7"><div id="ds-empty">No in-patients found</div></td></tr>';
+    } catch (e) {
+        console.error('Doctor station load error:', e);
+        container.innerHTML = '<div class="ds-card"><div class="ds-card-pad" style="text-align:center;color:#C0392B;font-size:13px;">Failed to load admitted patients. Please try again.</div></div>';
+        dsUpdateCounters(0, 0);
         return;
     }
-    // A type-specific filter needs the notes per stay, so they are fetched once.
-    loadNotesForType(filter);
-}
 
-function inpatientRow(p) {
-    const notes = dsNotes.filter(n => String(n.admission_id) === String(p.admission_id));
-    const record = clinicalRecordCell(p, notes);
-    return '<tr data-ds-row="' + p.admission_id + '">'
-        + '<td><span class="ds-code">' + escHtml(p.hospital_number || '-') + '</span></td>'
-        + '<td><span class="ds-name">' + escHtml(p.patient_name || '-') + '</span>'
-            + '<div class="ds-note-count">' + escHtml(p.gender || '') + (p.age !== null && p.age !== undefined ? ' &middot; ' + escHtml(p.age) + ' yrs' : '') + '</div></td>'
-        + '<td>' + escHtml(p.ward_name || '-') + ' &middot; Bed ' + escHtml(p.bed_number || '-') + '</td>'
-        + '<td>' + fmtDateTime(p.admission_date) + '<div class="ds-note-count">' + escHtml(p.admission_type || '') + '</div></td>'
-        + '<td>' + (p.diagnosis ? escHtml(p.diagnosis) : '<span style="color:#95A5A6;">—</span>') + '</td>'
-        + record
-        + '<td><div class="ds-actions">'
-            + '<button class="primary" data-ds-open="' + p.admission_id + '"><i class="fa-solid fa-plus"></i> Add Note / Discharge Summary</button>'
-            + '<button class="view" data-ds-history="' + p.admission_id + '"><i class="fa-solid fa-clock-rotate-left"></i> Record</button>'
-            + '<button class="consult" data-ds-consult="' + p.admission_id + '" title="Open the full consultation form for this patient"><i class="fa-solid fa-stethoscope"></i> Consultation Form</button>'
-        + '</div></td>'
-        + '</tr>';
-}
-
-function clinicalRecordCell(p, notes) {
-    if (!notes.length) {
-        return '<td><span style="color:#95A5A6;">No entries yet</span></td>';
+    // Ward filter is applied client-side: the in-patient feed already carries ward_name.
+    if (wardId) {
+        var wanted = dsWardName(wardId);
+        dsInpatients = dsInpatients.filter(function (p) { return String(p.ward_name) === String(wanted); });
     }
-    const tagFor = t => t === 'DISCHARGE_SUMMARY' ? 'dsum' : (t === 'IPD_NOTE' ? 'ipd' : 'opd');
-    const items = notes.slice(0, 3).map(n =>
-        '<div class="nt ' + tagFor(n.note_type) + '">' + escHtml(DS_TYPE_LABELS[n.note_type] || n.note_type) + '</div>'
-        + '<div class="txt" style="font-size:10.5px;color:#475569;max-height:34px;overflow:hidden;white-space:pre-wrap;">' + escHtml(n.clinical_note) + '</div>'
-        + '<div class="meta">' + fmtDateTime(n.created_at) + ' &middot; ' + escHtml(n.doctor_name || '') + '</div>'
-    ).join('<div style="height:6px"></div>');
-    const more = notes.length > 3 ? '<div class="meta">+ ' + (notes.length - 3) + ' more entr' + (notes.length - 3 === 1 ? 'y' : 'ies') + '</div>' : '';
-    return '<td>' + items + more + '</td>';
+
+    await renderCards();
 }
 
-function renderStationStats() {
-    let notes = 0, awaiting = 0, done = 0;
-    dsInpatients.forEach(p => {
-        if (Number(p.ipd_note_count) > 0) notes++;
-        if (Number(p.summary_count) > 0) done++; else awaiting++;
-    });
-    setText('ds-stat-inpatients', dsInpatients.length);
-    setText('ds-stat-notes', notes);
-    setText('ds-stat-summaries', awaiting);
-    setText('ds-stat-done', done);
+async function renderCards() {
+    var container = document.getElementById('dsCards');
+    dsContext = {}; dsNotesCache = {}; dsMedsCache = {}; dsInvCache = {}; dsConsultCache = {}; dsRx = {}; dsDrugs = {};
+
+    if (!dsInpatients.length) {
+        container.innerHTML = '<div class="ds-card"><div class="ds-card-pad" style="text-align:center;color:#64748B;font-size:13px;">No patients currently admitted in the selected ward.</div></div>';
+        dsUpdateCounters(0, 0);
+        return;
+    }
+
+    var html = [];
+    var ctxList = [];
+    for (var i = 0; i < dsInpatients.length; i++) {
+        var row = dsInpatients[i];
+        var ctx = await buildPatientContext(row);
+        dsContext[row.patient_id] = ctx;
+        ctxList.push(ctx);
+        html.push(renderPatientCard(ctx));
+    }
+    container.innerHTML = html.join('');
+
+    var total = ctxList.length;
+    var partial = ctxList.filter(function (c) { return Number(c.row.summary_count) > 0; }).length;
+    dsUpdateCounters(total, partial);
+
+    ctxList.forEach(fillClinicalData);
 }
 
-function setText(id, value) {
-    const el = document.getElementById(id);
+async function buildPatientContext(row) {
+    var pid = row.patient_id;
+    var summary = null;
+    var visits = [];
+    var vitalsList = [];
+
+    try {
+        var r = await fetch('/hms/backend/api/patients.php?action=summary&id=' + pid);
+        var d = await r.json();
+        if (d.success) summary = d.patient;
+    } catch (e) { console.error('Patient summary error:', e); }
+
+    try {
+        var r2 = await fetch('/hms/backend/api/visits.php?patient_id=' + pid);
+        var d2 = await r2.json();
+        if (d2.success) visits = d2.visits || [];
+    } catch (e) { console.error('Patient visits error:', e); }
+
+    var latestVisit = visits[0] || null;
+    if (latestVisit) {
+        try {
+            var r3 = await fetch('/hms/backend/api/vitals.php?visit_id=' + latestVisit.id);
+            var d3 = await r3.json();
+            if (d3.success) vitalsList = d3.vitals || [];
+        } catch (e) { console.error('Patient vitals error:', e); }
+    }
+
+    return { row: row, summary: summary, latestVisit: latestVisit, vitals: vitalsList };
+}
+
+function dsUpdateCounters(total, partial) {
+    setDsText('dsTotalPatients', total);
+    setDsText('dsPartialDischarged', partial);
+}
+
+function setDsText(id, value) {
+    var el = document.getElementById(id);
     if (el) el.textContent = value;
 }
 
-async function loadNotesForType(type) {
-    const tbody = document.getElementById('ds-table-body');
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading entries...</td></tr>';
-    try {
-        const response = await fetch('/hms/backend/api/clinical_notes.php?action=list&note_type=' + type);
-        const data = await response.json();
-        if (!data.success) throw new Error(data.error || 'Failed to load entries');
-        dsNotes = data.notes || [];
-
-        const wanted = dsInpatients.filter(p => dsNotes.some(n => String(n.admission_id) === String(p.admission_id)));
-        tbody.innerHTML = wanted.length
-            ? wanted.map(inpatientRow).join('')
-            : '<tr><td colspan="7"><div id="ds-empty">No in-patients with a ' + escHtml(DS_TYPE_LABELS[type] || type) + ' yet</div></td></tr>';
-    } catch (error) {
-        console.error('Doctor station notes error:', error);
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Failed to load entries</td></tr>';
-    }
-}
-
-// Delegated clicks so re-rendering the table keeps the buttons working.
-document.addEventListener('click', function (e) {
-    const openBtn = e.target.closest('[data-ds-open]');
-    if (openBtn) { openNoteModal(openBtn.getAttribute('data-ds-open'), true); return; }
-
-    const histBtn = e.target.closest('[data-ds-history]');
-    if (histBtn) { openNoteModal(histBtn.getAttribute('data-ds-history'), false); return; }
-
-    const consultBtn = e.target.closest('[data-ds-consult]');
-    if (consultBtn) {
-        e.stopPropagation();
-        toggleConsultationForm(consultBtn.getAttribute('data-ds-consult'));
-        return;
-    }
-
-    const rmBtn = e.target.closest('[data-ds-delete-note]');
-    if (rmBtn) { deleteClinicalNote(rmBtn.getAttribute('data-ds-delete-note')); return; }
-
-    // Removing a drug line only edits the local draft; nothing is sent until the
-    // doctor saves, so no confirm() is needed here.
-    const rxRm = e.target.closest('[data-ds-rx-rm]');
-    if (rxRm && dsForm) {
-        dsForm.rxLines.splice(Number(rxRm.getAttribute('data-ds-rx-rm')), 1);
-        renderRxLines();
-    }
-});
-
-async function openNoteModal(admissionId, startNewEntry) {
-    const target = dsInpatients.find(p => String(p.admission_id) === String(admissionId));
-    if (!target) return;
-    dsTarget = target;
-
-    document.getElementById('ds-note-patient').textContent =
-        (target.patient_name || 'Patient') + ' (' + (target.hospital_number || '-') + ')';
-    document.getElementById('ds-bar-admission').innerHTML =
-        '<b>ADMISSION:</b> ' + escHtml(target.admission_code || '-');
-    document.getElementById('ds-bar-bed').innerHTML =
-        '<b>WARD / BED:</b> ' + escHtml(target.ward_name || '-') + ' &middot; Bed ' + escHtml(target.bed_number || '-');
-    document.getElementById('ds-foot-code').textContent = target.admission_code || '—';
-
-    if (startNewEntry) {
-        document.getElementById('ds-note-text').value = '';
-        // A round note is the safe default: it is the one type always accepted
-        // for a live stay, whereas a stay that already has a summary would have
-        // its second summary refused by the API.
-        document.getElementById('ds-note-type').value = 'IPD_NOTE';
-    }
-    onNoteTypeChange();
-
-    document.getElementById('ds-note-modal').classList.add('show');
-    await loadStayNotes(target.admission_id);
-    if (startNewEntry) document.getElementById('ds-note-text').focus();
-}
-
-function closeNoteModal() {
-    document.getElementById('ds-note-modal').classList.remove('show');
-    dsTarget = null;
-}
-
-function onNoteTypeChange() {
-    const type = document.getElementById('ds-note-type').value;
-    const hint = document.getElementById('ds-type-hint');
-    if (hint) hint.textContent = DS_TYPE_HINTS[type] || '';
-
-    const warn = document.getElementById('ds-summary-warn');
-    if (warn) warn.classList.toggle('show', type === 'DISCHARGE_SUMMARY' && dsTarget && Number(dsTarget.summary_count) > 0);
-}
-
-async function loadStayNotes(admissionId) {
-    const body = document.getElementById('ds-history-body');
-    const count = document.getElementById('ds-history-count');
-    body.innerHTML = '<div class="empty">Loading...</div>';
-    try {
-        const response = await fetch('/hms/backend/api/clinical_notes.php?action=list&admission_id=' + admissionId);
-        const data = await response.json();
-        if (!data.success) throw new Error(data.error || 'Failed to load the clinical record');
-
-        const notes = data.notes || [];
-        count.textContent = notes.length + (notes.length === 1 ? ' entry' : ' entries');
-
-        if (!notes.length) {
-            body.innerHTML = '<div class="empty">No clinical entries recorded for this stay yet.</div>';
-            return;
-        }
-        const tagFor = t => t === 'DISCHARGE_SUMMARY' ? 'dsum' : (t === 'IPD_NOTE' ? 'ipd' : 'opd');
-        body.innerHTML = '<table><thead><tr><th>Type</th><th>Entry</th><th>Recorded</th><th></th></tr></thead><tbody>'
-            + notes.map(n =>
-                '<tr>'
-                + '<td><span class="nt ' + tagFor(n.note_type) + '">' + escHtml(DS_TYPE_LABELS[n.note_type] || n.note_type) + '</span></td>'
-                + '<td><div class="txt">' + escHtml(n.clinical_note) + '</div></td>'
-                + '<td><span class="meta" style="margin:0;">' + fmtDateTime(n.created_at) + '<br>' + escHtml(n.doctor_name || '') + '</span></td>'
-                + '<td><button class="rm" data-ds-delete-note="' + n.id + '">Delete</button></td>'
-                + '</tr>'
-            ).join('')
-            + '</tbody></table>';
-    } catch (error) {
-        body.innerHTML = '<div class="empty">Could not load the clinical record — ' + escHtml(error.message) + '</div>';
-    }
-}
-
-async function saveClinicalNote() {
-    if (!dsTarget) return;
-    const text = document.getElementById('ds-note-text').value.trim();
-    if (!text) { showAlert('Enter the clinical notes before saving', 'error'); return; }
-
-    const type = document.getElementById('ds-note-type').value;
-    const btn = document.getElementById('ds-save-note');
-    btn.disabled = true;
-    try {
-        const res = await fetch('/hms/backend/api/clinical_notes.php?action=create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                patient_id: dsTarget.patient_id,
-                admission_id: dsTarget.admission_id,
-                note_type: type,
-                clinical_note: text
-            })
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error || 'Could not save the entry');
-
-        showAlert((DS_TYPE_LABELS[type] || 'Clinical entry') + ' saved', 'success');
-        document.getElementById('ds-note-text').value = '';
-        closeNoteModal();
-        await loadInpatients();
-    } catch (error) {
-        showAlert(error.message, 'error');
-    } finally {
-        btn.disabled = false;
-    }
-}
-
-async function deleteClinicalNote(id) {
-    if (!confirm('Delete this clinical entry?\n\nThe record cannot be recovered.')) return;
-    try {
-        const res = await fetch('/hms/backend/api/clinical_notes.php?action=delete&id=' + id, { method: 'DELETE' });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error || 'Could not delete the entry');
-
-        showAlert('Clinical entry deleted', 'success');
-        if (dsTarget) await loadStayNotes(dsTarget.admission_id);
-        await loadInpatients();
-    } catch (error) {
-        showAlert(error.message, 'error');
-    }
-}
-
-/* ================= Inline consultation form =================
-   State for the single expandable form. Only one patient is expanded at a time,
-   so this is a plain object rather than a map keyed by admission. */
-let dsForm = null;
-
-function toggleConsultationForm(admissionId) {
-    const row = document.querySelector('#ds-table-body tr[data-ds-row="' + admissionId + '"]');
-    if (!row) return;
-
-    const existing = row.nextElementSibling;
-    if (existing && existing.classList.contains('ds-expand')) {
-        existing.remove();
-        if (dsForm) dsForm.row.classList.remove('is-open');
-        dsForm = null;
-        return;
-    }
-
-    if (dsForm && dsForm.row) {
-        const prior = dsForm.row.nextElementSibling;
-        if (prior && prior.classList.contains('ds-expand')) prior.remove();
-        dsForm.row.classList.remove('is-open');
-    }
-    dsForm = { admissionId: admissionId, row: row, rxLines: [], drugs: [], saved: null };
-    row.classList.add('is-open');
-
-    const host = document.createElement('tr');
-    host.className = 'ds-expand';
-    host.innerHTML = '<td colspan="7"><div class="ds-form"><div style="text-align:center;padding:20px;color:#8A94A6;font-size:12px;">Loading consultation form...</div></div></td>';
-    row.after(host);
-    loadConsultationForm();
-}
-
-async function loadConsultationForm() {
-    const ctx = await fetchJson('/hms/backend/api/consultation_form.php?action=context&patient_id=' + dsFormPatientId());
-    if (!ctx) return;
-    dsForm.ctx = ctx;
-    dsForm.host = dsForm.row.nextElementSibling;
-    dsForm.host.innerHTML = buildConsultationForm(ctx);
-    wireConsultationForm();
-    setupDrugPicker();
-    if (!ctx.admission) loadWards();
-}
-
-function dsFormPatientId() {
-    const p = dsInpatients.find(x => String(x.admission_id) === String(dsForm.admissionId));
-    return p ? p.patient_id : 0;
-}
-
-async function fetchJson(url, options) {
-    try {
-        const res = await fetch(url, options);
-        const data = await res.json();
-        if (!data.success) {
-            showAlert(data.error || 'Something went wrong', 'error');
-            return null;
-        }
-        return data;
-    } catch (error) {
-        showAlert(error.message, 'error');
-        return null;
-    }
-}
-
-/* ---------- Rendering ---------- */
+/* ============================ CARD RENDERING ============================ */
 function initialsOf(name) {
-    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
     if (!parts.length) return '?';
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function vitalTile(label, value, suffix) {
-    if (value === null || value === undefined || value === '') {
-        return '<div class="v none"><span class="k">' + escHtml(label) + '</span><span class="n">Not recorded</span></div>';
-    }
-    // Blood pressure arrives already composed as "120/80", so only round a
-    // genuinely numeric reading — rounding the string would print NaN.
-    const shown = (typeof value === 'number')
-        ? String(Math.round(value * 10) / 10)
-        : String(value);
-    return '<div class="v"><span class="k">' + escHtml(label) + '</span><span class="n">' + escHtml(shown) + (suffix || '') + '</span></div>';
+function plausibleVital(v, field) {
+    if (!v) return null;
+    var val = v[field];
+    if (val === null || val === undefined || val === '') return null;
+    val = Number(val);
+    if (isNaN(val)) return null;
+    var bounds = { temperature: [30, 45], heart_rate: [20, 260], oxygen_saturation: [40, 100],
+                   blood_pressure_systolic: [40, 320], blood_pressure_diastolic: [20, 200] };
+    var b = bounds[field];
+    if (b && (val < b[0] || val > b[1])) return null;
+    return val;
 }
 
-function buildConsultationForm(ctx) {
-    const p = ctx.patient;
-    const v = ctx.vitals;
-    const hasAllergy = !!(p.allergies && p.allergies.trim());
+function latestVitalTiles(readings) {
+    var v = (readings && readings.length) ? readings[0] : null;
+    var sys = plausibleVital(v, 'blood_pressure_systolic');
+    var dia = plausibleVital(v, 'blood_pressure_diastolic');
+    var bp = (sys !== null && dia !== null && dia < sys) ? sys + '/' + dia : '';
+    var pulse = plausibleVital(v, 'heart_rate');
+    var temp = plausibleVital(v, 'temperature');
+    var spo2 = plausibleVital(v, 'oxygen_saturation');
 
-    // Vitals held outside a believable range are blanked by the API. Saying so
-    // is better than silently showing a dash as though nothing was ever taken.
-    const dropped = (v.discarded || []).length;
-
-    const history = [];
-    (ctx.notes || []).forEach(n => history.push({
-        when: n.created_at,
-        who: n.doctor_name || '',
-        what: n.note_type,
-        text: n.clinical_note
-    }));
-    (ctx.consultations || []).forEach(c => history.push({
-        when: c.consultation_date,
-        who: c.doctor_name || '',
-        what: c.consultation_type === 'new' ? 'New consultation' : (c.consultation_type === 'follow_up' ? 'Follow-up consultation' : 'Emergency consultation'),
-        text: (c.diagnosis ? 'Diagnosis: ' + c.diagnosis : '') + (c.chief_complaint ? (c.diagnosis ? '\n' : '') + 'Complaint: ' + c.chief_complaint : ''),
-        muted: true
-    }));
-    history.sort((a, b) => String(b.when).localeCompare(String(a.when)));
-
-    const historyHtml = history.length
-        ? history.slice(0, 25).map(h =>
-            '<div class="h"><div class="w">' + fmtDateTime(h.when) + ' <span>(' + escHtml(h.who) + ')</span></div>'
-            + '<div style="font-size:9.5px;color:' + (h.muted ? '#94A3B8' : '#0b5fa5') + ';text-transform:uppercase;letter-spacing:.3px;font-weight:700;">' + escHtml(h.what) + '</div>'
-            + (h.text ? '<div class="txt">' + escHtml(h.text) + '</div>' : '')
-            + '</div>').join('')
-        : '<div class="none">No previous records for this patient.</div>';
-
-    const invHtml = (ctx.investigations || []).map(i =>
-        '<label><input type="checkbox" class="ds-inv-check" value="' + escHtml(i.key) + '">'
-        + escHtml(i.label) + '<span class="kind">' + escHtml(i.kind === 'lab' ? 'Lab' : 'Imaging') + '</span></label>').join('');
-
-    const deptHtml = '<option value="">General review (no clinic)</option>'
-        + (ctx.departments || []).map(d => '<option value="' + d.id + '">' + escHtml(d.name) + '</option>').join('');
-
-    const pendingHtml = (ctx.pending_prescriptions || []).length
-        ? '<div class="ds-pending"><div style="font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:#64748B;margin-bottom:5px;">Already prescribed, awaiting dispensing</div>'
-          + ctx.pending_prescriptions.map(r => '<div class="pd"><b>' + escHtml(r.drug_name) + '</b> &mdash; '
-              + escHtml(r.dosage || '') + ' ' + escHtml(r.frequency || '') + ' ' + escHtml(r.duration || '') + '</div>').join('')
-          + '</div>'
-        : '';
-
-    const admitBox = ctx.admission
-        ? '<div class="ds-admit is-admitted">'
-            + '<label class="chk"><input type="checkbox" id="ds-admit-check" checked disabled> Already admitted to a bed</label>'
-            + '<div class="note"><i class="fa-solid fa-bed"></i> ' + escHtml(ctx.admission.ward_name) + ' &middot; Bed ' + escHtml(ctx.admission.bed_number)
-            + '<br>Admission ' + escHtml(ctx.admission.admission_code) + '. No new admission is needed.</div>'
-          + '</div>'
-        : '<div class="ds-admit">'
-            + '<label class="chk"><input type="checkbox" id="ds-admit-check"> Admit patient to ward / bed</label>'
-            + '<div class="wardgrid" id="ds-wardgrid" style="display:none;">'
-                + '<div><label for="ds-ward">Ward</label><select id="ds-ward"><option value="">Select ward</option></select></div>'
-                + '<div><label for="ds-bed">Bed</label><select id="ds-bed" disabled><option value="">Select ward first</option></select></div>'
-            + '</div>'
-            + '<div class="note" id="ds-admit-note" style="display:none;">The bed is occupied by the Admissions Register, which owns bed state.</div>'
-          + '</div>';
-
-    return ''
-        + '<div class="ds-ident">'
-            + '<div class="who">'
-                + '<div class="avatar">' + escHtml(initialsOf(p.name)) + '</div>'
-                + '<div><div class="nm">' + escHtml(p.name) + '<span class="hn">' + escHtml(p.hospital_number) + '</span></div>'
-                + '<div class="facts">Gender: <b>' + escHtml(p.gender || '-') + '</b> &bull; Age: <b>' + escHtml(p.age !== null ? p.age + ' yrs' : '-') + '</b>'
-                + ' &bull; Blood Group: <b>' + escHtml(p.blood_group || 'Not recorded') + '</b>'
-                + ' &bull; NHIS No: <b>' + escHtml(p.nhia_number || 'Not recorded') + '</b></div></div>'
-            + '</div>'
-            + '<div>'
-                + (ctx.admission ? '<span class="ds-stay"><i class="fa-solid fa-bed"></i> ' + escHtml(ctx.admission.ward_name) + ' &middot; Bed ' + escHtml(ctx.admission.bed_number) + '</span>' : '')
-                + (hasAllergy ? ' <span class="ds-alert"><i class="fa-solid fa-triangle-exclamation"></i> Allergy: ' + escHtml(p.allergies) + '</span>' : '')
-            + '</div>'
-        + '</div>'
-
-        + '<div class="cols">'
-        + '<div class="col">'
-
-            + '<div class="ds-box"><h4><i class="fa-solid fa-clock-rotate-left"></i> Past Medical Records &amp; Histories</h4>'
-                + '<div class="ds-hist">' + historyHtml + '</div></div>'
-
-            + '<div class="ds-box"><h4><i class="fa-solid fa-heart-pulse"></i> Latest Vitals <span class="hint">entered by nursing</span></h4>'
-                + '<div class="ds-vitals">'
-                    + vitalTile('Blood Pressure', (v.blood_pressure_systolic !== null && v.blood_pressure_diastolic !== null)
-                        ? v.blood_pressure_systolic + '/' + v.blood_pressure_diastolic : null, ' mmHg')
-                    + vitalTile('Pulse Rate', v.heart_rate, ' bpm')
-                    + vitalTile('Temperature', v.temperature, ' °C')
-                    + vitalTile('SpO2 Level', v.oxygen_saturation, '%')
-                + '</div>'
-                + (v.recorded_at ? '<div class="when">Recorded ' + fmtDateTime(v.recorded_at) + (v.nurse_name ? ' by ' + escHtml(v.nurse_name) : '') + '</div>' : '')
-                + (dropped ? '<div class="flagged"><i class="fa-solid fa-triangle-exclamation"></i> ' + dropped + ' reading' + (dropped === 1 ? ' was' : 's were') + ' recorded outside a possible range and ' + (dropped === 1 ? 'is' : 'are') + ' not shown. Check the vitals entry.</div>' : '')
-            + '</div>'
-
-            + '<div class="ds-box"><h4><i class="fa-solid fa-ban"></i> Allergic Update</h4>'
-                + '<div class="ds-allergy-wrap"><input type="text" id="ds-allergies" placeholder="e.g. Penicillin, Sulfa drugs" value="' + escHtml(p.allergies || '') + '"></div>'
-                + '<div class="ds-allergy-note">Saved to the patient record and shown as a warning on every clinical screen.</div>'
-            + '</div>'
-
-            + '<div class="ds-box"><h4><i class="fa-solid fa-bed-pulse"></i> Inpatient Admission</h4>' + admitBox + '</div>'
-
-        + '</div>'
-        + '<div class="col">'
-
-            + '<div class="ds-box"><h4><i class="fa-solid fa-comment-medical"></i> Presenting Complaints</h4>'
-                + '<textarea id="ds-complaints" placeholder="Patient complaints, duration, severity..."></textarea></div>'
-
-            + '<div class="ds-box"><h4><i class="fa-solid fa-stethoscope"></i> Condition of the Patient / Provisional Diagnosis</h4>'
-                + '<div class="three">'
-                    + '<div><label for="ds-diagnosis">Provisional Diagnosis</label>'
-                        + '<input type="text" id="ds-diagnosis" placeholder="e.g. Malaria, Upper Respiratory Tract Infection" value="' + escHtml(ctx.admission && ctx.admission.diagnosis ? ctx.admission.diagnosis : '') + '"></div>'
-                    + '<div><label for="ds-diag-status">Diagnosis Status</label>'
-                        + '<select id="ds-diag-status"><option value="New">New Diagnosis</option><option value="Old">Old / Chronic Diagnosis</option></select></div>'
-                + '</div>'
-            + '</div>'
-
-            // The three write actions (notes, prescriptions, investigations) share
-            // one tabbed workspace. Plain JS switchDsTab — this project ships no
-            // Alpine.js. Hidden panels keep their inputs in the DOM, so saving
-            // still reads every value.
-            + '<div class="ds-workspace" id="ds-workspace">'
-                + '<div class="ds-tabs" role="tablist" aria-label="Doctor clinical actions">'
-                    + '<button type="button" class="ds-tab active" data-ds-tab="notes" role="tab" aria-selected="true"><i class="fa-solid fa-pen-to-square"></i> Doctor Notes &amp; Clinical Entries</button>'
-                    + '<button type="button" class="ds-tab" data-ds-tab="prescriptions" role="tab" aria-selected="false"><i class="fa-solid fa-pills"></i> Prescribe Medication</button>'
-                    + '<button type="button" class="ds-tab" data-ds-tab="investigations" role="tab" aria-selected="false"><i class="fa-solid fa-microscope"></i> Request Lab / Radiology</button>'
-                + '</div>'
-
-                + '<div class="ds-panel active" data-ds-panel="notes" role="tabpanel">'
-                    + '<div class="ds-box"><h4><i class="fa-solid fa-notes-medical"></i> Doctor Notes Update</h4>'
-                        + '<textarea id="ds-doctor-notes" placeholder="Clinical examination findings, systemic review..."></textarea></div>'
-                + '</div>'
-
-                + '<div class="ds-panel" data-ds-panel="prescriptions" role="tabpanel">'
-                    + '<div class="ds-box"><h4><i class="fa-solid fa-pills"></i> Prescription (Medication Orders)</h4>'
-                        + '<div class="ds-rx-add">'
-                            + '<input type="text" id="ds-drug-search" placeholder="Search stocked drugs by name or code..." list="ds-drug-list" autocomplete="off">'
-                            + '<datalist id="ds-drug-list"></datalist>'
-                            + '<button type="button" id="ds-drug-add"><i class="fa-solid fa-plus"></i> Add</button>'
-                        + '</div>'
-                        + '<div class="ds-rx-hint">Each drug added here creates a prescription row the pharmacy can dispense. Only drugs with stock in hand are listed.</div>'
-                        + '<div class="ds-rx-lines" id="ds-rx-lines"></div>'
-                        + pendingHtml
-                        + '<div class="fld" style="margin-top:11px;"><label for="ds-med-notes">Additional Medication Notes (free text)</label>'
-                            + '<textarea id="ds-med-notes" placeholder="Advice, drugs not stocked, anything the pharmacy must know..." style="min-height:58px;">'
-                            + escHtml(ctx.last_medication_notes || '') + '</textarea></div>'
-                    + '</div>'
-                + '</div>'
-
-                + '<div class="ds-panel" data-ds-panel="investigations" role="tabpanel">'
-                    + '<div class="ds-box"><h4><i class="fa-solid fa-microscope"></i> Investigations / Radiology / Sonography Requests <span class="hint">raise real orders</span></h4>'
-                        + '<div class="ds-inv">' + invHtml + '</div></div>'
-                + '</div>'
-            + '</div>'
-
-            + '<div class="ds-box"><h4><i class="fa-solid fa-calendar-days"></i> Follow-Up Calendar</h4>'
-                + '<div class="two">'
-                    + '<div><label for="ds-followup">Review Date &amp; Time</label><input type="datetime-local" id="ds-followup"></div>'
-                    + '<div><label for="ds-followup-clinic">Follow-Up Clinic / Unit</label><select id="ds-followup-clinic">' + deptHtml + '</select></div>'
-                + '</div>'
-                + '<div class="fld" style="margin-top:9px;"><label for="ds-followup-reason">Reason for review</label>'
-                    + '<input type="text" id="ds-followup-reason" placeholder="e.g. Review after completing treatment"></div>'
-            + '</div>'
-
-        + '</div>'
-        + '</div>'
-
-        + '<div class="ds-actions-bar">'
-            + '<div><span class="ds-saving" id="ds-saving"><i class="fa-solid fa-spinner fa-spin"></i> Saving...</span>'
-                + '<span class="note">Saved under your name and stamped with the time.</span></div>'
-            + '<div class="btns">'
-                + '<button type="button" class="ds-btn grey" id="ds-collapse"><i class="fa-solid fa-xmark"></i> Close</button>'
-                + '<button type="button" class="ds-btn grey" id="ds-save-draft"><i class="fa-regular fa-floppy-disk"></i> Save to Draft</button>'
-                + '<button type="button" class="ds-btn blue" id="ds-print"><i class="fa-solid fa-print"></i> Print</button>'
-                + '<button type="button" class="ds-btn red" id="ds-save"><i class="fa-solid fa-rotate"></i> Update Records</button>'
-            + '</div>'
+    function tile(k, text) {
+        return '<div class="ds-tile' + (text ? '' : ' none') + '"><span class="k">' + escHtml(k) + '</span>'
+            + '<span class="v">' + escHtml(text || 'Not recorded') + '</span></div>';
+    }
+    return '<div class="ds-tiles">'
+        + tile('Blood Pressure', bp)
+        + tile('Pulse Rate', pulse !== null ? pulse + ' bpm' : '')
+        + tile('Temperature', temp !== null ? temp + ' °C' : '')
+        + tile('SpO2', spo2 !== null ? spo2 + '%' : '')
         + '</div>';
 }
 
-/* Tab switcher for the consultation form's clinical workspace. The form is a
-   single injected instance, so the state lives on fixed data-* attributes. */
-function switchDsTab(section) {
-    const workspace = document.getElementById('ds-workspace');
-    if (!workspace) return;
-    workspace.querySelectorAll('.ds-tab').forEach(btn => {
-        const on = btn.getAttribute('data-ds-tab') === section;
+function dischargeBadgeHtml(adm) {
+    if (!adm) return '<span class="ds-admchip">No Admission Record</span>';
+    var outcome = String(adm.discharge_outcome || '').trim();
+    var status = String(adm.status || '').trim();
+    var isDischarged = status.toLowerCase() === 'discharged' || !!outcome;
+    var cls = '', label = 'Active Admission';
+    if (isDischarged) {
+        var o = outcome.toLowerCase();
+        if (/die|death|deceased|expire/.test(o)) { cls = 'died'; label = outcome || 'Died'; }
+        else if (/abscond|absent|escape|left against/.test(o)) { cls = 'absconded'; label = outcome || 'Absconded'; }
+        else { cls = 'discharged'; label = outcome || 'Discharged'; }
+    }
+    return '<span class="ds-admchip ' + cls + '">' + escHtml(label) + '</span>';
+}
+
+function renderPatientCard(ctx) {
+    var row = ctx.row;
+    var s = ctx.summary || {};
+    var pid = row.patient_id;
+    var readings = ctx.vitals || [];
+    var adm = s.admission || { status: 'Admitted' };
+
+    var demoLine = escHtml(s.gender || row.gender || '--') + ' | '
+        + ((s.age != null ? s.age : row.age) != null ? escHtml(s.age != null ? s.age : row.age) + ' Yrs' : '--')
+        + ' | Genotype: -- | Blood Group: ' + escHtml(s.blood_group || '--');
+
+    var allergy = (s.allergies && String(s.allergies).trim())
+        ? '<span class="ds-allergy"><i class="fa-solid fa-triangle-exclamation"></i> Allergy: ' + escHtml(s.allergies) + '</span>'
+        : '';
+
+    return ''
+    + '<div class="ds-card" data-ds-card="' + pid + '">'
+      + '<div class="ds-card-pad">'
+
+        // Ward + quick actions bar
+        + '<div class="ds-wardbar">'
+            + '<div class="left"><i class="fa-solid fa-bed"></i>'
+                + '<h3>' + escHtml(row.ward_name || 'Ward') + '</h3>'
+                + '<span class="ds-bedchip">Bed ' + escHtml(row.bed_number || '--') + '</span></div>'
+            + '<div class="right">'
+                + '<button type="button" class="ds-btn outline sm" onclick="dsTransfer()"><i class="fa-solid fa-right-left"></i> Change Bed / Transfer Patient</button>'
+                + '<button type="button" class="ds-btn outline sm" onclick="dsOpenMedicalRecords(' + pid + ')"><i class="fa-solid fa-file-medical"></i> Medical Records</button>'
+            + '</div>'
+        + '</div>'
+
+        // Red banner
+        + '<div class="ds-banner">'
+            + '<div><h3><i class="fa-regular fa-star"></i> Station Management — Doctor Clinical Workflow</h3>'
+                + '<div class="sub">Clinical entries, round notes, consultations and discharge summaries for this patient.</div></div>'
+            + '<div class="hn"><i class="fa-solid fa-hospital-user"></i> ' + escHtml(row.hospital_number || '--') + '</div>'
+        + '</div>'
+
+        // Patient details card
+        + '<div class="ds-patient">'
+            + '<div class="who">'
+                + '<div class="ds-avatar"><i class="fa-solid fa-user"></i></div>'
+                + '<div>'
+                    + '<div class="nm"><h4>' + escHtml(row.patient_name || 'PATIENT') + '</h4>'
+                        + '<span class="ds-idchip">ID: ' + escHtml(row.hospital_number || '--') + '</span>'
+                        + dischargeBadgeHtml(adm) + '</div>'
+                    + '<div class="demo">' + demoLine + '</div>'
+                    + '<a class="ds-link" onclick="dsGoAdmissions()">Discharge from Admissions</a>'
+                + '</div>'
+            + '</div>'
+            + '<div>' + allergy + '</div>'
+        + '</div>'
+
+        // Latest vitals
+        + '<div class="ds-vitals">'
+            + '<div class="head"><span class="ttl"><i class="fa-solid fa-heart-pulse"></i> Latest Vitals</span>'
+                + '<span>Most recent reading</span></div>'
+            + latestVitalTiles(readings)
+        + '</div>'
+
+        // Clinical workspace
+        + '<div class="ds-workspace" id="dsWorkspace_' + pid + '">'
+            + '<div class="ds-tabs" role="tablist" aria-label="Clinical sections">'
+                + dsTab(pid, 'doctor_notes', 'fa-user-doctor', 'Doctor Notes &amp; Clinical Entries', true)
+                + dsTab(pid, 'vitals', 'fa-heart-pulse', 'Vital Signs Readings', false)
+                + dsTab(pid, 'prescriptions', 'fa-pills', 'Prescribed Medication', false)
+                + dsTab(pid, 'nurse_notes', 'fa-notes-medical', 'Nurses / Midwives Notes', false)
+                + dsTab(pid, 'treatment', 'fa-file-prescription', 'Treatment Sheet', false)
+                + dsTab(pid, 'investigations', 'fa-flask-vial', 'Investigations Requested', false)
+            + '</div>'
+
+            // Panel 1 — Doctor Notes & Clinical Entries (WRITE)
+            + '<div class="ds-panel active" id="dsPanel_' + pid + '_doctor_notes" data-ds-panel="doctor_notes" role="tabpanel">'
+                + '<div class="ds-sec">'
+                    + '<div class="ds-sec-head"><h4><i class="fa-solid fa-pen-to-square"></i> Doctor Clinical Round Notes &amp; Discharge Summary</h4>'
+                        + '<span class="hint">Saved against this stay under your name</span></div>'
+                    + '<div class="ds-fld"><label for="dsNoteType_' + pid + '">Entry Type</label>'
+                        + '<select id="dsNoteType_' + pid + '">'
+                            + '<option value="IPD_NOTE" selected>IPD Daily Clinical Round Note</option>'
+                            + '<option value="OPD_NOTE">OPD Consultation Note</option>'
+                            + '<option value="DISCHARGE_SUMMARY">Discharge Summary</option>'
+                        + '</select></div>'
+                    + '<div class="ds-fld"><label for="dsNoteText_' + pid + '">Clinical Notes / Recommendations</label>'
+                        + '<textarea id="dsNoteText_' + pid + '" placeholder="Enter clinical observations, diagnoses, treatment plan or discharge instructions…"></textarea></div>'
+                    + '<div style="text-align:right;"><button type="button" class="ds-btn primary" onclick="dsSaveDoctorEntry(' + pid + ')"><i class="fa-solid fa-floppy-disk"></i> Save Doctor Entry</button></div>'
+                    + '<div style="border-top:1px dashed var(--ds-line);margin:14px 0 12px;"></div>'
+                    + '<div class="ds-sec-head" style="border:none;padding:0;margin:0 0 8px;"><h4><i class="fa-solid fa-clock-rotate-left"></i> Clinical Record For This Stay</h4></div>'
+                    + '<div id="dsNotesList_' + pid + '"><div class="ds-empty">Loading clinical record…</div></div>'
+                + '</div>'
+            + '</div>'
+
+            // Panel 2 — Vitals (READ)
+            + '<div class="ds-panel" id="dsPanel_' + pid + '_vitals" data-ds-panel="vitals" role="tabpanel">'
+                + '<div class="ds-sec">'
+                    + '<div class="ds-sec-head"><h4><i class="fa-solid fa-heart-pulse"></i> Vital Signs Readings Log</h4>'
+                        + '<span class="hint">Recorded by nursing</span></div>'
+                    + '<div class="ds-table-wrap"><table class="ds-table"><thead><tr>'
+                        + '<th>Date / Time</th><th>Temp (°C)</th><th>BP (mmHg)</th><th>HR (bpm)</th><th>RR (bpm)</th><th>SpO2 (%)</th><th>Weight (kg)</th><th>Nurse</th>'
+                        + '</tr></thead><tbody id="dsVitalsBody_' + pid + '">' + dsVitalsRows(readings) + '</tbody></table></div>'
+                + '</div>'
+            + '</div>'
+
+            // Panel 3 — Prescriptions (READ + WRITE)
+            + '<div class="ds-panel" id="dsPanel_' + pid + '_prescriptions" data-ds-panel="prescriptions" role="tabpanel">'
+                + '<div class="ds-sec">'
+                    + '<div class="ds-sec-head"><h4><i class="fa-solid fa-pills"></i> Prescribed Medication</h4>'
+                        + '<span class="hint">Only stocked drugs can be ordered</span></div>'
+                    + '<div class="ds-table-wrap" style="margin-bottom:14px;"><table class="ds-table"><thead><tr>'
+                        + '<th>Drug Name &amp; Strength</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Status</th>'
+                        + '</tr></thead><tbody id="dsMedsBody_' + pid + '"><tr><td colspan="5" class="ds-empty">Loading prescriptions…</td></tr></tbody></table></div>'
+                    + '<div class="ds-fld"><label for="dsDrugSearch_' + pid + '">+ Prescribe Drug</label>'
+                        + '<div class="ds-rx-add">'
+                            + '<input type="text" id="dsDrugSearch_' + pid + '" list="dsDrugList_' + pid + '" placeholder="Search stocked drugs by name or code…" autocomplete="off">'
+                            + '<datalist id="dsDrugList_' + pid + '"></datalist>'
+                            + '<button type="button" class="ds-btn primary sm" onclick="dsAddDrug(' + pid + ')"><i class="fa-solid fa-plus"></i> Add</button>'
+                        + '</div>'
+                        + '<div class="ds-rx-hint">Each drug added here creates a prescription the pharmacy can dispense.</div>'
+                    + '</div>'
+                    + '<div class="ds-rx-lines" id="dsRxLines_' + pid + '"></div>'
+                    + '<div style="text-align:right;margin-top:12px;"><button type="button" class="ds-btn green" onclick="dsSavePrescription(' + pid + ')"><i class="fa-solid fa-floppy-disk"></i> Save Prescription</button></div>'
+                + '</div>'
+            + '</div>'
+
+            // Panel 4 — Nurse notes (READ)
+            + '<div class="ds-panel" id="dsPanel_' + pid + '_nurse_notes" data-ds-panel="nurse_notes" role="tabpanel">'
+                + '<div class="ds-sec">'
+                    + '<div class="ds-sec-head"><h4><i class="fa-solid fa-notes-medical"></i> Nurses / Midwives Shift Notes</h4>'
+                        + '<span class="hint">Recorded at the Nurses Station</span></div>'
+                    + '<div id="dsNurseList_' + pid + '"></div>'
+                + '</div>'
+            + '</div>'
+
+            // Panel 5 — Treatment sheet (READ)
+            + '<div class="ds-panel" id="dsPanel_' + pid + '_treatment" data-ds-panel="treatment" role="tabpanel">'
+                + '<div class="ds-sec">'
+                    + '<div class="ds-sec-head"><h4><i class="fa-solid fa-file-prescription"></i> Inpatient Treatment Sheet</h4>'
+                        + '<span class="hint">Recorded at the Nurses Station</span></div>'
+                    + '<div class="ds-table-wrap"><table class="ds-table"><thead><tr>'
+                        + '<th>Date / Time</th><th>Treatment / Procedure</th><th>Notes</th><th>Staff</th><th>Status</th>'
+                        + '</tr></thead><tbody id="dsTreatBody_' + pid + '"><tr><td colspan="5" class="ds-empty">No treatments logged yet.</td></tr></tbody></table></div>'
+                + '</div>'
+            + '</div>'
+
+            // Panel 6 — Investigations (READ + WRITE)
+            + '<div class="ds-panel" id="dsPanel_' + pid + '_investigations" data-ds-panel="investigations" role="tabpanel">'
+                + '<div class="ds-sec">'
+                    + '<div class="ds-sec-head"><h4><i class="fa-solid fa-flask-vial"></i> Laboratory &amp; Radiology Investigations Requested</h4>'
+                        + '<span class="hint">Ordered from the Doctor Station</span></div>'
+                    + '<div class="ds-table-wrap" style="margin-bottom:14px;"><table class="ds-table"><thead><tr>'
+                        + '<th>Date Requested</th><th>Investigation / Test</th><th>Category</th><th>Ordered By</th><th>Result Status</th>'
+                        + '</tr></thead><tbody id="dsInvBody_' + pid + '"><tr><td colspan="5" class="ds-empty">Loading investigations…</td></tr></tbody></table></div>'
+                    + '<div class="ds-fld"><label>+ Request Test</label><div class="ds-inv" id="dsInvCat_' + pid + '"><div class="ds-empty">Loading investigation catalogue…</div></div></div>'
+                    + '<div style="text-align:right;margin-top:12px;"><button type="button" class="ds-btn green" onclick="dsSaveInvestigations(' + pid + ')"><i class="fa-solid fa-floppy-disk"></i> Save Requests</button></div>'
+                + '</div>'
+            + '</div>'
+
+        + '</div>' // /workspace
+
+      + '</div>' // /card-pad
+
+      // Footer
+      + '<div class="ds-footer">'
+          + '<span class="log">Logging as: <strong>' + escHtml(DS_STAFF) + '</strong> &bull; Last saved: <span id="dsLastSaved_' + pid + '">--</span>'
+              + ' <span class="ds-save-state" id="dsSaved_' + pid + '"><i class="fa-solid fa-circle-check"></i> Saved</span></span>'
+          + '<div class="btns">'
+              + '<button type="button" class="ds-btn light" onclick="dsSaveDraft(' + pid + ')">Save To Draft</button>'
+              + '<button type="button" class="ds-btn green" onclick="dsSaveOrUpdate(' + pid + ')">Save Or Update</button>'
+          + '</div>'
+      + '</div>'
+
+    + '</div>';
+}
+
+function dsTab(pid, section, icon, label, active) {
+    return '<button type="button" class="ds-tab' + (active ? ' active' : '') + '" data-ds-tab="' + section + '"'
+        + ' role="tab" aria-selected="' + (active ? 'true' : 'false') + '"'
+        + ' onclick="switchDsTab(' + pid + ', \'' + section + '\')">'
+        + '<i class="fa-solid ' + icon + '"></i><span>' + label + '</span></button>';
+}
+
+function dsVitalsRows(readings) {
+    if (!readings || !readings.length) {
+        return '<tr><td colspan="8" class="ds-empty">No vital signs recorded yet.</td></tr>';
+    }
+    return readings.map(function (v) {
+        var bp = (v.blood_pressure_systolic && v.blood_pressure_diastolic)
+            ? v.blood_pressure_systolic + '/' + v.blood_pressure_diastolic : '--';
+        return '<tr>'
+            + '<td><strong>' + escHtml(fmtDateTime(v.recorded_at)) + '</strong></td>'
+            + '<td>' + escHtml(v.temperature != null ? v.temperature : '--') + '</td>'
+            + '<td>' + escHtml(bp) + '</td>'
+            + '<td>' + escHtml(v.heart_rate != null ? v.heart_rate : '--') + '</td>'
+            + '<td>' + escHtml(v.respiratory_rate != null ? v.respiratory_rate : '--') + '</td>'
+            + '<td>' + escHtml(v.oxygen_saturation != null ? v.oxygen_saturation + '%' : '--') + '</td>'
+            + '<td>' + escHtml(v.weight != null ? v.weight : '--') + '</td>'
+            + '<td>' + escHtml(v.nurse_name || '--') + '</td>'
+            + '</tr>';
+    }).join('');
+}
+
+/* ============================ TAB SWITCH ============================ */
+function switchDsTab(pid, section) {
+    var ws = document.getElementById('dsWorkspace_' + pid);
+    if (!ws) return;
+    ws.querySelectorAll('.ds-tab').forEach(function (btn) {
+        var on = btn.getAttribute('data-ds-tab') === section;
         btn.classList.toggle('active', on);
         btn.setAttribute('aria-selected', on ? 'true' : 'false');
     });
-    workspace.querySelectorAll('.ds-panel').forEach(panel => {
+    ws.querySelectorAll('.ds-panel').forEach(function (panel) {
         panel.classList.toggle('active', panel.getAttribute('data-ds-panel') === section);
     });
+    // Lazy-load the write context the first time a doctor-write tab is opened.
+    if (section === 'prescriptions' || section === 'investigations') ensureConsultContext(pid);
 }
 
-function wireConsultationForm() {
-    const collapse = document.getElementById('ds-collapse');
-    if (collapse) collapse.addEventListener('click', toggleConsultationForm.bind(null, dsForm.admissionId));
+/* ============================ FILL CLINICAL DATA ============================ */
+function fillClinicalData(ctx) {
+    var pid = ctx.row.patient_id;
+    loadClinicalNotes(pid);
+    if (ctx.latestVisit) loadPrescriptions(ctx.latestVisit.id, pid);
+    else renderMedications(pid);
+    loadInvestigations(pid, ctx.row.hospital_number);
+    renderNurseNotes(pid);
+    renderTreatments(pid);
+    renderSavedStamp(pid);
+}
 
-    const save = document.getElementById('ds-save');
-    if (save) save.addEventListener('click', () => saveConsultationForm(false));
-    const draft = document.getElementById('ds-save-draft');
-    if (draft) draft.addEventListener('click', () => saveConsultationForm(true));
-    const printBtn = document.getElementById('ds-print');
-    if (printBtn) printBtn.addEventListener('click', printConsultation);
-
-    const admit = document.getElementById('ds-admit-check');
-    if (admit) {
-        admit.addEventListener('change', () => {
-            const grid = document.getElementById('ds-wardgrid');
-            if (grid) grid.style.display = admit.checked ? 'grid' : 'none';
-        });
+/* ---------- Clinical notes (tab 1) ---------- */
+async function loadClinicalNotes(pid) {
+    try {
+        var r = await fetch('/hms/backend/api/clinical_notes.php?action=list&patient_id=' + pid);
+        var d = await r.json();
+        dsNotesCache[pid] = (d.success && d.notes) ? d.notes : [];
+    } catch (e) {
+        console.error('Clinical notes load error:', e);
+        dsNotesCache[pid] = [];
     }
-
-    const ward = document.getElementById('ds-ward');
-    if (ward) ward.addEventListener('change', loadAvailableBeds);
-
-    // Clinical workspace tabs (notes / prescriptions / investigations). Panels
-    // are toggled by class, so hidden fields still submit their values on save.
-    document.querySelectorAll('#ds-workspace .ds-tab').forEach(btn => {
-        btn.addEventListener('click', () => switchDsTab(btn.getAttribute('data-ds-tab')));
-    });
-
-    renderRxLines();
+    renderClinicalNotes(pid);
 }
 
-// Ward list for the admit toggle. Occupancy comes from admissions.php, which is
-// the only place bed state is maintained.
-async function loadWards() {
-    const data = await fetchJson('/hms/backend/api/admissions.php?action=wards');
-    if (!data) return;
-    const select = document.getElementById('ds-ward');
-    if (!select) return;
-
-    const free = (data.wards || []).filter(w => w.beds_free > 0);
-    if (!free.length) {
-        select.innerHTML = '<option value="">No ward has a free bed</option>';
-        select.disabled = true;
-        const note = document.getElementById('ds-admit-note');
-        if (note) { note.style.display = 'block'; note.textContent = 'Every bed is currently occupied. The patient cannot be admitted right now.'; }
+function renderClinicalNotes(pid) {
+    var holder = document.getElementById('dsNotesList_' + pid);
+    if (!holder) return;
+    var list = dsNotesCache[pid] || [];
+    if (!list.length) {
+        holder.innerHTML = '<div class="ds-empty">No clinical entries recorded for this stay yet.</div>';
         return;
     }
-    select.innerHTML = '<option value="">Select ward</option>'
-        + free.map(w => '<option value="' + w.id + '">' + escHtml(w.ward_name) + ' &mdash; ' + w.beds_free + ' free</option>').join('');
+    holder.innerHTML = list.map(function (n) {
+        return '<div class="ds-note-item">'
+            + '<div class="top"><span class="who">' + escHtml(n.doctor_name || 'Doctor')
+                + ' <span style="font-weight:400;color:#64748B;">&middot; ' + escHtml(DS_NOTE_LABELS[n.note_type] || n.note_type) + '</span></span>'
+                + '<span class="when">' + escHtml(fmtDateTime(n.created_at)) + '</span></div>'
+            + '<div class="txt">' + escHtml(n.clinical_note) + '</div>'
+            + '<div style="text-align:right;margin-top:6px;"><button type="button" class="rm" onclick="dsDeleteNote(' + n.id + ',' + pid + ')">Delete</button></div>'
+            + '</div>';
+    }).join('');
 }
 
-async function loadAvailableBeds() {
-    const wardId = document.getElementById('ds-ward').value;
-    const bedSelect = document.getElementById('ds-bed');
-    if (!bedSelect) return;
-    if (!wardId) {
-        bedSelect.innerHTML = '<option value="">Select ward first</option>';
-        bedSelect.disabled = true;
-        return;
-    }
-    bedSelect.disabled = true;
-    bedSelect.innerHTML = '<option value="">Loading beds...</option>';
-    const data = await fetchJson('/hms/backend/api/admissions.php?action=available_beds&ward_id=' + wardId);
-    if (!data) { bedSelect.innerHTML = '<option value="">Could not load beds</option>'; return; }
-    if (!data.beds || !data.beds.length) {
-        bedSelect.innerHTML = '<option value="">No free bed in this ward</option>';
-        return;
-    }
-    bedSelect.disabled = false;
-    bedSelect.innerHTML = '<option value="">Select bed</option>'
-        + data.beds.map(b => '<option value="' + b.id + '">' + escHtml(b.bed_number) + (b.bed_type ? ' (' + escHtml(b.bed_type) + ')' : '') + '</option>').join('');
-}
+async function dsSaveDoctorEntry(pid) {
+    var row = dsInpatients.filter(function (p) { return String(p.patient_id) === String(pid); })[0];
+    if (!row) return;
+    var text = (document.getElementById('dsNoteText_' + pid).value || '').trim();
+    if (!text) { showAlert('Enter the clinical notes before saving.', 'error'); return; }
+    var type = document.getElementById('dsNoteType_' + pid).value;
 
-function setupDrugPicker() {
-    const input = document.getElementById('ds-drug-search');
-    const list = document.getElementById('ds-drug-list');
-    const add = document.getElementById('ds-drug-add');
-    if (!input || !add) return;
-
-    let timer = null;
-    input.addEventListener('input', () => {
-        clearTimeout(timer);
-        const term = input.value.trim();
-        timer = setTimeout(() => searchDrugs(term), 250);
-    });
-
-    input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); addDrugFromInput(); }
-    });
-    add.addEventListener('click', addDrugFromInput);
-
-    searchDrugs('');
-}
-
-async function searchDrugs(term) {
-    const list = document.getElementById('ds-drug-list');
-    if (!list) return;
-    const data = await fetchJson('/hms/backend/api/consultation_form.php?action=drugs&q=' + encodeURIComponent(term || ''));
-    if (!data) return;
-    dsForm.drugs = data.drugs || [];
-    list.innerHTML = dsForm.drugs
-        .map(d => '<option value="' + escHtml(d.drug_name) + '">' + escHtml(d.drug_code) + ' &mdash; ' + (d.quantity_in_stock || 0) + ' ' + escHtml(d.unit || 'in stock') + '</option>')
-        .join('');
-}
-
-async function addDrugFromInput() {
-    const input = document.getElementById('ds-drug-search');
-    const term = input.value.trim();
-    if (!term) return;
-
-    // Match what was typed against the last search result set. The datalist
-    // gives the suggestion but exposes no id, so the lookup happens here.
-    const lower = term.toLowerCase();
-    let drug = dsForm.drugs.find(d => d.drug_name.toLowerCase() === lower || d.drug_code.toLowerCase() === lower);
-
-    if (!drug) {
-        const data = await fetchJson('/hms/backend/api/consultation_form.php?action=drugs&q=' + encodeURIComponent(term));
-        drug = (data && data.drugs || []).find(d => d.drug_name.toLowerCase() === lower || d.drug_code.toLowerCase() === lower);
-    }
-    if (!drug) {
-        showAlert('"' + term + '" is not a stocked drug. Search the list and pick one so the pharmacy receives a valid order.', 'error');
-        return;
-    }
-    if (dsForm.rxLines.some(l => l.drug_id === drug.id)) {
-        showAlert(drug.drug_name + ' is already on this prescription', 'error');
-        return;
-    }
-
-    dsForm.rxLines.push({
-        drug_id: drug.id,
-        drug_name: drug.drug_name,
-        generic_name: drug.generic_name,
-        dosage: '',
-        frequency: '',
-        duration: '',
-        quantity: 1,
-        instructions: ''
-    });
-    input.value = '';
-    renderRxLines();
-    const first = document.querySelector('#ds-rx-lines input.ds-rx-dosage');
-    if (first) first.focus();
-}
-
-function renderRxLines() {
-    const host = document.getElementById('ds-rx-lines');
-    if (!host) return;
-
-    if (!dsForm.rxLines.length) {
-        host.innerHTML = '<div class="ds-rx-empty">No drugs added yet.</div>';
-        return;
-    }
-
-    host.innerHTML = dsForm.rxLines.map((l, i) =>
-        '<div class="ds-rx-line">'
-        + '<div class="top"><b>' + escHtml(l.drug_name) + '</b>'
-            + (l.generic_name && l.generic_name.toLowerCase() !== l.drug_name.toLowerCase()
-                ? '<span class="gen">' + escHtml(l.generic_name) + '</span>' : '')
-            + '<button type="button" class="rm" data-ds-rx-rm="' + i + '">Remove</button></div>'
-        + '<div class="flds">'
-            + '<div>' + '<label>Dosage</label><input type="text" class="ds-rx-dosage" data-ds-rx-field="dosage" data-ds-rx-i="' + i + '" value="' + escHtml(l.dosage) + '" placeholder="e.g. 1g"></div>'
-            + '<div><label>Frequency</label><input type="text" data-ds-rx-field="frequency" data-ds-rx-i="' + i + '" value="' + escHtml(l.frequency) + '" placeholder="e.g. TDS"></div>'
-            + '<div><label>Duration</label><input type="text" data-ds-rx-field="duration" data-ds-rx-i="' + i + '" value="' + escHtml(l.duration) + '" placeholder="e.g. 5 days"></div>'
-            + '<div><label>Quantity to issue</label><input type="number" min="1" step="1" class="ds-rx-qty" data-ds-rx-field="quantity" data-ds-rx-i="' + i + '" value="' + escHtml(l.quantity == null ? 1 : l.quantity) + '" title="The pharmacy will not dispense more than this"></div>'
-        + '</div>'
-        + '<div style="margin-top:6px;"><label>Instructions (optional)</label><input type="text" data-ds-rx-field="instructions" data-ds-rx-i="' + i + '" value="' + escHtml(l.instructions) + '" placeholder="e.g. after food"></div>'
-        + '</div>').join('');
-}
-
-async function saveConsultationForm(asDraft) {
-    if (!dsForm || !dsForm.ctx) return;
-
-    // Read the prescription lines back out of the inputs rather than trusting the
-    // in-memory copy, which can be stale if the doctor typed into them directly.
-    const lines = [];
-    document.querySelectorAll('#ds-rx-lines [data-ds-rx-field]').forEach(el => {
-        const i = Number(el.getAttribute('data-ds-rx-i'));
-        if (!dsForm.rxLines[i]) return;
-        dsForm.rxLines[i][el.getAttribute('data-ds-rx-field')] = el.value.trim();
-    });
-    dsForm.rxLines.forEach(l => lines.push({
-        drug_id: l.drug_id, dosage: l.dosage, frequency: l.frequency,
-        duration: l.duration, quantity: l.quantity, instructions: l.instructions
-    }));
-
-    const investigations = [];
-    document.querySelectorAll('#docstation .ds-inv-check').forEach(c => {
-        if (c.checked) investigations.push(c.value);
-    });
-
-    const wantsAdmit = document.getElementById('ds-admit-check')
-        && document.getElementById('ds-admit-check').checked
-        && !document.getElementById('ds-admit-check').disabled;
-
-    let wardId = '', bedId = '';
-    if (wantsAdmit) {
-        wardId = (document.getElementById('ds-ward') || {}).value || '';
-        bedId = (document.getElementById('ds-bed') || {}).value || '';
-        if (!wardId || !bedId) {
-            showAlert('Choose the ward and bed, or untick the admission box.', 'error');
-            return;
-        }
-    }
-
-    const payload = {
-        patient_id: dsForm.ctx.patient.id,
-        diagnosis_status: document.getElementById('ds-diag-status').value,
-        presenting_complaints: document.getElementById('ds-complaints').value.trim(),
-        doctor_notes: document.getElementById('ds-doctor-notes').value.trim(),
-        provisional_diagnosis: document.getElementById('ds-diagnosis').value.trim(),
-        medication_notes: document.getElementById('ds-med-notes').value.trim(),
-        allergies: document.getElementById('ds-allergies').value.trim(),
-        investigations: investigations,
-        prescriptions: lines,
-        save_as_draft: !!asDraft
-    };
-
-    const followUp = document.getElementById('ds-followup').value;
-    if (followUp) {
-        payload.follow_up_datetime = followUp;
-        payload.follow_up_department_id = document.getElementById('ds-followup-clinic').value;
-        payload.follow_up_reason = document.getElementById('ds-followup-reason').value.trim();
-    }
-
-    setSaving(true);
-    const saved = await fetchJson('/hms/backend/api/consultation_form.php?action=save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-    setSaving(false);
-    if (!saved) return;
-
-    const parts = [];
-    parts.push((asDraft ? 'Draft saved' : 'Consultation saved'));
-    if (saved.created.lab) parts.push(saved.created.lab + ' lab request' + (saved.created.lab === 1 ? '' : 's'));
-    if (saved.created.radiology) parts.push(saved.created.radiology + ' imaging request' + (saved.created.radiology === 1 ? '' : 's'));
-    if (saved.created.prescriptions) parts.push(saved.created.prescriptions + ' prescription' + (saved.created.prescriptions === 1 ? '' : 's'));
-    if (saved.appointment_id) parts.push('follow-up booked');
-    if (saved.skipped_duplicates) parts.push(saved.skipped_duplicates + ' duplicate request' + (saved.skipped_duplicates === 1 ? '' : 's') + ' skipped');
-    showAlert(parts.join(' · '), 'success');
-
-    // Admission is a separate call to the Admissions Register. It runs after the
-    // consultation is safely committed, so a full ward cannot lose the clinical
-    // record that was just written.
-    if (wantsAdmit) {
-        const admit = await fetchJson('/hms/backend/api/admissions.php?action=admit', {
+    try {
+        var res = await fetch('/hms/backend/api/clinical_notes.php?action=create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                patient_id: dsForm.ctx.patient.id,
-                ward_id: Number(wardId),
-                bed_id: Number(bedId),
-                admission_type: 'Routine',
-                admitting_doctor: dsForm.ctx.doctor_name || '',
-                diagnosis: payload.provisional_diagnosis
+                patient_id: pid,
+                admission_id: row.admission_id,
+                note_type: type,
+                clinical_note: text
             })
         });
-        if (admit) {
-            showAlert('Patient admitted — admission ' + (admit.admission_code || ''), 'success');
-        } else {
-            showAlert('Consultation saved, but the admission was refused. The bed may have just been taken. Open Admissions to check.', 'error');
-        }
+        var data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Could not save the entry.');
+        document.getElementById('dsNoteText_' + pid).value = '';
+        showAlert((DS_NOTE_LABELS[type] || 'Clinical entry') + ' saved.', 'success');
+        markSaved(pid);
+        await loadClinicalNotes(pid);
+    } catch (e) {
+        showAlert(e.message, 'error');
     }
+}
 
-    if (wantsAdmit) {
-        // An admission changes the in-patient list itself, so the list is
-        // rebuilt and the form closed: the patient now appears as a row.
-        await loadInpatients();
-        closeConsultationForm();
+async function dsDeleteNote(id, pid) {
+    if (!confirm('Delete this clinical entry?\n\nThe record cannot be recovered.')) return;
+    try {
+        var res = await fetch('/hms/backend/api/clinical_notes.php?action=delete&id=' + id, { method: 'DELETE' });
+        var data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Could not delete the entry.');
+        showAlert('Clinical entry deleted.', 'success');
+        await loadClinicalNotes(pid);
+    } catch (e) {
+        showAlert(e.message, 'error');
+    }
+}
+
+/* ---------- Prescriptions (tab 3) ---------- */
+async function loadPrescriptions(visitId, pid) {
+    try {
+        var r = await fetch('/hms/backend/api/prescriptions.php?visit_id=' + visitId);
+        var d = await r.json();
+        dsMedsCache[pid] = (d.success && d.prescriptions) ? d.prescriptions : [];
+    } catch (e) {
+        console.error('Prescriptions load error:', e);
+        dsMedsCache[pid] = [];
+    }
+    renderMedications(pid);
+}
+
+function renderMedications(pid) {
+    var tbody = document.getElementById('dsMedsBody_' + pid);
+    if (!tbody) return;
+    var list = dsMedsCache[pid] || [];
+    if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="ds-empty">No prescriptions recorded for the latest visit yet.</td></tr>';
         return;
     }
-    // Otherwise nothing in this table moved — the encounter went to
-    // consultations, lab/radiology requests and appointments, not to the
-    // clinical notes this list renders. Reloading would throw away the text that
-    // was just saved, so the form stays open exactly as it was left.
+    tbody.innerHTML = list.map(function (rx) {
+        var st = String(rx.status || 'pending');
+        var cls = /dispens|issued/i.test(st) ? 'ok' : (/cancel/i.test(st) ? 'bad' : 'warn');
+        return '<tr>'
+            + '<td><strong>' + escHtml(rx.drug_name || '--') + '</strong></td>'
+            + '<td>' + escHtml(rx.dosage || '--') + '</td>'
+            + '<td>' + escHtml(rx.frequency || '--') + '</td>'
+            + '<td>' + escHtml(rx.duration || '--') + '</td>'
+            + '<td><span class="ds-pill ' + cls + '">' + escHtml(st) + '</span></td>'
+            + '</tr>';
+    }).join('');
 }
 
-function closeConsultationForm() {
-    if (!dsForm) return;
-    const host = dsForm.row && dsForm.row.nextElementSibling;
-    if (host && host.classList.contains('ds-expand')) host.remove();
-    if (dsForm.row) dsForm.row.classList.remove('is-open');
-    dsForm = null;
+async function ensureConsultContext(pid) {
+    if (dsConsultCache[pid]) { renderInvCatalogue(pid); return dsConsultCache[pid]; }
+    var holder = document.getElementById('dsInvCat_' + pid);
+    if (holder) holder.innerHTML = '<div class="ds-empty">Loading investigation catalogue…</div>';
+    try {
+        var r = await fetch('/hms/backend/api/consultation_form.php?action=context&patient_id=' + pid);
+        var d = await r.json();
+        if (!d.success) throw new Error(d.error || 'Failed to load');
+        dsConsultCache[pid] = d;
+    } catch (e) {
+        console.error('Consultation context error:', e);
+        if (holder) holder.innerHTML = '<div class="ds-empty" style="color:#C0392B;">Could not load the investigation catalogue.</div>';
+        return null;
+    }
+    renderInvCatalogue(pid);
+    return dsConsultCache[pid];
 }
 
-function setSaving(on) {
-    const el = document.getElementById('ds-saving');
-    if (el) el.classList.toggle('show', !!on);
-    ['ds-save', 'ds-save-draft'].forEach(id => {
-        const b = document.getElementById(id);
-        if (b) b.disabled = !!on;
+function renderInvCatalogue(pid) {
+    var holder = document.getElementById('dsInvCat_' + pid);
+    if (!holder) return;
+    var ctx = dsConsultCache[pid];
+    var inv = (ctx && ctx.investigations) ? ctx.investigations : [];
+    if (!inv.length) {
+        holder.innerHTML = '<div class="ds-empty">No investigations are configured.</div>';
+        return;
+    }
+    holder.innerHTML = inv.map(function (i) {
+        return '<label><input type="checkbox" class="ds-inv-check" data-ds-inv="' + pid + '" value="' + escHtml(i.key) + '">'
+            + '<span>' + escHtml(i.label) + '</span>'
+            + '<span class="kind">' + escHtml(i.kind === 'lab' ? 'Lab' : 'Imaging') + '</span></label>';
+    }).join('');
+}
+
+async function dsAddDrug(pid) {
+    var input = document.getElementById('dsDrugSearch_' + pid);
+    if (!input) return;
+    var term = input.value.trim();
+    if (!term) { showAlert('Type or pick a drug to add.', 'error'); return; }
+
+    var list = dsDrugs[pid] || [];
+    var lower = term.toLowerCase();
+    var drug = list.filter(function (d) {
+        return String(d.drug_name || '').toLowerCase() === lower || String(d.drug_code || '').toLowerCase() === lower;
+    })[0];
+
+    if (!drug) {
+        try {
+            var r = await fetch('/hms/backend/api/consultation_form.php?action=drugs&q=' + encodeURIComponent(term));
+            var d = await r.json();
+            var found = (d && d.drugs) ? d.drugs : [];
+            dsDrugs[pid] = found;
+            var opts = document.getElementById('dsDrugList_' + pid);
+            if (opts) opts.innerHTML = found.map(function (x) { return '<option value="' + escHtml(x.drug_name) + '">'; }).join('');
+            drug = found.filter(function (x) {
+                return String(x.drug_name).toLowerCase() === lower || String(x.drug_code).toLowerCase() === lower;
+            })[0];
+        } catch (e) { console.error('Drug search error:', e); }
+    }
+
+    if (!drug) {
+        showAlert('"' + term + '" is not a stocked drug. Pick one from the list.', 'error');
+        return;
+    }
+
+    dsRx[pid] = dsRx[pid] || [];
+    if (dsRx[pid].some(function (l) { return l.drug_id === drug.id; })) {
+        showAlert(drug.drug_name + ' is already on this prescription.', 'error');
+        return;
+    }
+    dsRx[pid].push({
+        drug_id: drug.id, drug_name: drug.drug_name, generic_name: drug.generic_name,
+        dosage: '', frequency: '', duration: '', quantity: 1, instructions: ''
+    });
+    input.value = '';
+    renderRxLines(pid);
+}
+
+function renderRxLines(pid) {
+    var host = document.getElementById('dsRxLines_' + pid);
+    if (!host) return;
+    var lines = dsRx[pid] || [];
+    if (!lines.length) {
+        host.innerHTML = '<div class="ds-rx-empty">No drugs added yet.</div>';
+        return;
+    }
+    host.innerHTML = lines.map(function (l, i) {
+        return '<div class="ds-rx-line">'
+            + '<div class="top"><b>' + escHtml(l.drug_name) + '</b>'
+                + (l.generic_name && String(l.generic_name).toLowerCase() !== String(l.drug_name).toLowerCase()
+                    ? '<span class="gen">' + escHtml(l.generic_name) + '</span>' : '')
+                + '<button type="button" class="rm" onclick="dsRemoveDrug(' + pid + ',' + i + ')">Remove</button></div>'
+            + '<div class="flds">'
+                + '<div><label>Dosage</label><input type="text" data-ds-rx="dosage" data-ds-i="' + i + '" value="' + escHtml(l.dosage) + '" placeholder="e.g. 1g"></div>'
+                + '<div><label>Frequency</label><input type="text" data-ds-rx="frequency" data-ds-i="' + i + '" value="' + escHtml(l.frequency) + '" placeholder="e.g. TDS"></div>'
+                + '<div><label>Duration</label><input type="text" data-ds-rx="duration" data-ds-i="' + i + '" value="' + escHtml(l.duration) + '" placeholder="e.g. 5 days"></div>'
+                + '<div><label>Quantity</label><input type="number" min="1" step="1" data-ds-rx="quantity" data-ds-i="' + i + '" value="' + escHtml(l.quantity == null ? 1 : l.quantity) + '"></div>'
+            + '</div></div>';
+    }).join('');
+}
+
+function dsRemoveDrug(pid, i) {
+    if (dsRx[pid]) { dsRx[pid].splice(i, 1); renderRxLines(pid); }
+}
+
+function dsCollectRx(pid) {
+    var lines = dsRx[pid] || [];
+    document.querySelectorAll('#dsRxLines_' + pid + ' [data-ds-rx]').forEach(function (el) {
+        var i = Number(el.getAttribute('data-ds-i'));
+        if (lines[i]) lines[i][el.getAttribute('data-ds-rx')] = el.value.trim();
+    });
+    return lines.map(function (l) {
+        return {
+            drug_id: l.drug_id, dosage: l.dosage, frequency: l.frequency,
+            duration: l.duration, quantity: Number(l.quantity) || 1, instructions: l.instructions || ''
+        };
     });
 }
 
-function printConsultation() {
-    if (!dsForm || !dsForm.ctx) return;
-    const p = dsForm.ctx.patient;
-    const v = dsForm.ctx.vitals;
+async function dsSavePrescription(pid) {
+    var ctx = await ensureConsultContext(pid);
+    if (!ctx) { showAlert('Could not load the patient context.', 'error'); return; }
+    var lines = dsCollectRx(pid);
+    if (!lines.length) { showAlert('Add at least one drug before saving.', 'error'); return; }
 
-    const val = (el, fallback) => {
-        const e = document.getElementById(el);
-        const t = e ? e.value.trim() : '';
-        return t || fallback || '—';
+    var paid = dsPostConsultation(pid, ctx, {
+        diagnosis_status: 'New',
+        medication_notes: 'Prescription issued from the Doctor Station.',
+        prescriptions: lines
+    });
+    await paid;
+}
+
+/* ---------- Investigations (tab 6) ---------- */
+async function loadInvestigations(pid, hospitalNumber) {
+    var tbody = document.getElementById('dsInvBody_' + pid);
+    if (!tbody || !hospitalNumber) return;
+    var rows = [];
+    try {
+        var labP = fetch('/hms/backend/api/lab.php?action=requests').then(function (r) { return r.json(); }).catch(function () { return { success: false }; });
+        var radP = fetch('/hms/backend/api/radiology.php?action=requests').then(function (r) { return r.json(); }).catch(function () { return { success: false }; });
+        var out = await Promise.all([labP, radP]);
+        var lab = out[0], rad = out[1];
+        if (lab.success && lab.requests) {
+            lab.requests.filter(function (x) { return x.hospital_number === hospitalNumber; }).forEach(function (x) {
+                rows.push({ kind: 'Laboratory', test: x.test_type, when: x.requested_at, by: x.doctor_name || '--', status: x.status, result_status: x.result_status });
+            });
+        }
+        if (rad.success && rad.requests) {
+            rad.requests.filter(function (x) { return x.hospital_number === hospitalNumber; }).forEach(function (x) {
+                var test = x.exam_type + (x.body_part ? ' / ' + x.body_part : '');
+                rows.push({ kind: 'Radiology', test: test, when: x.requested_at, by: x.doctor_name || '--', status: x.status, result_status: x.result_status });
+            });
+        }
+    } catch (e) { console.error('Investigations load error:', e); }
+    dsInvCache[pid] = rows;
+    renderInvestigations(pid);
+}
+
+function invStatusBadge(x) {
+    if (String(x.status || '').toLowerCase() === 'cancelled') return '<span class="ds-pill bad">Cancelled</span>';
+    var rs = String(x.result_status || '').toLowerCase();
+    if (rs === 'final' || rs === 'amended') return '<span class="ds-pill ok">Result Available</span>';
+    if (rs === 'draft') return '<span class="ds-pill info">Result Drafted</span>';
+    var label = String(x.status || 'pending').replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+    return '<span class="ds-pill warn">' + escHtml(label) + '</span>';
+}
+
+function renderInvestigations(pid) {
+    var tbody = document.getElementById('dsInvBody_' + pid);
+    if (!tbody) return;
+    var list = dsInvCache[pid] || [];
+    if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="ds-empty">No investigations requested for this patient yet.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = list.slice().sort(function (a, b) {
+        return String(b.when || '').localeCompare(String(a.when || ''));
+    }).map(function (x) {
+        return '<tr>'
+            + '<td><strong>' + escHtml(fmtDateTime(x.when)) + '</strong></td>'
+            + '<td>' + escHtml(x.test) + '</td>'
+            + '<td>' + escHtml(x.kind) + '</td>'
+            + '<td>' + escHtml(x.by) + '</td>'
+            + '<td>' + invStatusBadge(x) + '</td>'
+            + '</tr>';
+    }).join('');
+}
+
+async function dsSaveInvestigations(pid) {
+    var ctx = await ensureConsultContext(pid);
+    if (!ctx) { showAlert('Could not load the patient context.', 'error'); return; }
+    var keys = [];
+    document.querySelectorAll('#dsInvCat_' + pid + ' .ds-inv-check').forEach(function (c) { if (c.checked) keys.push(c.value); });
+    if (!keys.length) { showAlert('Tick at least one investigation to request.', 'error'); return; }
+    await dsPostConsultation(pid, ctx, {
+        diagnosis_status: 'New',
+        doctor_notes: 'Investigations requested from the Doctor Station.',
+        investigations: keys
+    });
+}
+
+/* ---------- Shared consultation POST (prescriptions + investigations) ---------- */
+async function dsPostConsultation(pid, ctx, overrides) {
+    var allergies = (ctx.patient && ctx.patient.allergies) ? ctx.patient.allergies : '';
+    var payload = {
+        patient_id: pid,
+        diagnosis_status: overrides.diagnosis_status || 'New',
+        presenting_complaints: '',
+        doctor_notes: overrides.doctor_notes || '',
+        provisional_diagnosis: '',
+        medication_notes: overrides.medication_notes || '',
+        allergies: allergies,
+        investigations: overrides.investigations || [],
+        prescriptions: overrides.prescriptions || [],
+        save_as_draft: false
     };
-    const investigations = [];
-    document.querySelectorAll('#docstation .ds-inv-check').forEach(c => { if (c.checked) investigations.push(c.value.split(':')[1]); });
+    try {
+        var res = await fetch('/hms/backend/api/consultation_form.php?action=save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        var data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Could not save.');
+        var parts = [];
+        if (data.created) {
+            if (data.created.prescriptions) parts.push(data.created.prescriptions + ' prescription' + (data.created.prescriptions === 1 ? '' : 's'));
+            if (data.created.lab) parts.push(data.created.lab + ' lab request' + (data.created.lab === 1 ? '' : 's'));
+            if (data.created.radiology) parts.push(data.created.radiology + ' imaging request' + (data.created.radiology === 1 ? '' : 's'));
+        }
+        showAlert('Saved' + (parts.length ? ' \u00B7 ' + parts.join(' \u00B7 ') : '') + '.', 'success');
+        markSaved(pid);
+        if (overrides.prescriptions) { dsRx[pid] = []; renderRxLines(pid); }
+        if (overrides.investigations) {
+            var cat = document.getElementById('dsInvCat_' + pid);
+            if (cat) cat.querySelectorAll('.ds-inv-check').forEach(function (c) { c.checked = false; });
+        }
+        var row = dsInpatients.filter(function (p) { return String(p.patient_id) === String(pid); })[0];
+        if (row) loadInvestigations(pid, row.hospital_number);
+    } catch (e) {
+        showAlert(e.message, 'error');
+    }
+}
 
-    const rxRows = [];
-    document.querySelectorAll('#ds-rx-lines [data-ds-rx-field]').forEach(el => {
-        const i = Number(el.getAttribute('data-ds-rx-i'));
-        if (!dsForm.rxLines[i]) return;
-        dsForm.rxLines[i][el.getAttribute('data-ds-rx-field')] = el.value.trim();
-    });
-    dsForm.rxLines.forEach(l => rxRows.push(
-        '<tr><td>' + escHtml(l.drug_name) + '</td><td>' + escHtml(l.dosage || '—') + '</td>'
-        + '<td>' + escHtml(l.frequency || '—') + '</td><td>' + escHtml(l.duration || '—') + '</td>'
-        + '<td>' + escHtml(l.instructions || '—') + '</td></tr>'));
+/* ---------- Nurse notes (read-only from the Nurses Station browser sheet) ---------- */
+function sheetGet(kind, pid) {
+    try { var raw = localStorage.getItem('hms:' + kind + '-' + pid); return raw ? JSON.parse(raw) : []; }
+    catch (e) { return []; }
+}
 
-    // Local wall-clock stamp, formatted through the shell's own date helper so
-    // the printed header matches every other date on the portal.
-    const now = new Date();
-    const localStamp = now.getFullYear() + '-'
-        + String(now.getMonth() + 1).padStart(2, '0') + '-'
-        + String(now.getDate()).padStart(2, '0') + ' '
-        + String(now.getHours()).padStart(2, '0') + ':'
-        + String(now.getMinutes()).padStart(2, '0');
+function renderNurseNotes(pid) {
+    var holder = document.getElementById('dsNurseList_' + pid);
+    if (!holder) return;
+    var notes = sheetGet('nurse-notes', pid);
+    if (!notes.length) {
+        holder.innerHTML = '<div class="ds-empty">No nurse notes recorded yet.</div>';
+        return;
+    }
+    holder.innerHTML = notes.slice().reverse().map(function (n) {
+        return '<div style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:8px;padding:10px;margin-bottom:8px;font-size:12px;">'
+            + '<div style="white-space:pre-wrap;color:#334155;">' + escHtml(n.text) + '</div>'
+            + '<div style="font-size:10.5px;color:#94A3B8;margin-top:4px;">&mdash; ' + escHtml(n.by || 'Staff') + ' &middot; ' + escHtml(fmtDateTime(n.at)) + '</div>'
+            + '</div>';
+    }).join('');
+}
 
-    document.getElementById('ds-print-area').innerHTML = ''
-        + '<h1>Consultation Record</h1>'
-        + '<div class="sub">Eddie Health Care Solutions &middot; printed ' + escHtml(fmtDateTime(localStamp)) + '</div>'
-        + '<h2>Patient</h2><table class="kv">'
-            + '<tr><td>Name</td><td>' + escHtml(p.name) + '</td></tr>'
-            + '<tr><td>Hospital No.</td><td>' + escHtml(p.hospital_number) + '</td></tr>'
-            + '<tr><td>Gender / Age</td><td>' + escHtml(p.gender || '—') + ' / ' + escHtml(p.age !== null ? p.age + ' yrs' : '—') + '</td></tr>'
-            + '<tr><td>Blood Group</td><td>' + escHtml(p.blood_group || '—') + '</td></tr>'
-            + '<tr><td>NHIS No.</td><td>' + escHtml(p.nhia_number || '—') + '</td></tr>'
-            + '<tr><td>Allergies</td><td>' + escHtml(p.allergies || 'None recorded') + '</td></tr>'
-        + '</table>'
-        + '<h2>Latest Vitals (nursing)</h2><table class="kv">'
-            + '<tr><td>Blood Pressure</td><td>' + escHtml((v.blood_pressure_systolic || '—') + '/' + (v.blood_pressure_diastolic || '—')) + ' mmHg</td></tr>'
-            + '<tr><td>Pulse</td><td>' + escHtml(v.heart_rate || '—') + ' bpm</td></tr>'
-            + '<tr><td>Temperature</td><td>' + escHtml(v.temperature || '—') + ' °C</td></tr>'
-            + '<tr><td>SpO2</td><td>' + escHtml(v.oxygen_saturation || '—') + '%</td></tr>'
-        + '</table>'
-        + '<h2>Presenting Complaints</h2><div class="pre">' + escHtml(val('ds-complaints')) + '</div>'
-        + '<h2>Provisional Diagnosis</h2><div class="pre">' + escHtml(val('ds-diagnosis')) + '</div>'
-        + '<h2>Doctor Notes</h2><div class="pre">' + escHtml(val('ds-doctor-notes')) + '</div>'
-        + (investigations.length ? '<h2>Investigations Requested</h2><ul>' + investigations.map(i => '<li>' + escHtml(i) + '</li>').join('') + '</ul>' : '')
-        + (rxRows.length ? '<h2>Prescription</h2><table class="kv"><tr><td style="width:auto;">Drug</td><td style="width:90px;">Dosage</td><td style="width:90px;">Frequency</td><td style="width:90px;">Duration</td><td>Instructions</td></tr>' + rxRows.join('') + '</table>' : '')
-        + (val('ds-med-notes', '') !== '—' ? '<h2>Medication Notes</h2><div class="pre">' + escHtml(val('ds-med-notes')) + '</div>' : '')
-        + '<h2>Follow-Up</h2><table class="kv"><tr><td>Review Date</td><td>' + escHtml(val('ds-followup')) + '</td></tr>'
-        + '<tr><td>Clinic</td><td>' + escHtml(document.getElementById('ds-followup-clinic').selectedOptions[0].textContent) + '</td></tr></table>';
+/* ---------- Treatment sheet (read-only from the Nurses Station browser sheet) ---------- */
+function renderTreatments(pid) {
+    var tbody = document.getElementById('dsTreatBody_' + pid);
+    if (!tbody) return;
+    var list = sheetGet('treatments', pid);
+    if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="ds-empty">No treatments logged yet.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = list.slice().reverse().map(function (t) {
+        var cls = t.status === 'Done' ? 'ok' : (t.status === 'Failed' ? 'bad' : 'warn');
+        return '<tr>'
+            + '<td><strong>' + escHtml(fmtDateTime(t.at)) + '</strong></td>'
+            + '<td><strong>' + escHtml(t.treatment) + '</strong></td>'
+            + '<td style="white-space:pre-wrap;">' + escHtml(t.notes || '--') + '</td>'
+            + '<td>' + escHtml(t.by || '--') + '</td>'
+            + '<td><span class="ds-pill ' + cls + '">' + escHtml(t.status || 'Pending') + '</span></td>'
+            + '</tr>';
+    }).join('');
+}
 
-    window.print();
+/* ============================ DRAFT / SAVE OR UPDATE (footer) ============================ */
+function renderSavedStamp(pid) {
+    var draft = dsReadDraft(pid);
+    var el = document.getElementById('dsLastSaved_' + pid);
+    if (el && draft && draft.savedAt) el.textContent = fmtDateTime(draft.savedAt);
+}
+
+function dsDraftKey(pid) { return 'hms:docstation-draft-' + pid; }
+
+function dsReadDraft(pid) {
+    try { var raw = localStorage.getItem(dsDraftKey(pid)); return raw ? JSON.parse(raw) : null; }
+    catch (e) { return null; }
+}
+
+function dsSaveDraft(pid) {
+    var payload = {
+        noteType: (document.getElementById('dsNoteType_' + pid) || {}).value || 'IPD_NOTE',
+        noteText: (document.getElementById('dsNoteText_' + pid) || {}).value || '',
+        rx: dsCollectRx(pid),
+        savedAt: new Date().toISOString()
+    };
+    try { localStorage.setItem(dsDraftKey(pid), JSON.stringify(payload)); } catch (e) {}
+    var el = document.getElementById('dsLastSaved_' + pid);
+    if (el) el.textContent = fmtDateTime(payload.savedAt);
+    showAlert('Draft saved in this browser. Click Save Or Update to finalise.', 'info');
+}
+
+async function dsSaveOrUpdate(pid) {
+    var text = (document.getElementById('dsNoteText_' + pid).value || '').trim();
+    var lines = dsCollectedLinesExist(pid);
+    var invCount = document.querySelectorAll('#dsInvCat_' + pid + ' .ds-inv-check:checked').length;
+
+    if (!text && !lines && !invCount) {
+        showAlert('Nothing to save — write a note, prescribe a drug or tick an investigation.', 'error');
+        return;
+    }
+    if (text) await dsSaveDoctorEntry(pid);
+    if (lines) await dsSavePrescription(pid);
+    if (invCount) await dsSaveInvestigations(pid);
+    try { localStorage.removeItem(dsDraftKey(pid)); } catch (e) {}
+}
+
+function dsCollectedLinesExist(pid) {
+    return (dsRx[pid] || []).length > 0;
+}
+
+function markSaved(pid) {
+    var el = document.getElementById('dsSaved_' + pid);
+    if (!el) return;
+    el.classList.add('show');
+    setTimeout(function () { el.classList.remove('show'); }, 3500);
+}
+
+/* ============================ MEDICAL RECORDS MODAL ============================ */
+function dsOpenMedicalRecords(pid) {
+    var row = dsInpatients.filter(function (p) { return String(p.patient_id) === String(pid); })[0];
+    var notes = dsNotesCache[pid] || [];
+    var body = document.getElementById('dsModalBody');
+
+    var head = row
+        ? '<p style="font-weight:800;color:#0F2D59;margin:0 0 4px;">' + escHtml(row.patient_name) + ' &middot; ' + escHtml(row.hospital_number || '--') + '</p>'
+          + '<p style="font-size:11px;color:#64748B;margin:0 0 14px;">' + escHtml(row.ward_name || '') + ' &middot; Bed ' + escHtml(row.bed_number || '--')
+          + (row.diagnosis ? ' &middot; Diagnosis: ' + escHtml(row.diagnosis) : '') + '</p>'
+        : '';
+
+    var list = notes.length
+        ? notes.map(function (n) {
+            return '<div class="ds-note-item">'
+                + '<div class="top"><span class="who">' + escHtml(DS_NOTE_LABELS[n.note_type] || n.note_type) + ' &middot; ' + escHtml(n.doctor_name || 'Doctor') + '</span>'
+                + '<span class="when">' + escHtml(fmtDateTime(n.created_at)) + '</span></div>'
+                + '<div class="txt">' + escHtml(n.clinical_note) + '</div></div>';
+        }).join('')
+        : '<div class="ds-empty">No clinical entries recorded for this stay yet.</div>';
+
+    body.innerHTML = head + '<div class="ds-sec-head"><h4><i class="fa-solid fa-file-lines"></i> Clinical Entries</h4></div>' + list;
+    document.getElementById('docstation-modal').classList.add('show');
+}
+
+function dsCloseModal() {
+    document.getElementById('docstation-modal').classList.remove('show');
+}
+
+/* ============================ NAVIGATION HELPERS ============================ */
+function dsGoAdmissions() {
+    if (window.navigateTo) { window.navigateTo('admissions'); return; }
+    if (window.loadModuleTab) { window.loadModuleTab('active_inpatients'); return; }
+}
+
+function dsTransfer() {
+    // Bed state is owned by the Admissions Register; send the user there.
+    dsGoAdmissions();
+}
+
+/* ============================ HELPERS ============================ */
+function escHtml(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function fmtDateTime(dateString) {
+    if (!dateString) return '--';
+    var d = new Date(dateString);
+    if (isNaN(d.getTime())) return String(dateString);
+    var p = function (n) { return String(n).padStart(2, '0'); };
+    return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
 }
 </script>
