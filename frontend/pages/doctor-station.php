@@ -190,7 +190,7 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
 #docstation-modal .ds-note-sec:last-child{border-bottom:none;margin-bottom:0}
 #docstation-modal .ds-note-sec .k{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1D4ED8}
 #docstation-modal .ds-note-sec .v{color:#334155;font-size:12px;white-space:pre-wrap;line-height:1.5}
-#docstation-modal .ds-note-diag{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:9px;margin-top:8px}
+#docstation-modal .ds-note-diag{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:9px;margin-top:8px}
 #docstation-modal .ds-note-diag .k{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#94A3B8;margin-bottom:2px}
 #docstation-modal .ds-note-diag .k.blue{color:#1B659D}
 #docstation-modal .ds-note-diag .v{font-weight:700;color:#1E293B;font-size:12px}
@@ -199,6 +199,11 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
 #docstation-modal .ds-status-badge.old{background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE}
 #docstation-modal .ds-status-badge.recurring{background:#FFFBEB;color:#B45309;border-color:#FCD34D}
 #docstation-modal .ds-status-badge.cured{background:#F0FDFA;color:#0F766E;border-color:#5EEAD4}
+#docstation-modal .ds-discharge-badge{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:2px 9px;border-radius:6px;border:1px solid}
+#docstation-modal .ds-discharge-badge.continue{background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE}
+#docstation-modal .ds-discharge-badge.ready{background:#FFFBEB;color:#B45309;border-color:#FCD34D}
+#docstation-modal .ds-discharge-badge.fit{background:#ECFDF5;color:#047857;border-color:#6EE7B7}
+#docstation-modal .ds-discharge-badge.referred{background:#FEF2F2;color:#B91C1C;border-color:#FCA5A5}
 #docstation-modal .ds-sec-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--ds-line);padding-bottom:9px;margin-bottom:12px}
 #docstation-modal .ds-sec-head h4{margin:0;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--ds-blue);display:flex;align-items:center;gap:7px}
 #docstation .ds-save-state{font-size:10.5px;color:#15803D;display:none;align-items:center;gap:5px}
@@ -239,13 +244,22 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
 #docstation .ds-consult-grid.ds-diagnosis{grid-template-columns:repeat(3,1fr);background:#F8FAFC;border:1px solid var(--ds-line);border-radius:12px;padding:14px;margin-bottom:10px}
 #docstation .ds-consult-grid.ds-diagnosis .ds-fld{margin-bottom:0}
 #docstation .ds-consult-grid.ds-diagnosis label{color:var(--ds-blue)}
+/* Test Requested Results (lab & radiology) — a tinted single-field panel */
+#docstation .ds-consult-grid.ds-lab{grid-template-columns:1fr;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:14px;margin-bottom:10px}
+#docstation .ds-consult-grid.ds-lab .ds-fld{margin-bottom:0}
+#docstation .ds-consult-grid.ds-lab label{color:var(--ds-blue)}
+#docstation .ds-consult-grid.ds-lab textarea{background:#fff}
+/* Finalize visit / discharge process — an amber "decision" panel */
+#docstation .ds-consult-grid.ds-finalize{background:#FFFBEB;border:1px solid #FCD34D;border-radius:12px;padding:14px;margin-bottom:10px}
+#docstation .ds-consult-grid.ds-finalize .ds-fld{margin-bottom:0}
+#docstation .ds-consult-grid.ds-finalize label{color:#92400E}
 /* Structured rendering of a saved labelled clinical entry */
 #docstation .ds-note-sec{display:flex;flex-direction:column;gap:2px;margin:0 0 8px;padding-bottom:6px;border-bottom:1px dashed #D9E7F8}
 #docstation .ds-note-sec:last-child{border-bottom:none;margin-bottom:0}
 #docstation .ds-note-sec .k{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1D4ED8}
 #docstation .ds-note-sec .v{color:#334155;font-size:12px;white-space:pre-wrap;line-height:1.5}
-/* Diagnosis block inside a saved entry (provisional / confirmed / status) */
-#docstation .ds-note-diag{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#fff;border:1px solid var(--ds-line);border-radius:8px;padding:9px;margin-top:8px}
+/* Diagnosis block inside a saved entry (provisional / confirmed / status / discharge) */
+#docstation .ds-note-diag{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;background:#fff;border:1px solid var(--ds-line);border-radius:8px;padding:9px;margin-top:8px}
 #docstation .ds-note-diag .k{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#94A3B8;margin-bottom:2px}
 #docstation .ds-note-diag .k.blue{color:var(--ds-blue)}
 #docstation .ds-note-diag .v{font-weight:700;color:#1E293B;font-size:12px}
@@ -254,6 +268,12 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
 #docstation .ds-status-badge.old{background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE}
 #docstation .ds-status-badge.recurring{background:#FFFBEB;color:#B45309;border-color:#FCD34D}
 #docstation .ds-status-badge.cured{background:#F0FDFA;color:#0F766E;border-color:#5EEAD4}
+/* Discharge process badge shown beside the diagnosis status in a saved entry */
+#docstation .ds-discharge-badge{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:2px 9px;border-radius:6px;border:1px solid}
+#docstation .ds-discharge-badge.continue{background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE}
+#docstation .ds-discharge-badge.ready{background:#FFFBEB;color:#B45309;border-color:#FCD34D}
+#docstation .ds-discharge-badge.fit{background:#ECFDF5;color:#047857;border-color:#6EE7B7}
+#docstation .ds-discharge-badge.referred{background:#FEF2F2;color:#B91C1C;border-color:#FCA5A5}
 /* Clinical record header: collapsible title + sort / collapse tools */
 #docstation .ds-rec-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--ds-line);padding-bottom:6px;margin-bottom:10px}
 #docstation .ds-rec-title{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none}
@@ -375,16 +395,18 @@ var dsNotesUi = {};           // pid -> { open: bool, desc: bool } clinical-reco
 var dsSearchTimer = null;
 
 var DS_NOTE_LABELS = {
-    OPD_NOTE: 'OPD Consultation Note',
-    IPD_NOTE: 'IPD Daily Round Note',
-    DISCHARGE_SUMMARY: 'Discharge Summary'
+    OPD_NOTE: 'OPD Consultation Entry',
+    IPD_NOTE: 'IPD Daily Clinical Round Note',
+    PROGRESS_NOTE: 'Progress Report Note',
+    DISCHARGE_SUMMARY: 'Discharge Summary & Discharge Process'
 };
 
 /* Human labels shown in the entry-type select (same keys as DS_NOTE_LABELS). */
 var DS_ENTRY_LABELS = {
     OPD_NOTE: 'OPD Consultation Entry',
     IPD_NOTE: 'IPD Daily Clinical Round Note',
-    DISCHARGE_SUMMARY: 'Discharge Summary Note'
+    PROGRESS_NOTE: 'Progress Report Note',
+    DISCHARGE_SUMMARY: 'Discharge Summary & Discharge Process'
 };
 
 /* The structured consultation fields on the expanded Doctor Notes form. Each
@@ -396,6 +418,9 @@ var DS_NOTE_FIELDS = [
     { key: 'on_direct_question',   label: 'ON DIRECT QUESTION',               plain: 'On Direct Question' },
     { key: 'previous_history',     label: 'PREVIOUS HISTORY / MEDICAL HISTORY', plain: 'Previous History / Medical History' },
     { key: 'allergies',            label: 'ALLERGIES / DRUG REACTIONS',       plain: 'Allergies / Drug Reactions' },
+    { key: 'examinations',         label: 'EXAMINATIONS (PHYSICAL AND SYSTEMIC)', plain: 'Examinations (Physical & Systemic)' },
+    { key: 'progress_notes',       label: 'PROGRESS REPORT NOTES',            plain: 'Progress Report Notes' },
+    { key: 'test_requested_results', label: 'TEST REQUESTED RESULTS (LAB AND RADIOLOGY)', plain: 'Test Requested Results (Lab & Radiology)' },
     { key: 'provisional_diagnosis', label: 'PROVISIONAL DIAGNOSIS',           plain: 'Provisional Diagnosis', control: 'input' },
     { key: 'confirmed_diagnosis',   label: 'CONFIRMED DIAGNOSIS',             plain: 'Confirmed Diagnosis',   control: 'input' },
     { key: 'diagnosis_status',      label: 'DIAGNOSIS STATUS',                plain: 'Diagnosis Status',      control: 'select', defaultValue: 'NEW',
@@ -404,6 +429,14 @@ var DS_NOTE_FIELDS = [
           { value: 'OLD',       label: 'OLD' },
           { value: 'RECURRING', label: 'RECURRING' },
           { value: 'CURED',     label: 'CURED' }
+      ] },
+    { key: 'finalize_visit',        label: 'FINALIZE VISIT INSTRUCTIONS',     plain: 'Finalize Visit Instructions', control: 'input' },
+    { key: 'discharge_process',     label: 'DISCHARGE PROCESS / STATUS',      plain: 'Discharge Process / Status', control: 'select', defaultValue: 'CONTINUE_ADMISSION',
+      options: [
+          { value: 'CONTINUE_ADMISSION',  label: 'Continue Admission (Active Stay)' },
+          { value: 'READY_FOR_DISCHARGE', label: 'Ready for Discharge (Finalize Bill)' },
+          { value: 'DISCHARGED_FIT',      label: 'Discharged - Fit for Home' },
+          { value: 'REFERRED_OUT',        label: 'Referred Out to Tertiary Facility' }
       ] }
 ];
 
@@ -411,6 +444,20 @@ var DS_NOTE_FIELDS = [
    rendered, with the status shown as a coloured badge. */
 var DS_DIAG_KEYS = ['provisional_diagnosis', 'confirmed_diagnosis', 'diagnosis_status'];
 var DS_STATUS_CLASS = { NEW: 'new', OLD: 'old', RECURRING: 'recurring', CURED: 'cured' };
+
+/* The discharge process shares the diagnosis panel in a saved entry, rendered
+   as a colour-coded badge beside the diagnosis status. */
+var DS_DISCHARGE_KEY = 'discharge_process';
+var DS_DISCHARGE_LABELS = {
+    CONTINUE_ADMISSION:  'Continue Admission (Active Stay)',
+    READY_FOR_DISCHARGE: 'Ready for Discharge (Finalize Bill)',
+    DISCHARGED_FIT:      'Discharged - Fit for Home',
+    REFERRED_OUT:        'Referred Out to Tertiary Facility'
+};
+var DS_DISCHARGE_CLASS = {
+    CONTINUE_ADMISSION: 'continue', READY_FOR_DISCHARGE: 'ready',
+    DISCHARGED_FIT: 'fit', REFERRED_OUT: 'referred'
+};
 
 /* Modality tick-box row on the Request Test block. `kind` matches the kind tag
    on the investigation catalogue, so the master boxes and the grouped checklists
@@ -721,7 +768,8 @@ function renderPatientCard(ctx) {
                         + '<select id="dsNoteType_' + pid + '">'
                             + '<option value="IPD_NOTE" selected>IPD Daily Clinical Round Note</option>'
                             + '<option value="OPD_NOTE">OPD Consultation Entry</option>'
-                            + '<option value="DISCHARGE_SUMMARY">Discharge Summary Note</option>'
+                            + '<option value="PROGRESS_NOTE">Progress Report Note</option>'
+                            + '<option value="DISCHARGE_SUMMARY">Discharge Summary &amp; Discharge Process</option>'
                         + '</select></div>'
                     + '<div class="ds-consult-grid">'
                         + '<div>' + dsNoteFieldHtml(pid, 'principal_complaints', {
@@ -742,6 +790,21 @@ function renderPatientCard(ctx) {
                             placeholder: 'e.g. Penicillin, Sulfa drugs, NSAIDs, food or environmental allergies...'
                         }) + '</div>'
                     + '</div>'
+                    + '<div class="ds-consult-grid">'
+                        + '<div>' + dsNoteFieldHtml(pid, 'examinations', {
+                            required: true,
+                            placeholder: 'General, cardiovascular, respiratory, abdominal examination findings...'
+                        }) + '</div>'
+                        + '<div>' + dsNoteFieldHtml(pid, 'progress_notes', {
+                            required: true,
+                            placeholder: 'Enter clinical progression, response to treatment, round observations...'
+                        }) + '</div>'
+                    + '</div>'
+                    + '<div class="ds-consult-grid ds-lab">'
+                        + '<div>' + dsNoteFieldHtml(pid, 'test_requested_results', {
+                            placeholder: 'Summary of lab / x-ray test results reviewed during consultation...'
+                        }) + '</div>'
+                    + '</div>'
                     + '<div class="ds-consult-grid ds-diagnosis">'
                         + '<div>' + dsNoteFieldHtml(pid, 'provisional_diagnosis', {
                             placeholder: 'e.g. Suspected Malaria / Acute Febrile Illness'
@@ -752,6 +815,12 @@ function renderPatientCard(ctx) {
                         + '<div>' + dsNoteFieldHtml(pid, 'diagnosis_status', {
                             required: true
                         }) + '</div>'
+                    + '</div>'
+                    + '<div class="ds-consult-grid ds-finalize">'
+                        + '<div>' + dsNoteFieldHtml(pid, 'finalize_visit', {
+                            placeholder: 'e.g. Outpatient review in 1 week / Routine follow-up scheduled'
+                        }) + '</div>'
+                        + '<div>' + dsNoteFieldHtml(pid, 'discharge_process', {}) + '</div>'
                     + '</div>'
                     + '<div style="text-align:right;"><button type="button" class="ds-btn primary" onclick="dsSaveDoctorEntry(' + pid + ')"><i class="fa-solid fa-floppy-disk"></i> Save Doctor Entry</button></div>'
                     + '<div style="border-top:1px dashed var(--ds-line);margin:14px 0 12px;"></div>'
@@ -975,7 +1044,16 @@ function dsHasNoteContent(pid) {
 function dsClearNoteFields(pid) {
     DS_NOTE_FIELDS.forEach(function (f) {
         var el = document.getElementById('dsNote_' + pid + '_' + f.key);
-        if (el) el.value = '';
+        if (!el) return;
+        if ((f.control || 'textarea') === 'select') {
+            // Selects reset to their default (e.g. NEW / CONTINUE_ADMISSION)
+            // rather than a blank option after a save.
+            el.value = f.defaultValue != null
+                ? f.defaultValue
+                : ((f.options && f.options[0]) ? f.options[0].value : '');
+        } else {
+            el.value = '';
+        }
     });
 }
 
@@ -1032,21 +1110,37 @@ function dsRenderNoteText(text) {
         html += '<div class="ds-note-sec"><span class="k">Entry Type</span><span class="v">' + escHtml(parts.entry_type) + '</span></div>';
     }
     DS_NOTE_FIELDS.forEach(function (f) {
-        // The diagnosis fields are grouped into their own panel below.
+        // The diagnosis fields and discharge process are grouped into their own
+        // panel below, not rendered as plain sections.
         if (DS_DIAG_KEYS.indexOf(f.key) !== -1) return;
+        if (f.key === DS_DISCHARGE_KEY) return;
         if (parts[f.key]) {
             html += '<div class="ds-note-sec"><span class="k">' + escHtml(f.plain) + '</span><div class="v">' + escHtml(parts[f.key]) + '</div></div>';
         }
     });
-    var hasDiag = DS_DIAG_KEYS.some(function (k) { return !!parts[k]; });
+    var hasDiag = DS_DIAG_KEYS.some(function (k) { return !!parts[k]; })
+        || !!parts[DS_DISCHARGE_KEY];
     if (hasDiag) {
         html += '<div class="ds-note-diag">'
             + dsDiagCell('Provisional Diagnosis', parts.provisional_diagnosis, false)
             + dsDiagCell('Confirmed Diagnosis', parts.confirmed_diagnosis, false)
             + dsDiagCell('Diagnosis Status', parts.diagnosis_status, true)
+            + (parts[DS_DISCHARGE_KEY] ? dsDischargeCell(parts[DS_DISCHARGE_KEY]) : '')
             + '</div>';
     }
     return '<div class="txt">' + html + '</div>';
+}
+
+// Cell of the saved-entry diagnosis panel showing the discharge process as a
+// colour-coded badge. The raw select value is mapped back to its friendly label.
+function dsDischargeCell(value) {
+    var code = String(value || '').toUpperCase();
+    return '<div><span class="k">Discharge Process</span>'
+        + (value
+            ? '<span class="ds-discharge-badge ' + (DS_DISCHARGE_CLASS[code] || 'continue') + '">'
+                + escHtml(DS_DISCHARGE_LABELS[code] || value) + '</span>'
+            : '<span class="v">&mdash;</span>')
+        + '</div>';
 }
 
 // One cell of the saved-entry diagnosis panel. The status renders as a

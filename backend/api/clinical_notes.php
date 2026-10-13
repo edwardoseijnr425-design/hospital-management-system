@@ -23,7 +23,7 @@ requireRole(['admin', 'doctor', 'nurse']);
 // Declared before the dispatcher below: PHP executes top-level statements in
 // order and does not hoist const, so a const placed after the dispatch block
 // would be undefined by the time the handlers run.
-const CLINICAL_NOTE_TYPES = ['OPD_NOTE', 'IPD_NOTE', 'DISCHARGE_SUMMARY'];
+const CLINICAL_NOTE_TYPES = ['OPD_NOTE', 'IPD_NOTE', 'DISCHARGE_SUMMARY', 'PROGRESS_NOTE'];
 
 if ($method === 'GET' && $action === 'inpatients') {
     listInpatients();

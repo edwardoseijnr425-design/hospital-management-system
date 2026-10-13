@@ -875,9 +875,14 @@ var PCP_NOTE_LABELS = {
     'ON DIRECT QUESTION': 'on_direct_question',
     'PREVIOUS HISTORY / MEDICAL HISTORY': 'previous_history',
     'ALLERGIES / DRUG REACTIONS': 'allergies',
+    'EXAMINATIONS (PHYSICAL AND SYSTEMIC)': 'examinations',
+    'PROGRESS REPORT NOTES': 'progress_notes',
+    'TEST REQUESTED RESULTS (LAB AND RADIOLOGY)': 'test_requested_results',
     'PROVISIONAL DIAGNOSIS': 'provisional_diagnosis',
     'CONFIRMED DIAGNOSIS': 'confirmed_diagnosis',
-    'DIAGNOSIS STATUS': 'diagnosis_status'
+    'DIAGNOSIS STATUS': 'diagnosis_status',
+    'FINALIZE VISIT INSTRUCTIONS': 'finalize_visit',
+    'DISCHARGE PROCESS / STATUS': 'discharge_process'
 };
 
 function pcpParseNote(text) {
@@ -905,6 +910,7 @@ function pcpEntryTypeLabel(noteType) {
     if (noteType === 'IPD_NOTE') return 'IPD Daily Clinical Round Note';
     if (noteType === 'DISCHARGE_SUMMARY') return 'Discharge Summary Note';
     if (noteType === 'OPD_NOTE') return 'OPD Consultation Entry';
+    if (noteType === 'PROGRESS_NOTE') return 'Progress Report Note';
     return noteType || 'Clinical Entry';
 }
 
@@ -934,7 +940,11 @@ function pcpRenderEntry(n) {
     [['principal_complaints', 'Principal Complaints', false],
      ['on_direct_question', 'On Direct Question', false],
      ['previous_history', 'Previous History / Medical History', false],
-     ['allergies', 'Allergies / Drug Reactions', true]].forEach(function (f) {
+     ['allergies', 'Allergies / Drug Reactions', true],
+     ['examinations', 'Examinations (Physical & Systemic)', false],
+     ['progress_notes', 'Progress Report Notes', false],
+     ['test_requested_results', 'Test Requested Results (Lab & Radiology)', false],
+     ['finalize_visit', 'Finalize Visit Instructions', false]].forEach(function (f) {
         if (!d[f[0]]) return;
         any = true;
         body += '<div class="pcp-fld' + (f[2] ? ' allergy' : '') + '">'
@@ -942,16 +952,15 @@ function pcpRenderEntry(n) {
             + '<span class="v">' + pcpEsc(d[f[0]]) + '</span></div>';
     });
 
-    // Diagnosis trio gets its own compact panel.
+    // Diagnosis trio gets its own compact panel, with the discharge process
+    // shown beside the diagnosis status when it was recorded.
     var diag = '';
-    ['provisional_diagnosis', 'confirmed_diagnosis', 'diagnosis_status'].forEach(function (k) {
-        if (d[k]) any = true;
-    });
-    if (d.provisional_diagnosis || d.confirmed_diagnosis || d.diagnosis_status) {
+    if (d.provisional_diagnosis || d.confirmed_diagnosis || d.diagnosis_status || d.discharge_process) {
         diag = '<div class="pcp-diag">'
             + pcpDiagCell('Provisional Diagnosis', d.provisional_diagnosis)
             + pcpDiagCell('Confirmed Diagnosis', d.confirmed_diagnosis)
             + pcpDiagCell('Diagnosis Status', d.diagnosis_status)
+            + (d.discharge_process ? pcpDiagCell('Discharge Process', pcpDischargeLabel(d.discharge_process)) : '')
             + '</div>';
     }
 
@@ -964,6 +973,18 @@ function pcpRenderEntry(n) {
 function pcpDiagCell(label, value) {
     return '<div class="cell"><div class="k">' + pcpEsc(label) + '</div>'
         + '<div class="v">' + pcpEsc(value || '—') + '</div></div>';
+}
+
+// The Doctor Station saves the raw DISCHARGE PROCESS / STATUS select value
+// (e.g. CONTINUE_ADMISSION); map it back to the friendly label for display.
+function pcpDischargeLabel(code) {
+    var labels = {
+        CONTINUE_ADMISSION: 'Continue Admission (Active Stay)',
+        READY_FOR_DISCHARGE: 'Ready for Discharge (Finalize Bill)',
+        DISCHARGED_FIT: 'Discharged - Fit for Home',
+        REFERRED_OUT: 'Referred Out to Tertiary Facility'
+    };
+    return labels[String(code || '').toUpperCase()] || code;
 }
 
 /* ---- Tab 2: Investigations Results (lab + radiology) ---- */

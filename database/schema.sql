@@ -537,7 +537,7 @@ CREATE TABLE clinical_notes (
     admission_id INT DEFAULT NULL,
     visit_id INT DEFAULT NULL,
     patient_id INT NOT NULL,
-    note_type ENUM('OPD_NOTE', 'IPD_NOTE', 'DISCHARGE_SUMMARY') NOT NULL,
+    note_type ENUM('OPD_NOTE', 'IPD_NOTE', 'DISCHARGE_SUMMARY', 'PROGRESS_NOTE') NOT NULL,
     clinical_note TEXT NOT NULL,
     doctor_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -306,6 +306,7 @@
                         <option value="">All entry types</option>
                         <option value="OPD_NOTE">OPD Note</option>
                         <option value="IPD_NOTE">IPD Round Note</option>
+                        <option value="PROGRESS_NOTE">Progress Report Note</option>
                         <option value="DISCHARGE_SUMMARY">Discharge Summary</option>
                     </select>
                     <button type="button" class="rx-btn grey" id="rx-records-refresh"><i class="fa-solid fa-rotate"></i> Refresh</button>

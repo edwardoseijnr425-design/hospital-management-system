@@ -1364,7 +1364,8 @@ function renderTreatments(pid) {
 const NOTE_TYPE_LABELS = {
     'OPD_NOTE': 'OPD Consultation Note',
     'IPD_NOTE': 'IPD Round Note',
-    'DISCHARGE_SUMMARY': 'Discharge Summary'
+    'DISCHARGE_SUMMARY': 'Discharge Summary',
+    'PROGRESS_NOTE': 'Progress Report Note'
 };
 
 async function loadDoctorNotes(pid) {
