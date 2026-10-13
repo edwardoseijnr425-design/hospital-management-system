@@ -55,8 +55,8 @@
 
 <div class="nhis-toolbar" id="nhisToolbar">
     <div class="nhis-toolbar-head">
-        <label class="nhis-toolbar-title" for="nhisToolbarInput">NHIS Card Status Verification</label>
-        <span class="nhis-toolbar-sub">National Health Insurance Scheme</span>
+        <label class="nhis-toolbar-title" for="nhisToolbarInput">NHIS Status Verification &amp; Reconfirmation</label>
+        <span class="nhis-toolbar-sub">NHIA Direct Link</span>
     </div>
 
     <div class="nhis-toolbar-row">
@@ -64,7 +64,7 @@
         <button type="button" id="nhisToolbarBtn" class="nhis-toolbar-btn" onclick="nhisToolbarVerify()">
             <span class="spinner"></span>
             <span class="tick">&#10004;</span>
-            <span id="nhisToolbarLabel">VERIFY NHIS</span>
+            <span id="nhisToolbarLabel">VERIFY / RECONFIRM NHIS</span>
         </button>
     </div>
 
@@ -150,7 +150,7 @@ function nhisToolbarVerify() {
         })
         .finally(function () {
             if (btn) { btn.disabled = false; btn.classList.remove('is-busy'); }
-            if (label) label.textContent = 'VERIFY NHIS';
+            if (label) label.textContent = 'VERIFY / RECONFIRM NHIS';
         });
 }
 

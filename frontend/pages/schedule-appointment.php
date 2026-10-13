@@ -35,6 +35,7 @@ require_once __DIR__ . '/../../backend/config/config.php';
 #schedule-page .form-group.notes{margin-top:20px}
 #schedule-page .form-group label{font-weight:700;color:var(--s600);font-size:10px;text-transform:uppercase;letter-spacing:.4px}
 #schedule-page .form-group label .required{color:#E74C3C;font-weight:800}
+#schedule-page .sa-hint{font-size:10px;color:var(--s400);margin:4px 0 0}
 #schedule-page .input-wrapper{position:relative;display:flex;align-items:center}
 #schedule-page .form-control{width:100%;padding:9px 11px;border:1px solid var(--s300);border-radius:8px;font-size:12px;background:var(--s50);color:var(--s800);font-weight:600;transition:border-color .2s,box-shadow .2s;font-family:inherit}
 #schedule-page .form-control:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(27,101,157,.15)}
@@ -105,6 +106,7 @@ require_once __DIR__ . '/../../backend/config/config.php';
               <input type="hidden" id="saPatientId">
               <div class="sa-results" id="saSearchResults"></div>
             </div>
+            <p class="sa-hint">Auto-filled from selected patient &mdash; type to change.</p>
           </div>
 
           <div class="form-group">
@@ -174,8 +176,10 @@ require_once __DIR__ . '/../../backend/config/config.php';
 
         </div>
 
+        <div class="form-section-title second">Consultation Pricing &amp; Notes</div>
+
         <div class="sa-fee-banner" id="saFeeBanner">
-          <span class="sa-fee-label">Consultation Fee:</span>
+          <span class="sa-fee-label">Consultation Tariff:</span>
           <span class="sa-fee-right">
             <span class="sa-fee-note" id="saFeeNote"></span>
             <span class="sa-fee-value" id="saFeeValue">GH₵ 50.00</span>
@@ -276,7 +280,7 @@ function saUpdateFeeBanner() {
         note.className = 'sa-fee-note';
         banner.classList.remove('is-cash');
     } else if (state.nhisNumber && state.message) {
-        note.textContent = 'Cash tariff \u2014 NHIS inactive/expired';
+        note.textContent = 'Cash Rate Applied \u2014 NHIS inactive/expired';
         note.className = 'sa-fee-note is-cash';
         banner.classList.add('is-cash');
     } else {
