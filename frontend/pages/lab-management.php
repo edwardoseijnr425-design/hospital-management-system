@@ -123,6 +123,12 @@ foreach ($__labCatalog as $__cat => $__items) {
 #lab-page .lab-field select,#lab-page .lab-field input{width:100%;padding:9px 11px;border:1px solid var(--s300);border-radius:8px;font-size:12px;background:var(--s50);color:var(--s800);font-weight:600;font-family:inherit;transition:border-color .15s,box-shadow .15s}
 #lab-page .lab-field select:focus,#lab-page .lab-field input:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(27,101,157,.15)}
 #lab-page .lab-field input[readonly]{background:var(--s100);color:var(--brand);font-weight:800;cursor:not-allowed}
+/* Blend the shared date/time picker trigger with this screen's controls
+   (the dropdown calendar itself keeps the system look). */
+#lab-page .lab-field .calendar-input-group{border-radius:8px;background:var(--s50);padding:9px 11px;min-height:auto}
+#lab-page .lab-field .calendar-input-group:hover{border-color:var(--brand)}
+#lab-page .lab-field .calendar-input-group:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px rgba(27,101,157,.15)}
+#lab-page .lab-field .calendar-input-group .calendar-icon{color:var(--brand)}
 #lab-page .span-3{grid-column:span 3}
 #lab-page .span-4{grid-column:span 4}
 #lab-page .span-2{grid-column:span 2}
@@ -363,7 +369,7 @@ foreach ($__labCatalog as $__cat => $__items) {
 
           <div class="lab-field span-3" id="crWhenField" style="display:none;">
             <label for="crWhen">New Date &amp; Time <span class="req">*</span></label>
-            <input type="datetime-local" id="crWhen">
+            <input type="datetime-local" id="crWhen" data-dp-datetime>
           </div>
 
           <div class="lab-field span-3">
@@ -1009,11 +1015,13 @@ function labCrToggle(open) {
 function labCrToggleAction() {
     var action = document.getElementById('crAction');
     var whenField = document.getElementById('crWhenField');
-    var whenInput = document.getElementById('crWhen');
     if (!action || !whenField) return;
     var isResched = action.value === 'reschedule';
     whenField.style.display = isResched ? 'flex' : 'none';
-    if (whenInput) whenInput.required = isResched;
+    /* The date/time control is the custom picker. Its hidden native input must
+       stay out of the browser's constraint validation (a display:none required
+       field cannot be focused, so it would silently block submission); the
+       reschedule value is validated in handleCancelReschedule instead. */
 }
 
 function populateCrRequisitions() {

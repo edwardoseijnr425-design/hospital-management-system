@@ -92,6 +92,7 @@ foreach ($labCatalog as $cat => $items) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lab Management — EHMS</title>
 <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+<link rel="stylesheet" href="assets/css/date-picker.css">
 <style>
 :root{
   --brand:#1b659d; --brand-dk:#155380; --rose:#E11D48; --amber:#F59E0B;
@@ -192,6 +193,12 @@ body{margin:0;background:var(--s50);color:var(--s700);font-family:'Segoe UI',Tah
 .field textarea{font-weight:500;resize:vertical}
 .field select:focus,.field input:focus,.field textarea:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(27,101,157,.15)}
 .field input[readonly]{background:var(--s100);color:var(--brand);font-weight:800}
+/* Blend the shared date/time picker trigger with this screen's controls
+   (the dropdown calendar itself keeps the system look). */
+.field .calendar-input-group{border-radius:var(--radius-sm);background:var(--s50);padding:9px 11px;min-height:auto}
+.field .calendar-input-group:hover{border-color:var(--brand)}
+.field .calendar-input-group:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px rgba(27,101,157,.15)}
+.field .calendar-input-group .calendar-icon{color:var(--brand)}
 .span-2{grid-column:span 2}.span-3{grid-column:span 3}.span-4{grid-column:span 4}.span-6{grid-column:span 6}
 .form-actions{grid-column:span 6;display:flex;justify-content:space-between;gap:10px;align-items:center;padding-top:12px;border-top:1px solid var(--s200);flex-wrap:wrap}
 @media (max-width:820px){.form-grid{grid-template-columns:1fr}.span-2,.span-3,.span-4,.span-6,.form-actions{grid-column:span 1}}
@@ -472,7 +479,7 @@ table.lab-table tbody tr:hover{background:var(--s50)}
             </div>
             <div class="field span-3" id="crWhenField" style="display:none">
               <label for="crWhen">New Date &amp; Time <span class="req">*</span></label>
-              <input type="datetime-local" id="crWhen">
+              <input type="datetime-local" id="crWhen" data-dp-datetime>
             </div>
             <div class="field span-3">
               <label for="crReason">Reason <span class="req">*</span></label>
@@ -723,6 +730,7 @@ table.lab-table tbody tr:hover{background:var(--s50)}
 
 <div id="labToast"></div>
 
+<script src="assets/js/date-picker.js"></script>
 <script>
 var LAB_CAT_LABELS = <?php echo json_encode($labCategories); ?>;
 var LAB_PARAM_DATA = <?php echo json_encode($labParamData); ?>;
@@ -1311,10 +1319,12 @@ function labCrToggle() {
 function labCrToggleAction() {
     var action = document.getElementById('crAction').value;
     var whenField = document.getElementById('crWhenField');
-    var whenInput = document.getElementById('crWhen');
     var isResched = action === 'reschedule';
     whenField.style.display = isResched ? 'flex' : 'none';
-    whenInput.required = isResched;
+    /* The date/time control is the custom picker. Its hidden native input must
+       stay out of the browser's constraint validation (a display:none required
+       field cannot be focused, so it would silently block submission); the
+       reschedule value is validated in handleCrSubmit instead. */
 }
 
 function populateCrRequisitions() { populateRequisitions('crRequisition', '-- Select Requisition --'); }

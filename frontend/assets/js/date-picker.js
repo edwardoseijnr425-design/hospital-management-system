@@ -3,12 +3,14 @@
    window.initCustomDatePickers(root) after every SPA page is injected.
 
    It upgrades each native <input type="date"> into the dropdown-calendar
-   day widget, and each <input type="month"> into the month variant of the
-   same widget. The native input is kept in the DOM (hidden): its value
-   stays in sync as YYYY-MM-DD (or YYYY-MM) and a "change" event is
-   dispatched on selection, so existing page code that reads input.value or
-   attaches onchange handlers (saUpdateFormalDate, calculateAge,
-   dhiLoad, ...) keeps working unchanged. */
+   day widget, each <input type="month"> into the month variant, and each
+   <input type="datetime-local" data-dp-datetime> into the day widget with a
+   time bar (hour/minute + AM/PM). The native input is kept in the DOM
+   (hidden): its value stays in sync as YYYY-MM-DD (or YYYY-MM, or
+   YYYY-MM-DDTHH:MM) and a "change" event is dispatched on selection, so
+   existing page code that reads input.value or attaches onchange handlers
+   (saUpdateFormalDate, calculateAge, dhiLoad, the lab cancel/reschedule
+   form, ...) keeps working unchanged. */
 (function () {
     'use strict';
 
@@ -33,6 +35,27 @@
 
     function toIso(d) {
         return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+    }
+
+    /* A datetime-local field carries YYYY-MM-DDTHH:MM. Split it into the date
+       plus the 12-hour clock pieces the time bar edits, so the widget and the
+       native value format stay in lock-step. */
+    function parseDateTime(value) {
+        if (!value) return null;
+        var m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+        if (!m) return null;
+        var h24 = parseInt(m[4], 10);
+        if (isNaN(h24) || h24 > 23) h24 = 0;
+        return {
+            date: new Date(+m[1], +m[2] - 1, +m[3]),
+            hour12: ((h24 + 11) % 12) + 1,
+            minute: Math.min(59, parseInt(m[5], 10) || 0),
+            isPm: h24 >= 12
+        };
+    }
+
+    function toDateTime(date, hour24, minute) {
+        return toIso(date) + 'T' + pad2(hour24) + ':' + pad2(minute);
     }
 
     /* A month field carries YYYY-MM. It is held as {y, m} with a 1-based
@@ -428,6 +451,268 @@
         });
     }
 
+    /* Build the day + time widget around one native datetime-local input.
+       Selecting a day keeps the popover open so the hour/minute/AM-PM bar can
+       be adjusted; the value is committed on every change and the footer
+       "Done" button (or an outside click) closes it. */
+    function buildDateTimeWidget(input) {
+        if (input.getAttribute('data-ehms-dp')) return;
+        input.setAttribute('data-ehms-dp', '1');
+
+        var parts = buildShell(
+            input,
+            'datetime-mode',
+            '<div class="weekdays-grid">' + WEEKDAYS.map(function (d) { return '<span>' + d + '</span>'; }).join('') + '</div>'
+                + '<div class="days-grid" data-role="days"></div>'
+                + '<div class="calendar-time">'
+                +     '<div class="calendar-time-inputs">'
+                +         '<input type="text" class="calendar-time-input" data-role="hour" maxlength="2" inputmode="numeric" aria-label="Hour">'
+                +         '<span class="calendar-time-colon">:</span>'
+                +         '<input type="text" class="calendar-time-input" data-role="minute" maxlength="2" inputmode="numeric" aria-label="Minute">'
+                +     '</div>'
+                +     '<div class="calendar-ampm">'
+                +         '<button type="button" class="ampm-btn" data-role="am">AM</button>'
+                +         '<button type="button" class="ampm-btn" data-role="pm">PM</button>'
+                +     '</div>'
+                + '</div>',
+            'Previous Month',
+            'Next Month'
+        );
+        parts.popover.querySelector('[data-role="today"]').textContent = 'Today';
+
+        // Date+time needs an explicit confirm step, so add a Done button.
+        var doneBtn = document.createElement('button');
+        doneBtn.type = 'button';
+        doneBtn.className = 'footer-action-btn done-btn';
+        doneBtn.setAttribute('data-role', 'done');
+        doneBtn.textContent = 'Done';
+        parts.popover.querySelector('.calendar-footer').appendChild(doneBtn);
+
+        var trigger = parts.trigger;
+        var popover = parts.popover;
+        var displayEl = trigger.querySelector('[data-role="display"]');
+        var monthYearEl = popover.querySelector('[data-role="month-year"]');
+        var daysGridEl = popover.querySelector('[data-role="days"]');
+        var hourEl = popover.querySelector('[data-role="hour"]');
+        var minuteEl = popover.querySelector('[data-role="minute"]');
+        var amBtn = popover.querySelector('[data-role="am"]');
+        var pmBtn = popover.querySelector('[data-role="pm"]');
+
+        // ---- State ----
+        var now = new Date();
+        var currentDate = now;
+        var selectedDate = null;
+        var hour12 = ((now.getHours() + 11) % 12) + 1;
+        var minute = now.getMinutes();
+        var isPm = now.getHours() >= 12;
+
+        var existing = parseDateTime(input.value);
+        if (existing) {
+            selectedDate = existing.date;
+            hour12 = existing.hour12;
+            minute = existing.minute;
+            isPm = existing.isPm;
+            currentDate = new Date(existing.date.getFullYear(), existing.date.getMonth(), 1);
+        }
+
+        function hour24() { return (hour12 % 12) + (isPm ? 12 : 0); }
+
+        function updateAmpm() {
+            amBtn.classList.toggle('active', !isPm);
+            pmBtn.classList.toggle('active', isPm);
+        }
+
+        function updateTimeFields() {
+            hourEl.value = pad2(hour12);
+            minuteEl.value = pad2(minute);
+            updateAmpm();
+        }
+        updateTimeFields();
+
+        function updateDisplay() {
+            if (selectedDate) {
+                var dateTxt = selectedDate
+                    .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                    .replace(/ /g, '-');
+                displayEl.textContent = dateTxt + ' ' + pad2(hour12) + ':' + pad2(minute) + ' ' + (isPm ? 'PM' : 'AM');
+                displayEl.classList.remove('placeholder');
+            } else {
+                displayEl.textContent = 'Select date & time...';
+                displayEl.classList.add('placeholder');
+            }
+        }
+        updateDisplay();
+
+        function syncInput() {
+            input.value = selectedDate ? toDateTime(selectedDate, hour24(), minute) : '';
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        var shell = wireShell(parts, input, renderCalendar);
+
+        function selectDay(year, month, day) {
+            selectedDate = new Date(year, month, day);
+            renderCalendar();
+            updateDisplay();
+            syncInput();
+            // Deliberately keep the popover open so the time can be set too.
+        }
+
+        function renderCalendar() {
+            var year = currentDate.getFullYear();
+            var month = currentDate.getMonth();
+            monthYearEl.textContent = MONTHS[month] + ' ' + year;
+
+            daysGridEl.innerHTML = '';
+            var firstDayIndex = new Date(year, month, 1).getDay();
+            var totalDays = new Date(year, month + 1, 0).getDate();
+            var prevTotalDays = new Date(year, month, 0).getDate();
+            var today = new Date();
+
+            for (var i = firstDayIndex; i > 0; i--) {
+                var fill = document.createElement('div');
+                fill.className = 'day-cell outside-month';
+                fill.textContent = prevTotalDays - i + 1;
+                daysGridEl.appendChild(fill);
+            }
+
+            for (var day = 1; day <= totalDays; day++) {
+                var cell = document.createElement('div');
+                cell.className = 'day-cell';
+                cell.textContent = day;
+
+                var isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+                var isSelected = selectedDate && day === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear();
+
+                if (isToday) cell.classList.add('today');
+                if (isSelected) cell.classList.add('selected');
+
+                cell.addEventListener('click', function (d) {
+                    return function () { selectDay(year, month, d); };
+                }(day));
+
+                daysGridEl.appendChild(cell);
+            }
+
+            var totalCellsRendered = firstDayIndex + totalDays;
+            var nextDaysCount = totalCellsRendered <= 35 ? 35 - totalCellsRendered : 42 - totalCellsRendered;
+            for (var j = 1; j <= nextDaysCount; j++) {
+                var fillNext = document.createElement('div');
+                fillNext.className = 'day-cell outside-month';
+                fillNext.textContent = j;
+                daysGridEl.appendChild(fillNext);
+            }
+        }
+
+        // ---- Time bar ----
+        // On input, read loosely (never rewrite mid-typing); on blur, normalise.
+        function readTime() {
+            var h = parseInt(hourEl.value, 10);
+            if (isNaN(h)) h = 12;
+            hour12 = Math.min(12, Math.max(1, h));
+            var m = parseInt(minuteEl.value, 10);
+            if (isNaN(m)) m = 0;
+            minute = Math.min(59, Math.max(0, m));
+            updateDisplay();
+            syncInput();
+        }
+        function normaliseTime() {
+            hourEl.value = pad2(hour12);
+            minuteEl.value = pad2(minute);
+        }
+        hourEl.addEventListener('input', readTime);
+        minuteEl.addEventListener('input', readTime);
+        hourEl.addEventListener('blur', normaliseTime);
+        minuteEl.addEventListener('blur', normaliseTime);
+        amBtn.addEventListener('click', function () {
+            isPm = false;
+            updateAmpm();
+            updateDisplay();
+            syncInput();
+        });
+        pmBtn.addEventListener('click', function () {
+            isPm = true;
+            updateAmpm();
+            updateDisplay();
+            syncInput();
+        });
+
+        // ---- Events ----
+        popover.querySelector('[data-role="prev"]').addEventListener('click', function (e) {
+            e.stopPropagation();
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+        popover.querySelector('[data-role="next"]').addEventListener('click', function (e) {
+            e.stopPropagation();
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+        popover.querySelector('[data-role="clear"]').addEventListener('click', function (e) {
+            e.stopPropagation();
+            selectedDate = null;
+            updateDisplay();
+            syncInput();
+            shell.closePopover();
+        });
+        popover.querySelector('[data-role="today"]').addEventListener('click', function (e) {
+            e.stopPropagation();
+            var t = new Date();
+            selectedDate = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+            currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+            hour12 = ((t.getHours() + 11) % 12) + 1;
+            minute = t.getMinutes();
+            isPm = t.getHours() >= 12;
+            updateTimeFields();
+            renderCalendar();
+            updateDisplay();
+            syncInput();
+        });
+        doneBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            shell.closePopover();
+        });
+
+        // Keep the widget in sync when page JS sets the native input directly.
+        // Guard against our own dispatched "change" so typing in the time bar
+        // (which re-dispatches on every keystroke) never rewrites the field.
+        input.addEventListener('change', function () {
+            var parsed = parseDateTime(input.value);
+            if (parsed) {
+                var same = selectedDate
+                    && parsed.date.getTime() === selectedDate.getTime()
+                    && parsed.hour12 === hour12
+                    && parsed.minute === minute
+                    && parsed.isPm === isPm;
+                if (same) return;
+                selectedDate = parsed.date;
+                hour12 = parsed.hour12;
+                minute = parsed.minute;
+                isPm = parsed.isPm;
+                currentDate = new Date(parsed.date.getFullYear(), parsed.date.getMonth(), 1);
+                updateTimeFields();
+                updateDisplay();
+            } else {
+                if (!selectedDate) return;
+                selectedDate = null;
+                updateDisplay();
+            }
+        });
+
+        // A form reset clears the native value without firing "change"; keep the
+        // visible trigger in step.
+        if (input.form) {
+            input.form.addEventListener('reset', function () {
+                setTimeout(function () {
+                    if (!input.value) {
+                        selectedDate = null;
+                        updateDisplay();
+                    }
+                }, 0);
+            });
+        }
+    }
+
     /* Build the month widget around one native month input.
        A month is the smallest selectable unit here, so the header arrows step
        a whole year and the grid lists the 12 months of that year. */
@@ -596,6 +881,11 @@
         root = root || document;
         var dateInputs = root.querySelectorAll('input[type="date"]');
         for (var i = 0; i < dateInputs.length; i++) buildWidget(dateInputs[i]);
+        // datetime-local is opt-in: only fields marked data-dp-datetime are
+        // upgraded, so the app's other native datetime-local fields (admissions,
+        // appointment scheduling, radiology) keep their existing behaviour.
+        var dateTimeInputs = root.querySelectorAll('input[type="datetime-local"][data-dp-datetime]');
+        for (var k = 0; k < dateTimeInputs.length; k++) buildDateTimeWidget(dateTimeInputs[k]);
         var monthInputs = root.querySelectorAll('input[type="month"]');
         for (var j = 0; j < monthInputs.length; j++) buildMonthWidget(monthInputs[j]);
         return root;
