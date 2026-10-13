@@ -60,160 +60,167 @@ foreach ($__labCatalog as $__cat => $__items) {
 }
 ?>
 <style>
-/* ============= LAB MANAGEMENT & INVESTIGATION MODULE : FULL-WIDTH ============
-   Scoped under #lab-page. No Bootstrap — every utility used here is defined
-   below. Font Awesome is available (the shell loads
-   frontend/assets/fontawesome/css/all.min.css).
-   No inline support footer: the shell auto-appends the system banner. */
-#lab-page{background:#dce7f2;color:#333;font-size:13px;min-height:100vh;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding-bottom:30px}
+/* ============= LAB MANAGEMENT & INVESTIGATION MODULE ============
+   Scoped under #lab-page. No Bootstrap/Tailwind — every utility used here is
+   defined below. Font Awesome is available. Element ids/classes consumed by the
+   page JS (labTabs, cAll..cDispatched, lab-pane, lab-table, ...) are preserved. */
+#lab-page{
+    --brand:#1b659d; --brand-dk:#155380;
+    --s50:#F8FAFC; --s100:#F1F5F9; --s200:#E2E8F0; --s300:#CBD5E1;
+    --s400:#94A3B8; --s500:#64748B; --s600:#475569; --s700:#334155; --s800:#1E293B;
+    background:var(--s50);border-radius:12px;padding:14px;color:var(--s700);font-size:12px;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+}
 #lab-page *,#lab-page *::before,#lab-page *::after{box-sizing:border-box}
 
-/* ---- TOP BAR (HMS - HEALTHCARE MANAGEMENT SYSTEM branding) ---- */
-#lab-page .lab-topbar{background-color:#0b5fa5;color:#fff;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 5px rgba(0,0,0,0.15);flex-wrap:wrap;gap:8px}
-#lab-page .lab-topbar .title-group{display:flex;align-items:center;gap:10px}
-#lab-page .lab-topbar .title-group svg{width:22px;height:22px;fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#lab-page .lab-topbar-title{font-size:16px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase}
-#lab-page .lab-topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-#lab-page .lab-topbar-right > span{font-size:11px}
-#lab-page .lab-nav-btn{background-color:#0088cc;color:#fff;border:none;padding:5px 12px;font-size:11px;font-weight:bold;border-radius:3px;cursor:pointer;text-decoration:none;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
-#lab-page .lab-nav-btn:hover{background-color:#006699}
-
 /* ---- MODULE HEADER BANNER ---- */
-#lab-page .lab-wrap{max-width:1240px;margin:0 auto;padding:12px 16px 16px}
-#lab-page .lab-modhead{background:linear-gradient(135deg,#0D47A1,#0072BC);color:#fff;padding:9px 16px;border-radius:6px 6px 0 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 2px 6px rgba(13,71,161,.22)}
-#lab-page .lab-modhead .left{display:flex;align-items:center;gap:10px}
-#lab-page .lab-modhead .left svg{width:22px;height:22px;fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#lab-page .lab-modhead h2{margin:0;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+#lab-page .lab-wrap{max-width:1240px;margin:0 auto}
+#lab-page .lab-modhead{background:var(--brand);color:#fff;padding:14px 16px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 1px 2px rgba(15,23,42,.08)}
+#lab-page .lab-modhead .left{display:flex;align-items:center;gap:12px;min-width:0}
+#lab-page .mh-ic{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:10px;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+#lab-page .mh-ic i{font-size:19px;color:#BFDBFE}
+#lab-page .lab-modhead h2{margin:0;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+#lab-page .mh-sub{margin:2px 0 0;font-size:11px;color:#BFDBFE}
 #lab-page .lab-modhead .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-#lab-page .lab-h-btn{border:none;border-radius:3px;cursor:pointer;font-weight:bold;font-size:11px;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:6px;padding:6px 14px;font-family:inherit;transition:background .15s,filter .15s}
+#lab-page .lab-h-btn{border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.10);color:#fff;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:6px;padding:7px 13px;font-family:inherit;transition:background .15s}
+#lab-page .lab-h-btn:hover{background:rgba(255,255,255,.2)}
 #lab-page .lab-h-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#lab-page .lab-h-btn.light{background-color:#fff;color:#0D47A1}
-#lab-page .lab-h-btn.light:hover{filter:brightness(.96)}
-#lab-page .lab-live-badge{background:#fff;color:#1E7A34;border-radius:999px;font-size:10px;font-weight:bold;letter-spacing:.4px;padding:4px 11px;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase}
-#lab-page .lab-live-badge i{color:#27ae60}
+#lab-page .lab-live-badge{background:rgba(16,185,129,.18);color:#A7F3D0;border:1px solid rgba(52,211,153,.35);border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.4px;padding:5px 12px;display:inline-flex;align-items:center;gap:7px;text-transform:uppercase}
+#lab-page .lab-live-badge .dot{width:8px;height:8px;border-radius:50%;background:#34D399;animation:labPulse 1.6s infinite}
+@keyframes labPulse{0%,100%{opacity:1}50%{opacity:.35}}
 
-/* ---- FEATURE 1: 2-COLUMN NAVIGATION GRID ---- */
-#lab-page .lab-feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 16px}
-#lab-page .lab-feature-card{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #b2c8de;border-radius:6px;padding:14px 16px;cursor:pointer;text-align:left;font-family:inherit;box-shadow:0 2px 5px rgba(0,0,0,.07);transition:transform .15s,box-shadow .15s,border-color .15s}
-#lab-page .lab-feature-card:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.14);border-color:#0b5fa5}
-#lab-page .lab-feature-card svg{width:40px;height:40px;flex-shrink:0;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#lab-page .lab-feature-card .fc-title{font-size:12.5px;font-weight:800;color:#c0392b;text-transform:uppercase;letter-spacing:.4px;margin:0 0 2px}
-#lab-page .lab-feature-card .fc-sub{font-size:11px;color:#64748b;margin:0}
+/* ---- QUICK STAT TILES ---- */
+#lab-page .lab-feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}
+#lab-page .lab-feature-card{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid var(--s200);border-radius:12px;padding:14px 16px;cursor:pointer;text-align:left;font-family:inherit;box-shadow:0 1px 2px rgba(15,23,42,.05);transition:border-color .15s,box-shadow .15s,transform .15s}
+#lab-page .lab-feature-card:hover{border-color:var(--brand);box-shadow:0 6px 16px rgba(15,23,42,.10);transform:translateY(-1px)}
+#lab-page .fc-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+#lab-page .fc-title{font-size:10px;font-weight:800;color:var(--s400);text-transform:uppercase;letter-spacing:.4px}
+#lab-page .fc-num{font-size:17px;font-weight:800;color:var(--brand)}
+#lab-page .fc-num b{font-weight:800}
+#lab-page .fc-num .u{font-size:11px;font-weight:700;color:var(--s500)}
+#lab-page .fc-sub{font-size:10px;color:var(--s500)}
+#lab-page .fc-ic{width:46px;height:46px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:18px}
+#lab-page .fc-ic.blue{background:#EFF6FF;color:var(--brand);border:1px solid #BFDBFE}
+#lab-page .fc-ic.green{background:#ECFDF5;color:#059669;border:1px solid #A7F3D0}
+#lab-page .fc-ic.amber{background:#FFFBEB;color:#D97706;border:1px solid #FDE68A}
+#lab-page .fc-ic.slate{background:var(--s100);color:var(--s600);border:1px solid var(--s200)}
 
 /* ---- PANELS ---- */
-#lab-page .lab-panel{background:#fff;border:1px solid #b2c8de;border-top:none;border-radius:0 0 6px 6px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,.06)}
+#lab-page .lab-panel{background:#fff;border:1px solid var(--s200);border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
 #lab-page .lab-panel + .lab-panel{margin-top:14px}
-#lab-page .lab-panel.is-first{border-top:1px solid #b2c8de;border-radius:6px}
-#lab-page .lab-panel-head{background-color:#0b5fa5;color:#fff;font-weight:bold;font-size:12px;padding:9px 14px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-#lab-page .lab-panel-head.dark{background-color:#1f2933;padding:0}
+#lab-page .lab-panel.is-first{margin-top:0}
+#lab-page .lab-panel-head{background:var(--brand);color:#fff;font-weight:800;font-size:11px;padding:11px 16px;text-transform:uppercase;letter-spacing:.4px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 #lab-page .lab-panel-head .head-left{display:flex;align-items:center;gap:8px}
-#lab-page .lab-panel-head svg{width:17px;height:17px;fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#lab-page .lab-panel-head svg{width:16px;height:16px;fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#lab-page .lab-panel-head.dark{background:var(--s800);padding:0}
 #lab-page .lab-panel-head.dark svg{fill:none;stroke:#fff}
 
 /* ---- ENTRIES / TECHNICIAN FORM ---- */
-#lab-page .lab-form{display:grid;grid-template-columns:repeat(6,1fr);gap:12px 16px;padding:16px 18px;background-color:#f8fafc}
+#lab-page .lab-form{display:grid;grid-template-columns:repeat(6,1fr);gap:12px 16px;padding:16px 18px;background:#fff}
 #lab-page .lab-field{display:flex;flex-direction:column;gap:5px}
-#lab-page .lab-field label{font-weight:700;color:#222;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
-#lab-page .lab-field label .req{color:#e74c3c;font-weight:bold}
-#lab-page .lab-field select,#lab-page .lab-field input{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;background-color:#fff;color:#222;font-family:inherit}
-#lab-page .lab-field select:focus,#lab-page .lab-field input:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
-#lab-page .lab-field input[readonly]{background-color:#eef3f8;color:#1E7A34;font-weight:bold;cursor:not-allowed}
+#lab-page .lab-field label{font-weight:800;color:var(--s600);font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+#lab-page .lab-field label .req{color:#E74C3C;font-weight:800}
+#lab-page .lab-field select,#lab-page .lab-field input{width:100%;padding:9px 11px;border:1px solid var(--s300);border-radius:8px;font-size:12px;background:var(--s50);color:var(--s800);font-weight:600;font-family:inherit;transition:border-color .15s,box-shadow .15s}
+#lab-page .lab-field select:focus,#lab-page .lab-field input:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(27,101,157,.15)}
+#lab-page .lab-field input[readonly]{background:var(--s100);color:var(--brand);font-weight:800;cursor:not-allowed}
 #lab-page .span-3{grid-column:span 3}
 #lab-page .span-4{grid-column:span 4}
 #lab-page .span-2{grid-column:span 2}
 #lab-page .span-6{grid-column:span 6}
-#lab-page .lab-form-actions{grid-column:span 6;display:flex;justify-content:flex-end;margin-top:2px}
-#lab-page .lab-btn-submit{background-color:#0b5fa5;color:#fff;border:none;padding:9px 24px;font-weight:bold;font-size:12px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:8px}
-#lab-page .lab-btn-submit:hover{background-color:#004080}
-#lab-page .lab-btn-submit svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#lab-page .lab-form-actions{grid-column:span 6;display:flex;justify-content:flex-end;margin-top:2px;padding-top:14px;border-top:1px solid var(--s200)}
+#lab-page .lab-btn-submit{background:var(--brand);color:#fff;border:none;padding:10px 22px;font-weight:800;font-size:11px;border-radius:8px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 1px 2px rgba(27,101,157,.25)}
+#lab-page .lab-btn-submit:hover{background:var(--brand-dk)}
+#lab-page .lab-btn-submit svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* ---- TABS ---- */
 #lab-page .lab-tabs{display:flex;flex-wrap:wrap}
-#lab-page .lab-tab{background:transparent;border:none;border-right:1px solid rgba(255,255,255,.18);color:#dbe6f2;font-family:inherit;font-weight:bold;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:11px 16px;cursor:pointer}
+#lab-page .lab-tab{background:transparent;border:none;border-right:1px solid rgba(255,255,255,.12);color:#CBD5E1;font-family:inherit;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:12px 16px;cursor:pointer;transition:background .15s,color .15s}
 #lab-page .lab-tab:last-child{border-right:none}
 #lab-page .lab-tab:hover{background:rgba(255,255,255,.08);color:#fff}
-#lab-page .lab-tab.active{background:#0b5fa5;color:#fff;box-shadow:inset 0 -3px 0 #FFD166}
+#lab-page .lab-tab.active{background:var(--brand);color:#fff}
 
 /* ---- VIEW TOOLBAR (search) ---- */
-#lab-page .lab-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid #e1e8f0;background-color:#f8fafc}
+#lab-page .lab-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--s200);background:var(--s50)}
 #lab-page .lab-toolbar .search{display:flex;align-items:center;gap:8px;flex:1 1 240px;min-width:200px}
-#lab-page .lab-toolbar .search svg{width:16px;height:16px;fill:none;stroke:#0b5fa5;stroke-width:2;flex-shrink:0}
-#lab-page .lab-toolbar .search input{flex:1;padding:6px 9px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;font-family:inherit;background:#fff}
-#lab-page .lab-toolbar .search input:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
-#lab-page .lab-counts{font-size:10.5px;color:#64748b;display:flex;gap:12px;flex-wrap:wrap}
-#lab-page .lab-counts b{color:#0b5fa5}
+#lab-page .lab-toolbar .search svg{width:16px;height:16px;fill:none;stroke:var(--s400);stroke-width:2;flex-shrink:0}
+#lab-page .lab-toolbar .search input{flex:1;padding:8px 10px;border:1px solid var(--s300);border-radius:8px;font-size:12px;font-family:inherit;background:#fff;color:var(--s800)}
+#lab-page .lab-toolbar .search input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(27,101,157,.15)}
+#lab-page .lab-counts{font-size:10px;color:var(--s500);font-weight:600;display:flex;gap:12px;flex-wrap:wrap}
+#lab-page .lab-counts b{color:var(--s800)}
 
 /* ---- TAB PANES + TABLE ---- */
 #lab-page .lab-pane{display:none}
 #lab-page .lab-pane.active{display:block}
-#lab-page .lab-table-wrap{background-color:#fff;max-height:460px;overflow-y:auto}
+#lab-page .lab-table-wrap{background:#fff;max-height:520px;overflow-y:auto}
 #lab-page .lab-table{width:100%;border-collapse:collapse;font-size:11px}
-#lab-page .lab-table th{background-color:#e6eef5;color:#222;font-weight:bold;text-align:left;padding:8px;border-bottom:2px solid #b2c8de;position:sticky;top:0;z-index:1;white-space:nowrap;text-transform:uppercase;font-size:10.5px;letter-spacing:.3px}
-#lab-page .lab-table td{padding:7px 8px;border-bottom:1px solid #e1e8f0;vertical-align:middle}
-#lab-page .lab-table tbody tr:hover{background-color:#eef4fb}
+#lab-page .lab-table th{background:var(--s100);color:var(--s600);font-weight:800;text-align:left;padding:10px;border-bottom:1px solid var(--s200);position:sticky;top:0;z-index:1;white-space:nowrap;text-transform:uppercase;font-size:10px;letter-spacing:.4px}
+#lab-page .lab-table td{padding:9px 10px;border-bottom:1px solid var(--s100);vertical-align:middle}
+#lab-page .lab-table tbody tr:hover{background:var(--s50)}
 #lab-page .lab-table .first-col{padding-left:14px}
 #lab-page .lab-table .act-col{text-align:center;white-space:nowrap}
-#lab-page .lab-empty{text-align:center;padding:18px;color:#8a94a6}
-#lab-page .lab-badge{display:inline-block;padding:2px 8px;border-radius:3px;font-weight:bold;font-size:10px;text-transform:uppercase;letter-spacing:.3px}
-#lab-page .lab-status-ready{color:#1E7A34;background:#E9F9EF}
-#lab-page .lab-status-sent{color:#0D47A1;background:#E8F4FD}
-#lab-page .lab-status-abs{color:#B9770E;background:#FEF5E0}
-#lab-page .lab-status-not{color:#B23B3B;background:#FDEBEC}
-#lab-page .lab-btn-outline{background-color:#fff;color:#0b5fa5;border:1px solid #b2c8de;padding:4px 11px;font-weight:bold;font-size:10px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
-#lab-page .lab-btn-outline:hover{background-color:#e2edf7}
-#lab-page .lab-btn-primary{background-color:#0b5fa5;color:#fff;border:none;padding:4px 12px;font-weight:bold;font-size:10px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
-#lab-page .lab-btn-primary:hover{background-color:#004080}
-#lab-page .lab-btn-success{background-color:#27ae60;color:#fff;border:none;padding:4px 11px;font-weight:bold;font-size:10px;border-radius:3px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
-#lab-page .lab-btn-success:hover{background-color:#1e8c4d}
+#lab-page .lab-empty{text-align:center;padding:22px;color:var(--s400)}
+#lab-page .lab-badge{display:inline-block;padding:2px 9px;border-radius:999px;font-weight:800;font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+#lab-page .lab-status-ready{color:#047857;background:#ECFDF5}
+#lab-page .lab-status-sent{color:var(--brand);background:#EFF6FF}
+#lab-page .lab-status-abs{color:#B45309;background:#FFFBEB}
+#lab-page .lab-status-not{color:#B91C1C;background:#FEF2F2}
+#lab-page .lab-btn-outline{background:#fff;color:var(--brand);border:1px solid var(--s300);padding:5px 11px;font-weight:800;font-size:10px;border-radius:8px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
+#lab-page .lab-btn-outline:hover{background:var(--s100)}
+#lab-page .lab-btn-primary{background:var(--brand);color:#fff;border:none;padding:5px 12px;font-weight:800;font-size:10px;border-radius:8px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
+#lab-page .lab-btn-primary:hover{background:var(--brand-dk)}
+#lab-page .lab-btn-success{background:#059669;color:#fff;border:none;padding:5px 11px;font-weight:800;font-size:10px;border-radius:8px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px}
+#lab-page .lab-btn-success:hover{background:#047857}
 #lab-page .lab-btn-success svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
 
 /* ---- MODALS (scoped; both live inside #lab-page) ---- */
-#lab-page .modal{display:none;position:fixed;inset:0;z-index:2000;background:rgba(15,45,89,.55);align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+#lab-page .modal{display:none;position:fixed;inset:0;z-index:2000;background:rgba(15,23,42,.55);align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
 #lab-page .modal.show{display:flex}
 #lab-page .modal.centered{align-items:center}
-#lab-page .modal-content{background:#fff;border-radius:8px;width:min(640px,100%);box-shadow:0 12px 34px rgba(0,0,0,.25);overflow:hidden}
-#lab-page .modal-header{background-color:#0b5fa5;color:#fff;padding:13px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-#lab-page .modal-header h3{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
-#lab-page .modal-header.danger{background-color:#c0392b}
-#lab-page .modal-header svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#lab-page .modal-content{background:#fff;border-radius:14px;width:min(640px,100%);box-shadow:0 20px 44px rgba(15,23,42,.3);overflow:hidden}
+#lab-page .modal-header{background:var(--brand);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+#lab-page .modal-header h3{margin:0;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
+#lab-page .modal-header.danger{background:#B91C1C}
+#lab-page .modal-header svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #lab-page .modal-close{background:none;border:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:0 4px}
-#lab-page .modal-close:hover{color:#FFD54F}
-#lab-page .modal-body{padding:18px 20px;background:#F8FAFC}
+#lab-page .modal-close:hover{color:#FDE68A}
+#lab-page .modal-body{padding:18px 20px;background:var(--s50)}
 #lab-page .modal-body.text-center{text-align:center}
-#lab-page .lab-alert-title{font-size:15px;font-weight:bold;color:#222;margin:0 0 6px}
-#lab-page .lab-alert-sub{font-size:12px;color:#64748b;margin:0}
+#lab-page .lab-alert-title{font-size:14px;font-weight:800;color:var(--s800);margin:0 0 6px}
+#lab-page .lab-alert-sub{font-size:12px;color:var(--s500);margin:0}
 #lab-page .modal-body .form-group{margin-bottom:14px}
-#lab-page .modal-body label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#64748b;margin-bottom:5px}
-#lab-page .modal-body input,#lab-page .modal-body select,#lab-page .modal-body textarea{width:100%;padding:8px 10px;border:1px solid #b2c8de;border-radius:3px;font-size:12px;background-color:#fff;color:#222;font-family:inherit;box-sizing:border-box}
-#lab-page .modal-body input[readonly]{background-color:#eef3f8;color:#555}
+#lab-page .modal-body label{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--s600);margin-bottom:5px}
+#lab-page .modal-body input,#lab-page .modal-body select,#lab-page .modal-body textarea{width:100%;padding:9px 11px;border:1px solid var(--s300);border-radius:8px;font-size:12px;background:var(--s50);color:var(--s800);font-family:inherit;box-sizing:border-box}
+#lab-page .modal-body input[readonly]{background:var(--s100);color:var(--s500)}
 #lab-page .modal-body textarea{resize:vertical}
-#lab-page .modal-body input:focus,#lab-page .modal-body select:focus,#lab-page .modal-body textarea:focus{outline:none;border-color:#0b5fa5;box-shadow:0 0 4px rgba(11,95,165,.25)}
-#lab-page .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #e1e8f0}
+#lab-page .modal-body input:focus,#lab-page .modal-body select:focus,#lab-page .modal-body textarea:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(27,101,157,.15)}
+#lab-page .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--s200)}
 #lab-page .form-actions.center{justify-content:center;border-top:none;margin-top:8px;padding-top:0}
-#lab-page .btn{border:none;border-radius:3px;cursor:pointer;font-weight:bold;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:8px 18px;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
-#lab-page .btn-primary{background-color:#0072BC;color:#fff}
-#lab-page .btn-primary:hover{filter:brightness(1.08)}
-#lab-page .btn-secondary{background:#F1F5F9;color:#34495E;border:1px solid #C0C0C0}
-#lab-page .btn-secondary:hover{background:#E2E8F0}
+#lab-page .btn{border:none;border-radius:8px;cursor:pointer;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:9px 18px;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+#lab-page .btn-primary{background:var(--brand);color:#fff}
+#lab-page .btn-primary:hover{background:var(--brand-dk)}
+#lab-page .btn-secondary{background:var(--s100);color:var(--s700);border:1px solid var(--s300)}
+#lab-page .btn-secondary:hover{background:var(--s200)}
 
+@media (max-width:980px){
+  #lab-page .lab-feature-grid{grid-template-columns:repeat(2,1fr)}
+}
 @media (max-width:760px){
   #lab-page .lab-feature-grid{grid-template-columns:1fr}
   #lab-page .lab-form{grid-template-columns:1fr}
   #lab-page .span-3,#lab-page .span-4,#lab-page .span-2,#lab-page .span-6,#lab-page .lab-form-actions{grid-column:span 1}
-  #lab-page .lab-topbar .lab-tag-hide{display:none}
 }
 
 /* ---- CANCEL / RESCHEDULE TOGGLE (inside the technician form panel) ---- */
-#lab-page .lab-cr-head{padding:20px 18px 0;background-color:#f8fafc}
-#lab-page .lab-cr-divider{height:2px;background:#c0d4e8;border-radius:2px;position:relative;cursor:pointer;user-select:none;transition:background .2s}
-#lab-page .lab-cr-divider:hover{background:#9dbcd9}
-#lab-page .lab-cr-divider:focus-visible{outline:2px solid #0b5fa5;outline-offset:4px}
-#lab-page .lab-cr-divider span{position:absolute;top:-9px;left:6px;background:#c0392b;color:#fff;font-size:10px;font-weight:700;padding:3px 12px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 2px 6px rgba(192,57,43,.3)}
+#lab-page .lab-cr-head{padding:16px 18px 0;background:#fff}
+#lab-page .lab-cr-divider{height:2px;background:#FECDD3;border-radius:2px;position:relative;cursor:pointer;user-select:none;transition:background .2s}
+#lab-page .lab-cr-divider:hover{background:#FDA4AF}
+#lab-page .lab-cr-divider:focus-visible{outline:2px solid var(--brand);outline-offset:4px}
+#lab-page .lab-cr-divider span{position:absolute;top:-10px;left:6px;background:#E11D48;color:#fff;font-size:10px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 2px 6px rgba(190,18,60,.3)}
 #lab-page .lab-cr-divider .dhi-hint{font-weight:600;text-transform:none;letter-spacing:.2px;opacity:.85}
 #lab-page .lab-cr-divider .dhi-caret{display:inline-block;margin-left:8px;font-size:9px;font-style:normal;opacity:.9;transition:transform .25s ease}
 #lab-page .lab-cr-divider.open .dhi-caret{transform:rotate(180deg)}
-#lab-page #labCrBody .lab-form{background-color:#fdf7f5;border-top:1px solid #f0d9d4}
-#lab-page .lab-cr-hint{grid-column:span 6;font-size:10.5px;color:#8a5a00;background:#FEF5E0;border:1px solid #f0ad4e;border-radius:3px;padding:8px 10px;margin:0}
+#lab-page #labCrBody .lab-form{background:#FFF1F2;border-top:1px solid #FECDD3}
+#lab-page .lab-cr-hint{grid-column:span 6;font-size:10.5px;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:9px 11px;margin:0}
 @media (max-width:760px){
   #lab-page .lab-cr-hint{grid-column:span 1}
 }
@@ -222,71 +229,64 @@ foreach ($__labCatalog as $__cat => $__items) {
 <!-- LAB MANAGEMENT & INVESTIGATION MODULE -->
 <div id="lab-page">
 
-  <!-- TOP BAR -->
-  <div class="lab-topbar">
-    <div class="title-group">
-      <svg viewBox="0 0 24 24"><path d="M10 2v7.31M14 2v7.31M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0M5.5 15.5h13"/></svg>
-      <div class="lab-topbar-title">Laboratory</div>
+  <div class="lab-wrap">
+
+  <!-- MODULE HEADER BANNER -->
+  <div class="lab-modhead">
+    <div class="left">
+      <span class="mh-ic"><i class="fa-solid fa-flask-vial"></i></span>
+      <div>
+        <h2>Laboratory Management &amp; Investigation Module</h2>
+        <p class="mh-sub">Lab Technician Workspace &bull; Process Specimen, Verify Results &amp; Dispatch Reports</p>
+      </div>
     </div>
-    <div class="lab-topbar-right">
-      <span class="lab-tag-hide">HMS - HEALTHCARE MANAGEMENT SYSTEM</span>
-      <span class="lab-nav-btn" onclick="labGoHome()">HOME</span>
-      <span class="lab-nav-btn" onclick="labGoBack()">&lt; BACK</span>
-      <span class="lab-nav-btn" onclick="labGoPassword()">PASSWORD</span>
+    <div class="actions">
+      <span class="lab-live-badge" id="labLiveBadge"><span class="dot"></span> Live Auto-Refresh</span>
+      <button type="button" class="lab-h-btn" onclick="labRefresh()">
+        <svg viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
     </div>
   </div>
 
-  <div class="lab-wrap">
+  <!-- QUICK STAT TILES -->
+  <div class="lab-feature-grid">
+    <button type="button" class="lab-feature-card" onclick="labGoSection('labFormSection')">
+      <span class="fc-text">
+        <span class="fc-title">Sample Management</span>
+        <span class="fc-num"><b id="labStatSample">0</b> <span class="u">Logged</span></span>
+        <span class="fc-sub">Register &amp; process patient specimen</span>
+      </span>
+      <span class="fc-ic blue"><i class="fa-solid fa-vial"></i></span>
+    </button>
 
-    <!-- MODULE HEADER BANNER -->
-    <div class="lab-modhead">
-      <div class="left">
-        <svg viewBox="0 0 24 24"><path d="M10 2v7.31M14 2v7.31M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0M5.5 15.5h13"/></svg>
-        <h2>Lab Management &amp; Investigation Module</h2>
-      </div>
-      <div class="actions">
-        <span class="lab-live-badge" id="labLiveBadge"><i class="fa fa-sync fa-spin"></i> Live Auto-Refresh</span>
-        <button type="button" class="lab-h-btn light" onclick="labRefresh()">
-          <svg viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          Refresh
-        </button>
-      </div>
-    </div>
+    <button type="button" class="lab-feature-card" onclick="labCardTab('ready')">
+      <span class="fc-text">
+        <span class="fc-title">Lab Verification &amp; Ready Labs</span>
+        <span class="fc-num"><b id="labStatReady">0</b> <span class="u">Ready</span></span>
+        <span class="fc-sub">Verify completed tests &amp; authorize results</span>
+      </span>
+      <span class="fc-ic green"><i class="fa-solid fa-square-check"></i></span>
+    </button>
 
-    <!-- FEATURE 1: 2-COLUMN NAVIGATION GRID -->
-    <div class="lab-feature-grid">
-      <button type="button" class="lab-feature-card" onclick="labGoSection('labFormSection')">
-        <svg viewBox="0 0 24 24" stroke="#d9534f"><path d="M10 2v7.31M14 2v7.31M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0M5.5 15.5h13"/></svg>
-        <span>
-          <span class="fc-title">Sample Management</span>
-          <span class="fc-sub">Register and process patient specimens</span>
-        </span>
-      </button>
+    <button type="button" class="lab-feature-card" onclick="labCardTab('pending')">
+      <span class="fc-text">
+        <span class="fc-title">Pending Tests</span>
+        <span class="fc-num"><b id="labStatPending">0</b> <span class="u">Queued</span></span>
+        <span class="fc-sub">View pending lab test requests</span>
+      </span>
+      <span class="fc-ic amber"><i class="fa-solid fa-clock-rotate-left"></i></span>
+    </button>
 
-      <button type="button" class="lab-feature-card" onclick="labCardTab('ready')">
-        <svg viewBox="0 0 24 24" stroke="#5cb85c"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        <span>
-          <span class="fc-title">Lab Verification &amp; Ready Labs</span>
-          <span class="fc-sub">Verify completed tests &amp; authorize results</span>
-        </span>
-      </button>
-
-      <button type="button" class="lab-feature-card" onclick="labCardTab('pending')">
-        <svg viewBox="0 0 24 24" stroke="#f0ad4e"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        <span>
-          <span class="fc-title">Pending Tests</span>
-          <span class="fc-sub">View pending lab test requests</span>
-        </span>
-      </button>
-
-      <button type="button" class="lab-feature-card" onclick="labCardTab('dispatched')">
-        <svg viewBox="0 0 24 24" stroke="#0275d8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        <span>
-          <span class="fc-title">Report Dispatched</span>
-          <span class="fc-sub">Access dispatched lab records</span>
-        </span>
-      </button>
-    </div>
+    <button type="button" class="lab-feature-card" onclick="labCardTab('dispatched')">
+      <span class="fc-text">
+        <span class="fc-title">Report Dispatched</span>
+        <span class="fc-num"><b id="labStatDispatched">0</b> <span class="u">Reports</span></span>
+        <span class="fc-sub">Access dispatched lab records</span>
+      </span>
+      <span class="fc-ic slate"><i class="fa-solid fa-envelope-circle-check"></i></span>
+    </button>
+  </div>
 
     <!-- FEATURE 2: LAB TECHNICIAN FORM - PROCESS INVESTIGATION -->
     <div class="lab-panel is-first" id="labFormSection">
@@ -886,6 +886,10 @@ function renderLabPanes() {
 function setCount(id, val) {
     var el = document.getElementById(id);
     if (el) el.textContent = val;
+    /* Mirror the toolbar counts into the quick-stat tiles. */
+    var tileMap = { cAll: 'labStatSample', cReady: 'labStatReady', cPending: 'labStatPending', cDispatched: 'labStatDispatched' };
+    var tile = tileMap[id] ? document.getElementById(tileMap[id]) : null;
+    if (tile) tile.textContent = val;
 }
 
 function setPane(id, html) {
