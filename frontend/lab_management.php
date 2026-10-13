@@ -8,8 +8,9 @@
 // frontend/pages/lab-management.php.
 //
 // It reuses the existing Laboratory API (backend/api/lab.php), Visits API
-// (visits.php) and Messages API (messages.php), so there is no parallel data
-// path — this page is just a different face on the same records.
+// (visits.php), Patients API (patients.php) and Messages API (messages.php),
+// so there is no parallel data path — this page is just a different face on
+// the same records.
 require_once __DIR__ . '/../backend/config/config.php';
 requireLogin();
 
@@ -93,136 +94,147 @@ foreach ($labCatalog as $cat => $items) {
 <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
 <style>
 :root{
-  --brand:#1b659d; --brand-dk:#155380; --rose:#E11D48;
+  --brand:#1b659d; --brand-dk:#155380; --rose:#E11D48; --amber:#F59E0B;
   --s50:#F8FAFC; --s100:#F1F5F9; --s200:#E2E8F0; --s300:#CBD5E1;
   --s400:#94A3B8; --s500:#64748B; --s600:#475569; --s700:#334155; --s800:#1E293B;
+  --radius:6px;
 }
 *{box-sizing:border-box}
-body{margin:0;background:#E7EDF3;color:var(--s700);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;font-size:12px;line-height:1.45}
+body{margin:0;background:#f0f4f8;color:var(--s700);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;font-size:12px;line-height:1.45}
 
-/* ---- TOP HEADER ---- */
-.lab-top{background:var(--brand);color:#fff;padding:9px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(15,23,42,.2)}
-.lab-top .brand{display:flex;align-items:center;gap:9px}
-.lab-top .brand i{font-size:18px}
-.lab-top h1{margin:0;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px}
-.lab-top .nav{display:flex;align-items:center;gap:8px;font-size:11px;flex-wrap:wrap}
-.lab-top .nav .sys{color:#BFDBFE;font-weight:700;text-transform:uppercase}
-.topbtn{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:7px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;text-transform:uppercase;letter-spacing:.3px;font-family:inherit}
-.topbtn:hover{background:rgba(255,255,255,.2)}
-.topbtn.danger{background:var(--rose);border-color:transparent}
-.topbtn.danger:hover{background:#BE123C}
+/* ---- TOP HEADER (white bar, blue type) ---- */
+.lab-top{background:#fff;border-bottom:1px solid var(--s200);padding:8px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.lab-top .brand{display:flex;align-items:center;gap:8px;color:var(--brand)}
+.lab-top .brand i{font-size:22px}
+.lab-top h1{margin:0;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.7px;color:var(--brand)}
+.lab-top .nav{display:flex;align-items:center;gap:10px;font-size:11px;flex-wrap:wrap}
+.lab-top .sys{text-align:right;line-height:1.15}
+.lab-top .sys b{display:block;color:var(--brand);font-weight:900;font-size:12px}
+.lab-top .sys span{display:block;color:var(--s400);font-size:9px;font-weight:700;text-transform:uppercase}
+.topbtn{background:var(--brand);border:none;color:#fff;border-radius:4px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;text-transform:uppercase;font-family:inherit;letter-spacing:.3px}
+.topbtn:hover{background:var(--brand-dk)}
 
 /* ---- THREE-COLUMN SHELL ---- */
 .lab-shell{display:flex;gap:12px;padding:12px;max-width:1920px;margin:0 auto;align-items:flex-start}
 .lab-rail{width:224px;flex:0 0 224px;display:flex;flex-direction:column;gap:12px}
-.lab-rail.right{width:244px;flex:0 0 244px}
+.lab-rail.right{width:240px;flex:0 0 240px}
 .lab-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:12px}
 @media (max-width:1180px){.lab-shell{flex-wrap:wrap}.lab-rail,.lab-rail.right{width:100%;flex:1 1 100%}}
 
 /* ---- RAIL CARDS ---- */
-.railcard{background:#fff;border:1px solid var(--s200);border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.railcard{background:#fff;border:1px solid var(--s200);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
 .railcard.brand{background:var(--brand);border-color:var(--brand);color:#fff}
-.rail-head{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;display:flex;align-items:center;gap:7px}
+.rail-head{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;display:flex;align-items:center;gap:7px}
 .railcard.brand .rail-head{border-bottom:1px solid rgba(255,255,255,.25)}
 .railcard .rail-body{padding:10px 12px}
-.qlink{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;color:#E2E8F0;text-decoration:none;font-weight:600;font-size:11px;cursor:pointer;border:none;background:none;font-family:inherit;width:100%;text-align:left}
-.qlink:hover{background:rgba(255,255,255,.12);color:#fff}
-.qlink.active{background:rgba(255,255,255,.2);color:#fff;font-weight:800;border-left:3px solid #FBBF24}
+
+/* Quick-links card (white with blue title bar, like the mock) */
+.quickcard{background:#fff;border:1px solid var(--s200);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.quickcard .qh{background:var(--brand);color:#fff;padding:6px 12px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+.quickcard .qbody{padding:4px}
+.qlink{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;padding:5px 8px;border:none;background:none;border-radius:4px;color:var(--s600);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer}
+.qlink:hover{background:var(--s100)}
+.qlink.active{background:#E2E8F0;color:var(--brand);font-weight:800;border-left:2px solid var(--brand)}
 .qlink .qb{background:var(--rose);color:#fff;font-size:9px;font-weight:800;border-radius:999px;padding:1px 6px}
-.btn-send{width:100%;background:#F59E0B;color:#fff;border:none;border-radius:11px;padding:9px 12px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;font-family:inherit}
+.btn-send{width:100%;background:var(--amber);color:#fff;border:none;border-radius:4px;padding:8px 12px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;font-family:inherit;box-shadow:0 1px 2px rgba(15,23,42,.08)}
 .btn-send:hover{background:#D97706}
 .alerts-num{font-size:22px;font-weight:800;line-height:1.1}
 .alerts-label{font-size:9.5px;font-weight:700;text-transform:uppercase;color:#BFDBFE;margin-top:2px}
-.alerts-btn{margin-top:8px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:7px;padding:4px 9px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit}
+.alerts-btn{margin-top:8px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:4px;padding:4px 9px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit}
 .alerts-btn:hover{background:rgba(255,255,255,.2)}
 .status-row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;font-size:10px}
 .status-row .sl{color:#BFDBFE}
 .status-row .sv{font-weight:700;color:#fff;text-align:right}
-.status-tag{background:#FBBF24;color:#1E293B;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800}
-.status-logout{display:block;text-align:center;background:var(--rose);color:#fff;font-weight:700;text-decoration:none;border-radius:7px;padding:6px;margin-top:9px;border:none;width:100%;cursor:pointer;font-family:inherit;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
-.status-logout:hover{background:#BE123C}
+.status-tag{background:#10B981;color:#fff;border-radius:3px;padding:1px 6px;font-size:9px;font-weight:800}
+.status-logout{display:block;text-align:center;background:var(--brand-dk);color:#fff;font-weight:700;text-decoration:none;border-radius:4px;padding:6px;margin-top:9px;border:none;width:100%;cursor:pointer;font-family:inherit;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.status-logout:hover{background:#114266}
 
 /* ---- BANNER ---- */
-.banner{background:var(--brand);color:#fff;border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(15,23,42,.15)}
-.banner .bl{display:flex;align-items:center;gap:11px}
-.banner .bl i{font-size:18px;color:#BFDBFE}
+.banner{background:var(--brand);color:#fff;border-radius:var(--radius);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 1px 2px rgba(15,23,42,.12)}
+.banner .bl{display:flex;align-items:center;gap:10px}
+.banner .bl i{font-size:17px;color:#BFDBFE}
 .banner h2{margin:0;font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
 .banner p{margin:2px 0 0;font-size:10.5px;color:#BFDBFE}
 .banner .br{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .live{background:rgba(16,185,129,.18);color:#A7F3D0;border:1px solid rgba(52,211,153,.35);border-radius:999px;font-size:9.5px;font-weight:800;padding:5px 11px;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase}
 .live .dot{width:7px;height:7px;border-radius:50%;background:#34D399;animation:pulse 1.6s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.banner .topbtn{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22)}
+.banner .topbtn:hover{background:rgba(255,255,255,.2)}
 
 /* ---- STAT TILES ---- */
 .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 @media (max-width:1100px){.tiles{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:640px){.tiles{grid-template-columns:1fr}}
-.tile{background:#fff;border:1px solid var(--s200);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px;box-shadow:0 1px 2px rgba(15,23,42,.05);cursor:pointer;text-align:left;font-family:inherit;transition:border-color .15s,box-shadow .15s}
-.tile:hover{border-color:var(--brand);box-shadow:0 5px 14px rgba(15,23,42,.09)}
+.tile{background:#fff;border:1px solid var(--s200);border-radius:var(--radius);padding:11px 13px;display:flex;justify-content:space-between;align-items:center;gap:12px;box-shadow:0 1px 2px rgba(15,23,42,.05);cursor:pointer;text-align:left;font-family:inherit;transition:border-color .15s,box-shadow .15s}
+.tile:hover{border-color:var(--brand);box-shadow:0 4px 12px rgba(15,23,42,.08)}
 .tile .tt{font-size:9.5px;font-weight:800;color:var(--s400);text-transform:uppercase;letter-spacing:.4px}
-.tile .tn{font-size:16px;font-weight:800;color:var(--brand)}
+.tile .tn{font-size:15px;font-weight:800;color:var(--brand)}
 .tile .tn .u{font-size:10px;font-weight:600;color:var(--s500)}
 .tile .ts{font-size:10px;color:var(--s500)}
-.tile .ti{width:44px;height:44px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex:0 0 auto}
+.tile .ti{width:42px;height:42px;border-radius:var(--radius);display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto}
 .ti.blue{background:#EFF6FF;color:var(--brand);border:1px solid #BFDBFE}
 .ti.green{background:#ECFDF5;color:#059669;border:1px solid #A7F3D0}
 .ti.amber{background:#FFFBEB;color:#D97706;border:1px solid #FDE68A}
 .ti.slate{background:var(--s100);color:var(--s600);border:1px solid var(--s200)}
 
 /* ---- PANELS ---- */
-.panel{background:#fff;border:1px solid var(--s200);border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
-.panel-head{background:var(--brand);color:#fff;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:11px 15px;display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.panel{background:#fff;border:1px solid var(--s200);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.panel-head{background:var(--brand);color:#fff;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:10px 14px;display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.panel-head.center{justify-content:center}
 
 /* ---- TECHNICIAN FORM ---- */
-.form-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px 16px;padding:15px 16px}
+.form-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px 16px;padding:14px 15px}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-size:10px;font-weight:800;color:var(--s600);text-transform:uppercase;letter-spacing:.4px}
 .field label .req{color:#E74C3C}
-.field select,.field input,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--s300);border-radius:8px;background:var(--s50);color:var(--s800);font-size:12px;font-weight:600;font-family:inherit}
+.field select,.field input,.field textarea{width:100%;padding:8px 10px;border:1px solid var(--s300);border-radius:4px;background:var(--s50);color:var(--s800);font-size:12px;font-weight:600;font-family:inherit}
 .field textarea{font-weight:500;resize:vertical}
 .field select:focus,.field input:focus,.field textarea:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(27,101,157,.15)}
 .field input[readonly]{background:var(--s100);color:var(--brand);font-weight:800}
 .span-2{grid-column:span 2}.span-3{grid-column:span 3}.span-4{grid-column:span 4}.span-6{grid-column:span 6}
-.form-actions{grid-column:span 6;display:flex;justify-content:space-between;gap:10px;align-items:center;padding-top:13px;border-top:1px solid var(--s200);flex-wrap:wrap}
+.form-actions{grid-column:span 6;display:flex;justify-content:space-between;gap:10px;align-items:center;padding-top:12px;border-top:1px solid var(--s200);flex-wrap:wrap}
 @media (max-width:820px){.form-grid{grid-template-columns:1fr}.span-2,.span-3,.span-4,.span-6,.form-actions{grid-column:span 1}}
 
 /* ---- BUTTONS ---- */
-.btn{border:none;border-radius:8px;padding:9px 16px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:7px}
+.btn{border:none;border-radius:4px;padding:8px 15px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:7px}
 .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-dk)}
-.btn-rose{background:#FFF1F2;color:#BE123C;border:1px solid #FECDD3}.btn-rose:hover{background:#FFE4E6}
+.btn-rose{background:var(--rose);color:#fff}.btn-rose:hover{background:#BE123C}
 .btn-success{background:#059669;color:#fff}.btn-success:hover{background:#047857}
 .btn-ghost{background:#fff;color:var(--brand);border:1px solid var(--s300)}.btn-ghost:hover{background:var(--s100)}
-.btn-sm{padding:5px 11px;font-size:10px}
+.btn-sm{padding:4px 10px;font-size:10px}
 
 /* ---- CANCEL / RESCHEDULE ---- */
-.cr-divider{height:2px;background:#FECDD3;border-radius:2px;position:relative;cursor:pointer;margin:0 16px 12px;user-select:none;transition:background .2s}
+.cr-divider{height:2px;background:#FECDD3;border-radius:2px;position:relative;cursor:pointer;margin:0 15px 12px;user-select:none;transition:background .2s}
 .cr-divider:hover{background:#FDA4AF}
 .cr-divider span{position:absolute;top:-10px;left:6px;background:var(--rose);color:#fff;font-size:10px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px}
 .cr-divider .caret{display:inline-block;margin-left:8px;font-size:9px;font-style:normal;transition:transform .25s}
 .cr-divider.open .caret{transform:rotate(180deg)}
 #crBody .form-grid{background:#FFF1F2;border-top:1px solid #FECDD3}
-.cr-hint{grid-column:span 6;font-size:10.5px;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:9px 11px;margin:0}
+.cr-hint{grid-column:span 6;font-size:10.5px;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:4px;padding:9px 11px;margin:0}
 @media (max-width:820px){.cr-hint{grid-column:span 1}}
 
 /* ---- TABS + TABLE ---- */
 .tabs{display:flex;flex-wrap:wrap;background:var(--s800)}
-.tab{background:transparent;border:none;border-right:1px solid rgba(255,255,255,.12);color:#CBD5E1;font-family:inherit;font-weight:800;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;padding:11px 15px;cursor:pointer;transition:background .15s,color .15s}
+.tab{background:transparent;border:none;border-right:1px solid rgba(255,255,255,.12);color:#CBD5E1;font-family:inherit;font-weight:800;font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding:10px 14px;cursor:pointer;transition:background .15s,color .15s}
 .tab:last-child{border-right:none}
 .tab:hover{background:rgba(255,255,255,.08);color:#fff}
 .tab.active{background:var(--brand);color:#fff}
-.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 13px;background:var(--s50);border-bottom:1px solid var(--s200)}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;background:var(--s50);border-bottom:1px solid var(--s200)}
 .toolbar .search{position:relative;flex:1 1 240px;min-width:200px}
 .toolbar .search i{position:absolute;left:9px;top:8px;color:var(--s400);font-size:12px}
-.toolbar .search input{width:100%;padding:7px 9px 7px 28px;border:1px solid var(--s300);border-radius:8px;font-size:12px;font-family:inherit}
+.toolbar .search input{width:100%;padding:6px 9px 6px 27px;border:1px solid var(--s300);border-radius:4px;font-size:12px;font-family:inherit;background:#fff}
 .toolbar .search input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(27,101,157,.15)}
 .counts{font-size:10px;color:var(--s500);font-weight:600;display:flex;gap:10px;flex-wrap:wrap}
 .counts b{color:var(--s800)}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#EFF6FF;border:1px solid #BFDBFE;color:var(--brand);border-radius:999px;padding:2px 9px;font-size:10px;font-weight:800}
+.chip button{background:none;border:none;color:var(--brand);cursor:pointer;font-size:12px;line-height:1;padding:0}
 .table-wrap{max-height:520px;overflow:auto;background:#fff}
 table.lab-table{width:100%;border-collapse:collapse;font-size:11px}
-table.lab-table th{position:sticky;top:0;z-index:1;background:var(--s100);color:var(--s600);text-align:left;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:9px 10px;border-bottom:1px solid var(--s200);white-space:nowrap}
-table.lab-table td{padding:9px 10px;border-bottom:1px solid var(--s100);vertical-align:middle}
+table.lab-table th{position:sticky;top:0;z-index:1;background:var(--s100);color:var(--s600);text-align:left;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:1px solid var(--s200);white-space:nowrap}
+table.lab-table td{padding:8px 10px;border-bottom:1px solid var(--s100);vertical-align:middle}
 table.lab-table tbody tr:hover{background:var(--s50)}
-.first-col{padding-left:14px}
+.first-col{padding-left:13px}
 .act-col{text-align:center;white-space:nowrap}
 .empty{text-align:center;color:var(--s400);padding:22px}
 .pane{display:none}.pane.active{display:block}
@@ -240,32 +252,43 @@ table.lab-table tbody tr:hover{background:var(--s50)}
 /* ---- MODALS ---- */
 .modal{display:none;position:fixed;inset:0;z-index:2000;background:rgba(15,23,42,.55);align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
 .modal.show{display:flex}
-.modal-box{background:#fff;border-radius:14px;width:min(620px,100%);overflow:hidden;box-shadow:0 20px 44px rgba(15,23,42,.3)}
-.modal-head{background:var(--brand);color:#fff;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+.modal-box{background:#fff;border-radius:10px;width:min(620px,100%);overflow:hidden;box-shadow:0 20px 44px rgba(15,23,42,.3)}
+.modal-head{background:var(--brand);color:#fff;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
 .modal-head .x{background:none;border:none;color:#fff;font-size:22px;line-height:1;cursor:pointer}
 .modal-head .x:hover{color:#FDE68A}
-.modal-body{padding:16px 18px;background:var(--s50)}
+.modal-body{padding:15px 17px;background:var(--s50)}
 .modal-body .field{margin-bottom:12px}
-.modal-foot{display:flex;justify-content:flex-end;gap:9px;padding:13px 18px;border-top:1px solid var(--s200);background:#fff;flex-wrap:wrap}
+.modal-foot{display:flex;justify-content:flex-end;gap:9px;padding:12px 17px;border-top:1px solid var(--s200);background:#fff;flex-wrap:wrap}
 @media (max-width:560px){.modal{padding:16px 10px}}
 
-/* ---- RIGHT RAIL ---- */
-.rail-label{display:block;font-size:9.5px;font-weight:800;color:var(--s500);text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px}
-.rail-input{width:100%;padding:7px 9px;border:1px solid var(--s300);border-radius:7px;background:var(--s50);font-size:11px;font-family:inherit}
-.rail-input:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(27,101,157,.15)}
-.rail-field{margin-bottom:9px}
-.msg{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--s200);border-radius:9px;padding:9px 10px;margin-bottom:8px;cursor:pointer;font-family:inherit}
-.msg:hover{border-color:var(--brand)}
-.msg.unread{border-left:3px solid var(--brand);background:#F8FBFF}
+/* ---- RIGHT RAIL : PATIENT SEARCH ---- */
+.ps-field{margin-bottom:8px}
+.ps-field label{display:block;font-size:9.5px;font-weight:800;color:var(--s500);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+.ps-field input{width:100%;padding:6px 8px;border:1px solid var(--s300);border-radius:4px;background:var(--s50);font-size:11px;font-family:inherit}
+.ps-field input:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(27,101,157,.15)}
+.ps-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-top:4px}
+.ps-btns .btn{justify-content:center;padding:7px 4px;font-size:10px}
+.ps-results{margin-top:8px;border-top:1px solid var(--s200);padding-top:8px}
+.ps-item{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--s200);border-radius:4px;padding:6px 8px;margin-bottom:6px;cursor:pointer;font-family:inherit}
+.ps-item:hover{border-color:var(--brand);background:var(--s50)}
+.ps-item .pn{font-size:11px;font-weight:800;color:var(--s800)}
+.ps-item .pd{font-size:9.5px;color:var(--s500)}
+.ps-hint{font-size:10px;color:var(--s400);padding:4px 0}
+.msg{display:block;width:100%;text-align:left;background:#fff;border-bottom:1px solid var(--s100);padding:6px 0;cursor:pointer;font-family:inherit;border-left:none;border-right:none;border-top:none;border-radius:0}
+.msg:last-child{border-bottom:none}
+.msg:hover .ms{color:var(--brand)}
 .msg .mh{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;color:var(--s500);font-weight:700}
-.msg .ms{font-size:11px;font-weight:800;color:var(--s800);margin-top:2px}
+.msg .ms{font-size:11px;font-weight:800;color:#047857;margin-top:1px}
+.msg.unread .ms{color:var(--brand)}
 .msg .mb{font-size:10px;color:var(--s500);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.msg-link{display:block;text-align:center;color:var(--brand);font-weight:800;font-size:10px;text-decoration:none;padding-top:6px}
+.msg-link:hover{text-decoration:underline}
 
 /* ---- SUPPORT FOOTER + TOASTS ---- */
-.support{background:var(--brand);color:#fff;border-radius:12px;padding:11px 14px;text-align:center;font-size:11px;font-weight:600}
+.support{background:var(--brand);color:#fff;border-radius:var(--radius);padding:10px 14px;text-align:center;font-size:11px;font-weight:600}
 .support a{color:#FCD34D;font-weight:800;text-decoration:underline}
 #labToast{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px;max-width:340px}
-.toast{background:var(--s800);color:#fff;border-radius:9px;padding:10px 14px;font-size:11.5px;font-weight:600;box-shadow:0 8px 24px rgba(15,23,42,.35);border-left:4px solid var(--brand)}
+.toast{background:var(--s800);color:#fff;border-radius:6px;padding:10px 14px;font-size:11.5px;font-weight:600;box-shadow:0 8px 24px rgba(15,23,42,.35);border-left:4px solid var(--brand)}
 .toast.success{border-left-color:#10B981}.toast.error{border-left-color:#EF4444}.toast.info{border-left-color:#3B82F6}
 </style>
 </head>
@@ -278,10 +301,13 @@ table.lab-table tbody tr:hover{background:var(--s50)}
     <h1>Lab Management</h1>
   </div>
   <div class="nav">
-    <span class="sys">EHMS &bull; Eddie Healthcare Solutions</span>
+    <div class="sys">
+      <b>EHMS</b>
+      <span>Eddie Healthcare Solutions</span>
+    </div>
     <a class="topbtn" href="dashboard.php">Home</a>
     <button class="topbtn" type="button" onclick="history.back()">&larr; Back</button>
-    <button class="topbtn danger" type="button" onclick="labLogout()">Logout</button>
+    <button class="topbtn" type="button" onclick="openChangePw()">Password</button>
   </div>
 </header>
 
@@ -290,19 +316,19 @@ table.lab-table tbody tr:hover{background:var(--s50)}
   <!-- ================= LEFT RAIL ================= -->
   <aside class="lab-rail">
 
-    <div class="railcard brand">
-      <div class="rail-head"><i class="fa-solid fa-list-check"></i> Quick Links</div>
-      <div class="rail-body" style="padding-top:6px">
-        <button type="button" class="qlink active" onclick="labGoSection('labFormPanel')">Technician Form</button>
-        <button type="button" class="qlink" onclick="labCardTab('doctors')">Doctor Requests</button>
-        <button type="button" class="qlink" onclick="labCardTab('pending')">
+    <div class="quickcard">
+      <div class="qh">Quick Links</div>
+      <div class="qbody">
+        <button type="button" class="qlink" onclick="labGoSection('labFormPanel')">Technician Form</button>
+        <button type="button" class="qlink active" data-view="doctors" onclick="labCardTab('doctors')">Doctor Requests</button>
+        <button type="button" class="qlink" data-view="pending" onclick="labCardTab('pending')">
           <span>Pending Labs</span><span class="qb" id="qlPendingBadge" style="display:none">0</span>
         </button>
-        <button type="button" class="qlink" onclick="labCardTab('ready')">
+        <button type="button" class="qlink" data-view="ready" onclick="labCardTab('ready')">
           <span>Ready Labs</span><span class="qb" id="qlReadyBadge" style="display:none">0</span>
         </button>
-        <button type="button" class="qlink" onclick="labCardTab('notready')">Not Ready Labs</button>
-        <button type="button" class="qlink" onclick="labCardTab('dispatched')">Dispatched Labs</button>
+        <button type="button" class="qlink" data-view="notready" onclick="labCardTab('notready')">Not Ready Labs</button>
+        <button type="button" class="qlink" data-view="dispatched" onclick="labCardTab('dispatched')">Dispatched Labs</button>
         <button type="button" class="qlink" onclick="labGoSection('crSection')">Cancel / Reschedule</button>
         <button type="button" class="qlink" onclick="labGoSection('sysMessages')">Messages &amp; Alerts</button>
       </div>
@@ -487,6 +513,10 @@ table.lab-table tbody tr:hover{background:var(--s50)}
           <i class="fa-solid fa-magnifying-glass"></i>
           <input type="text" id="labSearch" placeholder="By Patient / Test / Req. ID..." oninput="renderLabPanes()">
         </div>
+        <span class="chip" id="patientChip" style="display:none">
+          <span id="patientChipText"></span>
+          <button type="button" title="Clear patient filter" onclick="clearSelectedPatient()">&times;</button>
+        </span>
         <div class="counts">
           <span>All: <b id="cAll">0</b></span> |
           <span>Pending: <b id="cPending">0</b></span> |
@@ -515,23 +545,54 @@ table.lab-table tbody tr:hover{background:var(--s50)}
   <aside class="lab-rail right">
 
     <div class="panel">
-      <div class="panel-head" style="justify-content:center"><span><i class="fa-solid fa-magnifying-glass"></i> Patient Search</span></div>
-      <div class="rail-body" style="padding:11px 12px">
-        <div class="rail-field">
-          <label class="rail-label" for="railName">By Patient Name</label>
-          <input class="rail-input" type="text" id="railName" placeholder="Full name" oninput="renderLabPanes()">
+      <div class="panel-head center"><span><i class="fa-solid fa-magnifying-glass"></i> Patient Search</span></div>
+      <div class="rail-body" style="padding:10px 12px">
+        <div class="ps-field">
+          <label for="psName">By Patient Name</label>
+          <input type="text" id="psName" data-field="name" placeholder="Full name" oninput="schedulePatientSearch()">
         </div>
-        <div class="rail-field">
-          <label class="rail-label" for="railNo">By Patient No.</label>
-          <input class="rail-input" type="text" id="railNo" placeholder="Patient number" oninput="renderLabPanes()">
+        <div class="ps-field">
+          <label for="psNo">By Patient No.</label>
+          <input type="text" id="psNo" data-field="patient_no" placeholder="Patient number" oninput="schedulePatientSearch()">
         </div>
-        <button type="button" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="labClearSearch()">Clear Search</button>
+        <div class="ps-field">
+          <label for="psNhis">By NHIS Number</label>
+          <input type="text" id="psNhis" data-field="nhis" placeholder="NHIS number" oninput="schedulePatientSearch()">
+        </div>
+        <div class="ps-field">
+          <label for="psArea">By Area</label>
+          <input type="text" id="psArea" data-field="area" placeholder="Residential area" oninput="schedulePatientSearch()">
+        </div>
+        <div class="ps-field">
+          <label for="psMobile">By Mobile</label>
+          <input type="text" id="psMobile" data-field="mobile" placeholder="Mobile number" oninput="schedulePatientSearch()">
+        </div>
+        <div class="ps-field">
+          <label for="psContactName">By Contact Name</label>
+          <input type="text" id="psContactName" data-field="contact_name" placeholder="Contact" oninput="schedulePatientSearch()">
+        </div>
+        <div class="ps-field">
+          <label for="psContactNumber">By Contact Number</label>
+          <input type="text" id="psContactNumber" data-field="contact_number" placeholder="Contact number" oninput="schedulePatientSearch()">
+        </div>
+        <div class="ps-field">
+          <label for="psContactEmail">By Contact Email</label>
+          <input type="text" id="psContactEmail" data-field="contact_email" placeholder="Contact email" oninput="schedulePatientSearch()">
+        </div>
+
+        <div class="ps-btns">
+          <button type="button" class="btn btn-primary" onclick="labSupport()">Support</button>
+          <button type="button" class="btn btn-primary" onclick="labHelp()">Help</button>
+        </div>
+
+        <div class="ps-results" id="psResults" style="display:none"></div>
       </div>
     </div>
 
     <div class="panel" id="sysMessages">
       <div class="panel-head"><span><i class="fa-solid fa-bell"></i> System Messages</span><button type="button" class="topbtn" onclick="loadMessages()">Refresh</button></div>
-      <div class="rail-body" id="msgList" style="padding:11px 12px"><div class="empty" style="padding:12px">Loading...</div></div>
+      <div class="rail-body" id="msgList" style="padding:8px 12px"><div class="empty" style="padding:12px">Loading...</div></div>
+      <a class="msg-link" href="#" onclick="labGoSection('sysMessages');return false;">Open Messages &amp; Alerts &rarr;</a>
     </div>
 
   </aside>
@@ -620,11 +681,41 @@ table.lab-table tbody tr:hover{background:var(--s50)}
   </div>
 </div>
 
+<!-- ================= CHANGE PASSWORD MODAL ================= -->
+<div class="modal" id="changePwModal">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-head"><span>Change Password</span><button type="button" class="x" onclick="closeChangePw()">&times;</button></div>
+    <form id="changePwForm">
+      <div class="modal-body">
+        <div class="field">
+          <label for="cpCurrent">Current Password *</label>
+          <input type="password" id="cpCurrent" required autocomplete="current-password">
+        </div>
+        <div class="field">
+          <label for="cpNew">New Password *</label>
+          <input type="password" id="cpNew" required autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label for="cpConfirm">Confirm New Password *</label>
+          <input type="password" id="cpConfirm" required autocomplete="new-password">
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" onclick="closeChangePw()">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-key"></i> Update Password</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div id="labToast"></div>
 
 <script>
 var LAB_CAT_LABELS = <?php echo json_encode($labCategories); ?>;
 var LAB_PARAM_DATA = <?php echo json_encode($labParamData); ?>;
+var LAB_STAFF = <?php echo json_encode($labStaff); ?>;
+var CONTACT_EMAIL = <?php echo json_encode($contactEmail); ?>;
+var CONTACT_PHONE = <?php echo json_encode($contactPhone); ?>;
 var DISPATCH_KEY = 'hms:lab-dispatched';
 var API = '/hms/backend/api';
 
@@ -633,9 +724,12 @@ var labResultsMap = {};
 var visitsCache = [];
 var knownReqIds = {};
 var LAB_VIEW = 'doctors';
-var labPollTimer = null;
 var POLL_INTERVAL_MS = 20000;
 var LAB_VIEWS = ['doctors', 'pending', 'ready', 'notready', 'dispatched'];
+var selectedPatient = null;      /* { name, hospital_number } from the rail search */
+var labMessages = [];
+var psTimer = null;
+var psList = [];                 /* latest patient-search results (index-addressed) */
 
 /* ================= BOOT ================= */
 document.addEventListener('DOMContentLoaded', function () {
@@ -644,7 +738,7 @@ document.addEventListener('DOMContentLoaded', function () {
     loadLabRequests();
     loadMessages();
     startSessionTimer();
-    labPollTimer = setInterval(livePoll, POLL_INTERVAL_MS);
+    setInterval(livePoll, POLL_INTERVAL_MS);
 });
 
 function setupLabEvents() {
@@ -656,6 +750,8 @@ function setupLabEvents() {
     if (cr) cr.addEventListener('submit', handleCrSubmit);
     var send = document.getElementById('sendForm');
     if (send) send.addEventListener('submit', handleSendSubmit);
+    var cpw = document.getElementById('changePwForm');
+    if (cpw) cpw.addEventListener('submit', handleChangePw);
     var divider = document.getElementById('crToggleDivider');
     if (divider) divider.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); labCrToggle(); }
@@ -668,11 +764,6 @@ function labGoSection(id) {
     if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function labCardTab(view) { labSwitchTab(view); labGoSection('labWorklist'); }
-function labClearSearch() {
-    var ids = ['labSearch', 'railName', 'railNo'];
-    ids.forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
-    renderLabPanes();
-}
 
 /* ================= SESSION TIMER ================= */
 function startSessionTimer() {
@@ -696,7 +787,7 @@ function labLogout() {
         .then(function () { window.location.href = 'index.php'; });
 }
 
-/* ================= TOASTS ================= */
+/* ================= TOASTS / HELP ================= */
 function toast(msg, type) {
     var box = document.getElementById('labToast');
     if (!box) return;
@@ -704,7 +795,11 @@ function toast(msg, type) {
     el.className = 'toast ' + (type || 'info');
     el.textContent = msg;
     box.appendChild(el);
-    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 4500);
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 5000);
+}
+function labSupport() { toast('HMS Support — Email: ' + CONTACT_EMAIL + ' | Phone: ' + CONTACT_PHONE, 'info'); }
+function labHelp() {
+    toast('Tip: pick a patient and test above, then Save & Submit to raise a request. Use Process Test to record results and Dispatch to hand out the report.', 'info');
 }
 
 /* ================= VISITS / PATIENT SELECT ================= */
@@ -856,25 +951,26 @@ function labSwitchTab(view) {
         if (btn) btn.classList.toggle('active', t === view);
         if (pane) pane.classList.toggle('active', t === view);
     });
+    document.querySelectorAll('.qlink[data-view]').forEach(function (l) {
+        l.classList.toggle('active', l.getAttribute('data-view') === view);
+    });
     renderLabPanes();
 }
 
 /* ================= FILTERS / RENDER ================= */
-function readFilters() {
-    var s = (val('labSearch') || '').trim().toLowerCase();
-    var nm = (val('railName') || '').trim().toLowerCase();
-    var no = (val('railNo') || '').trim().toLowerCase();
-    return { s: s, nm: nm, no: no };
-}
-
-function matchesFilter(r, f) {
+function matchesFilter(r, q) {
     var name = String(r.patient_name || '').toLowerCase();
     var hn = String(r.hospital_number || '').toLowerCase();
     var test = String(r.test_type || '').toLowerCase();
     var id = String(r.id || '');
-    if (f.s && !(name.indexOf(f.s) >= 0 || hn.indexOf(f.s) >= 0 || test.indexOf(f.s) >= 0 || id.indexOf(f.s) >= 0)) return false;
-    if (f.nm && name.indexOf(f.nm) < 0) return false;
-    if (f.no && hn.indexOf(f.no) < 0) return false;
+    if (q && !(name.indexOf(q) >= 0 || hn.indexOf(q) >= 0 || test.indexOf(q) >= 0 || id.indexOf(q) >= 0)) return false;
+    if (selectedPatient) {
+        if (selectedPatient.hospital_number) {
+            if (hn !== String(selectedPatient.hospital_number).toLowerCase()) return false;
+        } else if (name !== String(selectedPatient.name || '').toLowerCase()) {
+            return false;
+        }
+    }
     return true;
 }
 
@@ -911,7 +1007,7 @@ function dispatchBtn(r) {
 
 function renderLabPanes() {
     if (!document.getElementById('labTabs')) return;
-    var f = readFilters();
+    var q = (val('labSearch') || '').trim().toLowerCase();
     var dispatched = readDispatched();
     var ready = labData.filter(function (r) {
         return r.status === 'completed' && !dispatched.some(function (d) { return d.id === String(r.id); });
@@ -925,6 +1021,7 @@ function renderLabPanes() {
     setCount('cNotReady', notReady.length);
     setCount('cReady', ready.length);
     setCount('cDispatched', dispatched.length);
+    renderPatientChip();
 
     var headBase = '<th class="first-col">Req ID</th><th>Patient ID/Name</th><th>Lab Test Requested</th><th>Doctor</th><th>Date &amp; Time</th><th>Status</th><th class="act-col">Action</th>';
     var rowBase = function (r) {
@@ -937,27 +1034,27 @@ function renderLabPanes() {
     };
 
     /* Doctor Requests */
-    var all = labData.filter(function (r) { return matchesFilter(r, f); });
+    var all = labData.filter(function (r) { return matchesFilter(r, q); });
     setPane('paneDoctors', requestTable(all, headBase, function (r) {
         var action;
         if (r.status === 'pending' || r.status === 'in_progress') action = processBtn(r);
         else if (r.status === 'completed') action = dispatchBtn(r);
         else action = '<td class="act-col muted">-</td>';
         return rowBase(r) + action;
-    }, all.length ? '' : 'No lab requests yet - use the technician form above to add one.'));
+    }, 'No lab requests yet - use the technician form above to add one.'));
 
     /* Pending Labs */
-    var pendRows = pending.filter(function (r) { return matchesFilter(r, f); });
+    var pendRows = pending.filter(function (r) { return matchesFilter(r, q); });
     setPane('panePending', requestTable(pendRows, headBase, function (r) { return rowBase(r) + processBtn(r); },
         'Nothing pending - all requested tests have been processed.'));
 
     /* Not Ready Labs */
-    var nrRows = notReady.filter(function (r) { return matchesFilter(r, f); });
+    var nrRows = notReady.filter(function (r) { return matchesFilter(r, q); });
     setPane('paneNotReady', requestTable(nrRows, headBase, function (r) { return rowBase(r) + processBtn(r); },
         'No test is currently under processing.'));
 
     /* Ready Labs */
-    var readyRows = ready.filter(function (r) { return matchesFilter(r, f); });
+    var readyRows = ready.filter(function (r) { return matchesFilter(r, q); });
     var readyHead = '<th class="first-col">Req ID</th><th>Patient ID/Name</th><th>Lab Test</th><th>Result</th><th>Verified / Completed</th><th>Status</th><th class="act-col">Action</th>';
     setPane('paneReady', requestTable(readyRows, readyHead, function (r) {
         var res = labResultsMap[String(r.id)] || null;
@@ -974,9 +1071,8 @@ function renderLabPanes() {
 
     /* Dispatched Labs */
     var dHead = '<th class="first-col">Dispatch ID</th><th>Patient Name</th><th>Lab Test</th><th>Dispatch Date</th><th class="act-col">Report</th>';
-    var dRows = dispatched;
-    var dHtml = '<table class="lab-table"><thead><tr>' + dHead + '</tr></thead><tbody>' + (dRows.length
-        ? dRows.map(function (d) {
+    var dHtml = '<table class="lab-table"><thead><tr>' + dHead + '</tr></thead><tbody>' + (dispatched.length
+        ? dispatched.map(function (d) {
             var r = labData.find(function (x) { return String(x.id) === d.id; }) || null;
             return '<tr>'
                 + '<td class="first-col cell-strong">DSP ' + escHtml(d.id) + '</td>'
@@ -1003,6 +1099,82 @@ function setCount(id, n) {
 
 function setPane(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
 
+/* ================= PATIENT SEARCH (right rail) ================= */
+function schedulePatientSearch() {
+    if (psTimer) clearTimeout(psTimer);
+    psTimer = setTimeout(searchPatients, 300);
+}
+
+function activePatientField() {
+    var inputsAll = document.querySelectorAll('.ps-field input');
+    for (var i = 0; i < inputsAll.length; i++) {
+        var v = (inputsAll[i].value || '').trim();
+        if (v) return { field: inputsAll[i].getAttribute('data-field'), q: v };
+    }
+    return null;
+}
+
+async function searchPatients() {
+    var box = document.getElementById('psResults');
+    if (!box) return;
+    var q = activePatientField();
+    if (!q) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+    box.style.display = 'block';
+    box.innerHTML = '<div class="ps-hint">Searching...</div>';
+    try {
+        var r = await fetch(API + '/patients.php?action=search&field=' + encodeURIComponent(q.field) + '&q=' + encodeURIComponent(q.q) + '&limit=15');
+        var d = await r.json();
+        var list = (d.success && d.patients) ? d.patients : [];
+        psList = list;
+        if (!list.length) { box.innerHTML = '<div class="ps-hint">No patient matches that search.</div>'; return; }
+        box.innerHTML = list.map(function (p, i) {
+            var name = [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(' ');
+            var meta = p.hospital_number || '';
+            if (p.nhia_number) meta += (meta ? ' | ' : '') + 'NHIS ' + p.nhia_number;
+            return '<button type="button" class="ps-item" onclick="selectPatientByIndex(' + i + ')">'
+                + '<span class="pn">' + escHtml(name) + '</span>'
+                + '<span class="pd">' + escHtml(meta) + '</span>'
+                + '</button>';
+        }).join('');
+    } catch (e) {
+        console.error('Patient search error:', e);
+        box.innerHTML = '<div class="ps-hint">Could not search patients.</div>';
+    }
+}
+
+function selectPatient(name, hospitalNumber) {
+    selectedPatient = { name: name, hospital_number: hospitalNumber };
+    renderLabPanes();
+    labGoSection('labWorklist');
+    toast('Showing lab worklist for ' + name + (hospitalNumber ? ' (' + hospitalNumber + ')' : '') + '.', 'info');
+}
+
+/* Index-based so patient names never have to be embedded in onclick markup. */
+function selectPatientByIndex(i) {
+    var p = psList[i];
+    if (!p) return;
+    var name = [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(' ');
+    selectPatient(name, p.hospital_number || '');
+}
+
+function clearSelectedPatient() {
+    selectedPatient = null;
+    renderLabPanes();
+}
+
+function renderPatientChip() {
+    var chip = document.getElementById('patientChip');
+    var txt = document.getElementById('patientChipText');
+    if (!chip || !txt) return;
+    if (selectedPatient) {
+        txt.textContent = 'Patient: ' + selectedPatient.name + (selectedPatient.hospital_number ? ' (' + selectedPatient.hospital_number + ')' : '');
+        chip.style.display = 'inline-flex';
+    } else {
+        chip.style.display = 'none';
+    }
+}
+
 /* ================= PROCESS / RESULT ENTRY ================= */
 function populateRequisitions(selectId, placeholder) {
     var sel = document.getElementById(selectId);
@@ -1024,7 +1196,7 @@ function openProcessModal(requestId) {
         sel.value = String(requestId);
     }
     document.getElementById('processForm').reset();
-    document.getElementById('prTechnician').value = <?php echo json_encode($labStaff); ?>;
+    document.getElementById('prTechnician').value = LAB_STAFF;
     document.getElementById('processModal').classList.add('show');
 }
 function closeProcessModal() { document.getElementById('processModal').classList.remove('show'); }
@@ -1152,8 +1324,6 @@ function printReport(requestId) {
 }
 
 /* ================= MESSAGES ================= */
-var labMessages = [];
-
 async function loadMessages() {
     var box = document.getElementById('msgList');
     try {
@@ -1168,7 +1338,7 @@ async function loadMessages() {
             ? labMessages.map(function (m, i) {
                 return '<button type="button" class="msg' + (Number(m.is_read) === 0 ? ' unread' : '') + '" onclick="showMessage(' + i + ')">'
                     + '<span class="mh"><span>' + escHtml(m.sender_name || 'System') + '</span><span>' + fmtTime(m.sent_at) + '</span></span>'
-                    + '<span class="ms">' + escHtml(m.subject || '(no subject)') + '</span>'
+                    + '<span class="ms">&bull; ' + escHtml(m.subject || '(no subject)') + '</span>'
                     + '<span class="mb">' + escHtml(m.message || '') + '</span>'
                     + '</button>';
             }).join('')
@@ -1249,6 +1419,38 @@ async function handleSendSubmit(e) {
         }
     } catch (err) {
         console.error('Send message error:', err);
+        toast('Network error. Please try again.', 'error');
+    }
+}
+
+/* ================= CHANGE PASSWORD ================= */
+function openChangePw() {
+    document.getElementById('changePwForm').reset();
+    document.getElementById('changePwModal').classList.add('show');
+}
+function closeChangePw() { document.getElementById('changePwModal').classList.remove('show'); }
+
+async function handleChangePw(e) {
+    e.preventDefault();
+    var cur = document.getElementById('cpCurrent').value;
+    var nw = document.getElementById('cpNew').value;
+    var cf = document.getElementById('cpConfirm').value;
+    if (nw !== cf) { toast('New password and confirmation do not match.', 'error'); return; }
+    try {
+        var r = await fetch(API + '/auth.php?action=change_password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ current_password: cur, new_password: nw, confirm_password: cf })
+        });
+        var d = await r.json();
+        if (d.success) {
+            toast('Password updated.', 'success');
+            closeChangePw();
+        } else {
+            toast(d.error || (d.errors && d.errors[0]) || 'Could not update password.', 'error');
+        }
+    } catch (err) {
+        console.error('Change password error:', err);
         toast('Network error. Please try again.', 'error');
     }
 }
