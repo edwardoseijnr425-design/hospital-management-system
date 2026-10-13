@@ -209,7 +209,7 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
   #docstation .ds-tiles{grid-template-columns:repeat(2,1fr)}
   #docstation .ds-row2{grid-template-columns:1fr}
   #docstation .ds-inv{grid-template-columns:1fr}
-  #docstation .ds-inv-group .ds-inv{grid-template-columns:1fr}
+  #docstation .ds-inv-card .ds-inv{grid-template-columns:1fr}
   #docstation .ds-rx-line .flds{grid-template-columns:1fr 1fr}
   #docstation .ds-consult-grid{grid-template-columns:1fr}
   #docstation .ds-consult-grid.ds-diagnosis{grid-template-columns:1fr}
@@ -269,20 +269,38 @@ $__clinicStaff = getCurrentUserName() ?: 'Staff';
 #docstation .ds-rec-chev{background:transparent;border:none;color:#94A3B8;cursor:pointer;font-size:13px;padding:3px 5px;line-height:1}
 #docstation .ds-rec-chev:hover{color:#475569}
 #docstation .ds-rec-list.hidden{display:none}
-/* ---- MODALITY TICK-BOX SELECTOR (Request Test) ---- */
-#docstation .ds-mod-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-#docstation .ds-mod{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--ds-line);border-radius:8px;background:#F8FAFC;cursor:pointer;font-size:12px;font-weight:700;color:#334155;user-select:none;transition:background .15s ease,border-color .15s ease}
-#docstation .ds-mod:hover{background:#F1F5F9}
-#docstation .ds-mod.on{background:#EAF2FB;border-color:var(--ds-blue);color:var(--ds-blue)}
-#docstation .ds-mod input{accent-color:var(--ds-blue);width:15px;height:15px;cursor:pointer}
-#docstation .ds-mod .mod-ic{color:var(--ds-blue);font-size:13px}
-#docstation .ds-mod .mod-cnt{margin-left:auto;font-size:9px;font-weight:800;background:#E2E8F0;color:#475569;border-radius:999px;padding:1px 8px;min-width:22px;text-align:center}
-#docstation .ds-mod.on .mod-cnt{background:var(--ds-blue);color:#fff}
-#docstation .ds-inv-group{border:1px solid var(--ds-line);border-radius:10px;padding:10px;background:#fff}
-#docstation .ds-inv-group + .ds-inv-group{margin-top:10px}
-#docstation .ds-inv-group-top{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#475569;margin:0 0 8px}
-#docstation .ds-inv-group-top i{color:var(--ds-blue)}
-#docstation .ds-inv-group .ds-inv{grid-template-columns:1fr 1fr;gap:8px}
+/* ---- INVESTIGATION MODALITY CARDS (Request Test) ----
+   Plain-CSS port of the "Investigations & Diagnostics" workspace: a master
+   Show All / Hide All bar plus one collapsible card per modality. The project
+   ships no Alpine.js/Tailwind, so the reveal toggles are a `.collapsed` class
+   driven by plain JS (dsToggleModCard / dsShowAllMods). */
+#docstation .ds-inv-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid var(--ds-line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+#docstation .ds-inv-bar .bar-title{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#0F2D59}
+#docstation .ds-inv-bar .bar-title i{color:var(--ds-blue);font-size:14px}
+#docstation .ds-inv-bar .bar-btns{display:flex;flex-wrap:wrap;gap:8px}
+#docstation .ds-inv-bar-btn{background:#F1F5F9;border:1px solid #E2E8F0;color:#334155;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+#docstation .ds-inv-bar-btn:hover{background:#E2E8F0}
+#docstation .ds-inv-bar-btn i{color:var(--ds-blue)}
+#docstation .ds-inv-bar-btn.hide i{color:var(--ds-red)}
+#docstation .ds-inv-card{background:#fff;border:1px solid var(--ds-line);border-radius:12px;overflow:hidden;transition:border-color .15s ease}
+#docstation .ds-inv-card + .ds-inv-card{margin-top:10px}
+#docstation .ds-inv-card.on{border-color:var(--ds-blue)}
+#docstation .ds-inv-card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#F8FAFC;border-bottom:1px solid var(--ds-line);padding:9px 12px;cursor:pointer;user-select:none}
+#docstation .ds-inv-card.collapsed .ds-inv-card-head{border-bottom-color:transparent}
+#docstation .ds-inv-card-head .left{display:flex;align-items:center;gap:8px;min-width:0}
+#docstation .ds-inv-card-head .left>i{color:var(--ds-blue);font-size:13px}
+#docstation .ds-inv-card-head h5{margin:0;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#1E293B}
+#docstation .ds-inv-card-head .mod-check{accent-color:var(--ds-blue);width:15px;height:15px;cursor:pointer;flex:0 0 auto}
+#docstation .ds-inv-card-head .mod-check:disabled{opacity:.4;cursor:not-allowed}
+#docstation .ds-inv-card-head .mod-cnt{margin-left:2px;font-size:9px;font-weight:800;background:#E2E8F0;color:#475569;border-radius:999px;padding:1px 8px;min-width:22px;text-align:center}
+#docstation .ds-inv-card-head.on .mod-cnt{background:var(--ds-blue);color:#fff}
+#docstation .ds-inv-card-head .right{display:flex;align-items:center;gap:8px}
+#docstation .ds-inv-card-head .vis-badge{font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:6px;background:#EFF6FF;color:var(--ds-blue);border:1px solid #BFDBFE;text-transform:uppercase;letter-spacing:.3px}
+#docstation .ds-inv-card.collapsed .ds-inv-card-head .vis-badge{background:#F1F5F9;color:#64748B;border-color:#CBD5E1}
+#docstation .ds-inv-card-head .chev{color:#94A3B8;font-size:12px;transition:transform .15s ease}
+#docstation .ds-inv-card.collapsed .ds-inv-card-head .chev{transform:rotate(180deg)}
+#docstation .ds-inv-card-body{padding:12px}
+#docstation .ds-inv-card.collapsed .ds-inv-card-body{display:none}
 #docstation .ds-other-spec{display:flex;gap:8px;margin-top:10px;align-items:center}
 #docstation .ds-other-spec .ds-input{flex:1}
 </style>
@@ -815,9 +833,9 @@ function renderPatientCard(ctx) {
                     + '<div class="ds-table-wrap" style="margin-bottom:14px;"><table class="ds-table"><thead><tr>'
                         + '<th>Date Requested</th><th>Investigation / Test</th><th>Category</th><th>Ordered By</th><th>Result Status</th>'
                         + '</tr></thead><tbody id="dsInvBody_' + pid + '"><tr><td colspan="5" class="ds-empty">Loading investigations…</td></tr></tbody></table></div>'
-                    + '<div class="ds-fld"><label>+ Request Test — Tick the modality, then select the tests</label>'
-                        + '<div class="ds-mod-row" id="dsModRow_' + pid + '"></div>'
-                        + '<div class="ds-inv" id="dsInvCat_' + pid + '"><div class="ds-empty">Loading investigation catalogue…</div></div></div>'
+                    + '<div class="ds-fld"><label>+ Request Test — Show a modality card, then tick the tests</label>'
+                        + '<div class="ds-inv-bar" id="dsModRow_' + pid + '"></div>'
+                        + '<div class="ds-inv-cards" id="dsInvCat_' + pid + '"><div class="ds-empty">Loading investigation catalogue…</div></div></div>'
                     + '<div style="text-align:right;margin-top:12px;"><button type="button" class="ds-btn green" onclick="dsSaveInvestigations(' + pid + ')"><i class="fa-solid fa-floppy-disk"></i> Save Requests</button></div>'
                 + '</div>'
             + '</div>'
@@ -1285,24 +1303,24 @@ function renderInvCatalogue(pid) {
         groups[i.kind].push(i);
     });
 
-    // Modality master tick boxes — ticking one selects every test in its group.
+    // Master control bar — reveal or collapse every modality card at once.
+    // (Replaces the old flat master tick row; the per-modality "select all"
+    // checkbox now lives in each card header instead.)
     if (modRow) {
-        modRow.innerHTML = DS_INV_MODALITIES.map(function (m) {
-            var n = (groups[m.kind] || []).length;
-            return '<label class="ds-mod" id="dsMod_' + pid + '_' + m.kind + '">'
-                + '<input type="checkbox" class="ds-mod-check" data-ds-mod="' + m.kind + '" onchange="dsToggleMod(' + pid + ',\'' + m.kind + '\',this.checked)">'
-                + '<i class="fa-solid ' + m.icon + ' mod-ic"></i>'
-                + '<span>' + escHtml(m.label) + '</span>'
-                + '<span class="mod-cnt" id="dsModCnt_' + pid + '_' + m.kind + '">' + n + '</span>'
-                + '</label>';
-        }).join('');
+        modRow.innerHTML =
+            '<div class="bar-title"><i class="fa-solid fa-flask-vial"></i><span>Request Investigations &amp; Diagnostic Tests</span></div>'
+            + '<div class="bar-btns">'
+                + '<button type="button" class="ds-inv-bar-btn" onclick="dsShowAllMods(' + pid + ',true)"><i class="fa-solid fa-eye"></i><span>Show All Modalities</span></button>'
+                + '<button type="button" class="ds-inv-bar-btn hide" onclick="dsShowAllMods(' + pid + ',false)"><i class="fa-solid fa-eye-slash"></i><span>Hide All</span></button>'
+            + '</div>';
     }
 
-    // Grouped test checklists, one panel per modality. The Other panel also
-    // carries a free-text box so the doctor can request anything not preset.
+    // One collapsible card per modality. The Other card also carries a
+    // free-text box so the doctor can request anything not preset.
     holder.innerHTML = DS_INV_MODALITIES.map(function (m) {
         var items = groups[m.kind] || [];
         var isOther = m.kind === 'other';
+        if (!items.length && !isOther) return '';
         var body = items.map(function (i) {
             return '<label><input type="checkbox" class="ds-inv-check" data-ds-inv="' + pid + '" data-ds-grp="' + m.kind + '" value="' + escHtml(i.key) + '">'
                 + '<span>' + escHtml(i.label) + '</span>'
@@ -1311,13 +1329,25 @@ function renderInvCatalogue(pid) {
         if (!items.length && isOther) {
             body = '<div class="ds-empty" style="padding:10px;">No presets — type any procedure below.</div>';
         }
-        if (!items.length && !isOther) return '';
-        return '<div class="ds-inv-group" data-ds-grp-block="' + m.kind + '">'
-            + '<div class="ds-inv-group-top"><i class="fa-solid ' + m.icon + '"></i> ' + escHtml(m.groupLabel) + '</div>'
-            + '<div class="ds-inv">' + body + '</div>'
-            + (isOther
-                ? '<div class="ds-other-spec"><input type="text" id="dsOtherText_' + pid + '" class="ds-input" placeholder="Or type any other test / procedure, e.g. ECG, Spirometry…"></div>'
-                : '')
+        return '<div class="ds-inv-card" id="dsMod_' + pid + '_' + m.kind + '" data-ds-grp-block="' + m.kind + '">'
+            + '<div class="ds-inv-card-head" onclick="dsToggleModCard(' + pid + ',\'' + m.kind + '\')">'
+                + '<div class="left">'
+                    + '<input type="checkbox" class="mod-check ds-mod-check" id="dsModCheck_' + pid + '_' + m.kind + '" data-ds-mod="' + m.kind + '" onclick="event.stopPropagation()" onchange="dsToggleMod(' + pid + ',\'' + m.kind + '\',this.checked)">'
+                    + '<i class="fa-solid ' + m.icon + '"></i>'
+                    + '<h5>' + escHtml(m.groupLabel) + '</h5>'
+                    + '<span class="mod-cnt" id="dsModCnt_' + pid + '_' + m.kind + '">' + items.length + '</span>'
+                + '</div>'
+                + '<div class="right">'
+                    + '<span class="vis-badge" id="dsModVis_' + pid + '_' + m.kind + '">Visible</span>'
+                    + '<i class="fa-solid fa-chevron-up chev"></i>'
+                + '</div>'
+            + '</div>'
+            + '<div class="ds-inv-card-body">'
+                + '<div class="ds-inv">' + body + '</div>'
+                + (isOther
+                    ? '<div class="ds-other-spec"><input type="text" id="dsOtherText_' + pid + '" class="ds-input" placeholder="Or type any other test / procedure not listed above…"></div>'
+                    : '')
+            + '</div>'
             + '</div>';
     }).join('');
 
@@ -1330,6 +1360,27 @@ function renderInvCatalogue(pid) {
             }
         });
     }
+}
+
+// Collapse / reveal a single modality card. The card head click toggles it.
+function dsToggleModCard(pid, kind) {
+    var card = document.getElementById('dsMod_' + pid + '_' + kind);
+    if (!card) return;
+    dsSetCardVis(pid, kind, card.classList.contains('collapsed'));
+}
+
+// Apply the reveal state to a card, keeping its Visible / Hidden badge honest.
+function dsSetCardVis(pid, kind, visible) {
+    var card = document.getElementById('dsMod_' + pid + '_' + kind);
+    if (!card) return;
+    card.classList.toggle('collapsed', !visible);
+    var badge = document.getElementById('dsModVis_' + pid + '_' + kind);
+    if (badge) badge.textContent = visible ? 'Visible' : 'Hidden';
+}
+
+// Master reveal / collapse for every modality card at once.
+function dsShowAllMods(pid, show) {
+    DS_INV_MODALITIES.forEach(function (m) { dsSetCardVis(pid, m.kind, show); });
 }
 
 // Master tick toggles every test underneath that modality.
@@ -1345,17 +1396,16 @@ function dsToggleMod(pid, kind, checked) {
 // are ticked, and the count badge shows selected / total.
 function dsSyncModMasters(pid) {
     DS_INV_MODALITIES.forEach(function (m) {
-        var box = document.getElementById('dsMod_' + pid + '_' + m.kind);
+        var card = document.getElementById('dsMod_' + pid + '_' + m.kind);
+        if (!card) return; // modality absent from the catalogue
         var cnt = document.getElementById('dsModCnt_' + pid + '_' + m.kind);
+        var master = document.getElementById('dsModCheck_' + pid + '_' + m.kind);
         var checks = document.querySelectorAll('#dsInvCat_' + pid + ' [data-ds-grp="' + m.kind + '"]');
         var total = checks.length, on = 0;
         checks.forEach(function (c) { if (c.checked) on++; });
         if (cnt) cnt.textContent = on ? (on + '/' + total) : String(total);
-        if (box) {
-            box.classList.toggle('on', !!on);
-            var master = box.querySelector('.ds-mod-check');
-            if (master) master.checked = total > 0 && on === total;
-        }
+        if (master) { master.checked = total > 0 && on === total; master.disabled = total === 0; }
+        card.classList.toggle('on', !!on);
     });
 }
 
