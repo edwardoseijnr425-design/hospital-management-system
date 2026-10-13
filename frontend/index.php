@@ -3,9 +3,13 @@
 // Login page (modern single-card portal design).
 session_start();
 
-// Already logged in? Straight to the dashboard shell.
+// Already logged in? Straight to the right landing screen: lab technicians get
+// their dedicated laboratory workspace, everyone else gets the dashboard shell.
 if (isset($_SESSION['user_id'])) {
-    header('Location: /hms/frontend/dashboard.php');
+    $__landing = (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'lab')
+        ? '/hms/frontend/lab_management.php'
+        : '/hms/frontend/dashboard.php';
+    header('Location: ' . $__landing);
     exit;
 }
 

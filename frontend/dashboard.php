@@ -1,6 +1,14 @@
 <?php
 require_once __DIR__ . '/../backend/config/config.php';
 requireLogin();
+// Lab technicians get their own dedicated workspace (frontend/lab_management.php)
+// instead of this general dashboard, so the lab role is confined to the
+// laboratory modules. The same worklist also exists here as the SPA page
+// frontend/pages/lab-management.php for the roles that keep the dashboard.
+if (getCurrentUserRole() === 'lab') {
+    header('Location: lab_management.php');
+    exit;
+}
 // Support contact details for the dashboard banner + system footer strip.
 // Generic placeholders by default; override locally via the gitignored file
 // backend/config/local-contact.php (may define $contactEmail / $contactPhone).

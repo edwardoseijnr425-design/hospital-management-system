@@ -24,7 +24,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await response.json();
                 
                 if (result.success) {
-                    window.location.href = '/hms/frontend/dashboard.php';
+                    // Lab technicians land on their dedicated laboratory
+                    // workspace (frontend/lab_management.php); every other role
+                    // keeps the general dashboard shell.
+                    var role = result.user && result.user.role;
+                    window.location.href = (role === 'lab')
+                        ? '/hms/frontend/lab_management.php'
+                        : '/hms/frontend/dashboard.php';
                 } else {
                     showError(result.error || 'Login failed');
                 }
