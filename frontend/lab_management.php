@@ -268,11 +268,16 @@ table.lab-table tbody tr:hover{background:var(--s50)}
 .ps-field input:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(27,101,157,.15)}
 .ps-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-top:4px}
 .ps-btns .btn{justify-content:center;padding:7px 4px;font-size:10px}
-.ps-results{margin-top:8px;border-top:1px solid var(--s200);padding-top:8px}
-.ps-item{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--s200);border-radius:4px;padding:6px 8px;margin-bottom:6px;cursor:pointer;font-family:inherit}
-.ps-item:hover{border-color:var(--brand);background:var(--s50)}
+.ps-results{margin-top:8px}
+.ps-count{background:#EFF6FF;color:var(--brand);font-size:9px;font-weight:800;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.ps-list{max-height:240px;overflow-y:auto}
+.ps-item{display:block;width:100%;text-align:left;background:var(--s50);border:1px solid var(--s200);border-radius:4px;padding:7px 9px;margin-bottom:6px;cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s}
+.ps-item:hover{border-color:var(--brand);background:#EFF6FF}
+.ps-item-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .ps-item .pn{font-size:11px;font-weight:800;color:var(--s800)}
-.ps-item .pd{font-size:9.5px;color:var(--s500)}
+.ps-link{background:#D1FAE5;color:#065F46;font-size:9px;font-weight:800;padding:1px 6px;border-radius:3px;letter-spacing:.3px}
+.ps-no{display:block;font-size:10px;font-weight:800;color:var(--brand);margin-top:1px}
+.ps-meta{display:flex;justify-content:space-between;gap:8px;font-size:9px;color:var(--s400);font-weight:600;margin-top:2px}
 .ps-hint{font-size:10px;color:var(--s400);padding:4px 0}
 .msg{display:block;width:100%;text-align:left;background:#fff;border-bottom:1px solid var(--s100);padding:6px 0;cursor:pointer;font-family:inherit;border-left:none;border-right:none;border-top:none;border-radius:0}
 .msg:last-child{border-bottom:none}
@@ -549,43 +554,51 @@ table.lab-table tbody tr:hover{background:var(--s50)}
       <div class="rail-body" style="padding:10px 12px">
         <div class="ps-field">
           <label for="psName">By Patient Name</label>
-          <input type="text" id="psName" data-field="name" placeholder="Full name" oninput="schedulePatientSearch()">
+          <input type="text" id="psName" placeholder="Full name" oninput="schedulePatientSearch()">
         </div>
         <div class="ps-field">
           <label for="psNo">By Patient No.</label>
-          <input type="text" id="psNo" data-field="patient_no" placeholder="Patient number" oninput="schedulePatientSearch()">
+          <input type="text" id="psNo" placeholder="Patient number" oninput="schedulePatientSearch()">
         </div>
         <div class="ps-field">
           <label for="psNhis">By NHIS Number</label>
-          <input type="text" id="psNhis" data-field="nhis" placeholder="NHIS number" oninput="schedulePatientSearch()">
+          <input type="text" id="psNhis" placeholder="NHIS number" oninput="schedulePatientSearch()">
         </div>
         <div class="ps-field">
           <label for="psArea">By Area</label>
-          <input type="text" id="psArea" data-field="area" placeholder="Residential area" oninput="schedulePatientSearch()">
+          <input type="text" id="psArea" placeholder="Residential area" oninput="schedulePatientSearch()">
         </div>
         <div class="ps-field">
           <label for="psMobile">By Mobile</label>
-          <input type="text" id="psMobile" data-field="mobile" placeholder="Mobile number" oninput="schedulePatientSearch()">
+          <input type="text" id="psMobile" placeholder="Mobile number" oninput="schedulePatientSearch()">
         </div>
         <div class="ps-field">
           <label for="psContactName">By Contact Name</label>
-          <input type="text" id="psContactName" data-field="contact_name" placeholder="Contact" oninput="schedulePatientSearch()">
+          <input type="text" id="psContactName" placeholder="Contact" oninput="schedulePatientSearch()">
         </div>
         <div class="ps-field">
           <label for="psContactNumber">By Contact Number</label>
-          <input type="text" id="psContactNumber" data-field="contact_number" placeholder="Contact number" oninput="schedulePatientSearch()">
+          <input type="text" id="psContactNumber" placeholder="Contact number" oninput="schedulePatientSearch()">
         </div>
         <div class="ps-field">
           <label for="psContactEmail">By Contact Email</label>
-          <input type="text" id="psContactEmail" data-field="contact_email" placeholder="Contact email" oninput="schedulePatientSearch()">
+          <input type="text" id="psContactEmail" placeholder="Contact email" oninput="schedulePatientSearch()">
         </div>
 
         <div class="ps-btns">
-          <button type="button" class="btn btn-primary" onclick="labSupport()">Support</button>
+          <button type="button" class="btn btn-ghost" onclick="clearPatientSearch()">Clear Search</button>
           <button type="button" class="btn btn-primary" onclick="labHelp()">Help</button>
         </div>
+      </div>
+    </div>
 
-        <div class="ps-results" id="psResults" style="display:none"></div>
+    <div class="panel" id="psResultsPanel">
+      <div class="panel-head">
+        <span><i class="fa-solid fa-user-magnifying-glass"></i> Search Results</span>
+        <span class="ps-count" id="psCount">0 Found</span>
+      </div>
+      <div class="rail-body" id="psResults" style="padding:8px 12px">
+        <div class="ps-hint">Start typing to find a patient.</div>
       </div>
     </div>
 
@@ -797,9 +810,8 @@ function toast(msg, type) {
     box.appendChild(el);
     setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 5000);
 }
-function labSupport() { toast('HMS Support — Email: ' + CONTACT_EMAIL + ' | Phone: ' + CONTACT_PHONE, 'info'); }
 function labHelp() {
-    toast('Tip: pick a patient and test above, then Save & Submit to raise a request. Use Process Test to record results and Dispatch to hand out the report.', 'info');
+    toast('Search a patient on the right to link them to the form. Pick a test above, then Save & Submit to raise a request; use Process Test to record results and Dispatch to hand out the report. Support: ' + CONTACT_EMAIL + ' | ' + CONTACT_PHONE, 'info');
 }
 
 /* ================= VISITS / PATIENT SELECT ================= */
@@ -1105,57 +1117,101 @@ function schedulePatientSearch() {
     psTimer = setTimeout(searchPatients, 300);
 }
 
-function activePatientField() {
-    var inputsAll = document.querySelectorAll('.ps-field input');
-    for (var i = 0; i < inputsAll.length; i++) {
-        var v = (inputsAll[i].value || '').trim();
-        if (v) return { field: inputsAll[i].getAttribute('data-field'), q: v };
-    }
-    return null;
+/* Collect the eight rail inputs into the search endpoint's parameter names. */
+function patientSearchParams() {
+    return {
+        name: val('psName'),
+        patient_no: val('psNo'),
+        nhis_no: val('psNhis'),
+        area: val('psArea'),
+        mobile: val('psMobile'),
+        contact_name: val('psContactName'),
+        contact_no: val('psContactNumber'),
+        contact_email: val('psContactEmail')
+    };
+}
+
+function hasPatientSearchInput() {
+    var p = patientSearchParams();
+    return Object.keys(p).some(function (k) { return String(p[k] || '').trim() !== ''; });
 }
 
 async function searchPatients() {
+    if (!hasPatientSearchInput()) { psList = []; renderPatientSearchResults(); return; }
+    var p = patientSearchParams();
+    var qs = Object.keys(p).map(function (k) {
+        return k + '=' + encodeURIComponent(String(p[k] || '').trim());
+    }).join('&');
     var box = document.getElementById('psResults');
-    if (!box) return;
-    var q = activePatientField();
-    if (!q) { box.style.display = 'none'; box.innerHTML = ''; return; }
-
-    box.style.display = 'block';
-    box.innerHTML = '<div class="ps-hint">Searching...</div>';
+    if (box) box.innerHTML = '<div class="ps-hint">Searching...</div>';
     try {
-        var r = await fetch(API + '/patients.php?action=search&field=' + encodeURIComponent(q.field) + '&q=' + encodeURIComponent(q.q) + '&limit=15');
+        var r = await fetch(API + '/search_patients.php?' + qs);
         var d = await r.json();
-        var list = (d.success && d.patients) ? d.patients : [];
-        psList = list;
-        if (!list.length) { box.innerHTML = '<div class="ps-hint">No patient matches that search.</div>'; return; }
-        box.innerHTML = list.map(function (p, i) {
-            var name = [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(' ');
-            var meta = p.hospital_number || '';
-            if (p.nhia_number) meta += (meta ? ' | ' : '') + 'NHIS ' + p.nhia_number;
-            return '<button type="button" class="ps-item" onclick="selectPatientByIndex(' + i + ')">'
-                + '<span class="pn">' + escHtml(name) + '</span>'
-                + '<span class="pd">' + escHtml(meta) + '</span>'
-                + '</button>';
-        }).join('');
+        psList = (d && d.success && Array.isArray(d.patients)) ? d.patients : (Array.isArray(d) ? d : []);
     } catch (e) {
         console.error('Patient search error:', e);
-        box.innerHTML = '<div class="ps-hint">Could not search patients.</div>';
+        psList = [];
+        if (box) box.innerHTML = '<div class="ps-hint">Could not search patients.</div>';
+        setPsCount(0);
+        return;
     }
+    renderPatientSearchResults();
+}
+
+function setPsCount(n) { var el = document.getElementById('psCount'); if (el) el.textContent = n + ' Found'; }
+
+function renderPatientSearchResults() {
+    var box = document.getElementById('psResults');
+    setPsCount(psList.length);
+    if (!box) return;
+    if (!psList.length) {
+        box.innerHTML = '<div class="ps-hint">No patient matches that search query.</div>';
+        return;
+    }
+    box.innerHTML = '<div class="ps-list">' + psList.map(function (p, i) {
+        var gender = p.gender ? cap(p.gender) : '--';
+        var age = (p.age === null || p.age === undefined || p.age === '') ? '--' : p.age + ' Yrs';
+        return '<button type="button" class="ps-item" onclick="selectPatientByIndex(' + i + ')">'
+            + '<span class="ps-item-top"><span class="pn">' + escHtml(p.patient_name || '--') + '</span><span class="ps-link">LINK</span></span>'
+            + '<span class="ps-no">' + escHtml(p.patient_number || '--') + '</span>'
+            + '<span class="ps-meta"><span>' + escHtml(gender + ' | ' + age) + '</span><span>NHIS: ' + escHtml(p.nhis_number || '--') + '</span></span>'
+            + '</button>';
+    }).join('') + '</div>';
 }
 
 function selectPatient(name, hospitalNumber) {
     selectedPatient = { name: name, hospital_number: hospitalNumber };
     renderLabPanes();
+    var linked = linkPatientToForm(hospitalNumber);
     labGoSection('labWorklist');
-    toast('Showing lab worklist for ' + name + (hospitalNumber ? ' (' + hospitalNumber + ')' : '') + '.', 'info');
+    toast('Patient selected: ' + name + (hospitalNumber ? ' (' + hospitalNumber + ')' : '')
+        + (linked ? ' Linked to the processing form.' : ' No open visit found for this patient.'), 'info');
 }
 
 /* Index-based so patient names never have to be embedded in onclick markup. */
 function selectPatientByIndex(i) {
     var p = psList[i];
     if (!p) return;
-    var name = [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(' ');
-    selectPatient(name, p.hospital_number || '');
+    selectPatient(p.patient_name || '', p.patient_number || '');
+}
+
+/* Pre-select this patient's open visit in the technician form, if there is one. */
+function linkPatientToForm(hospitalNumber) {
+    var sel = document.getElementById('entryPatient');
+    if (!sel || !hospitalNumber) return false;
+    var target = String(hospitalNumber).toLowerCase();
+    var visit = visitsCache.find(function (v) { return String(v.hospital_number || '').toLowerCase() === target; });
+    if (!visit) return false;
+    sel.value = visit.id;
+    return true;
+}
+
+function clearPatientSearch() {
+    document.querySelectorAll('.ps-field input').forEach(function (i) { i.value = ''; });
+    psList = [];
+    selectedPatient = null;
+    renderPatientSearchResults();
+    renderLabPanes();
 }
 
 function clearSelectedPatient() {
@@ -1470,6 +1526,11 @@ function fmtTime(v) {
 function escHtml(s) {
     if (s === null || s === undefined) return '';
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function cap(s) {
+    s = String(s === null || s === undefined ? '' : s);
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 </script>
 </body>
