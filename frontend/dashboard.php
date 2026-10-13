@@ -540,23 +540,13 @@ function hcBrandLogo($px = 45) {
             <a href="#" class="nav-link active" data-page="dashboard">Control Panel</a>
             <a href="#" class="nav-link" data-page="appointment-calendar">Appointment Calendar</a>
             <a href="#" class="nav-link" data-page="messages">Messages &amp; Alerts <span class="nav-msg-badge" id="msgs-nav-badge" style="display:none">0</span></a>
-            <a href="#" class="nav-link" data-page="records">Patient Record Management</a>
-            <a href="#" class="nav-link" data-page="patients">Patients</a>
-            <a href="#" class="nav-link" data-page="visits">Visits</a>
-            <a href="#" class="nav-link" data-page="consultations">Consultations</a>
-            <a href="#" class="nav-link" data-page="admissions">Admissions</a>
-            <a href="#" class="nav-link" data-page="active-inpatients">Active In-Patients</a>
-            <a href="#" class="nav-link" data-page="beds">Bed Management</a>
             <a href="#" class="nav-link" data-page="pharmacy">Pharmacy</a>
-            <a href="#" class="nav-link" data-page="prices">Service Prices</a>
-            <a href="#" class="nav-link" data-page="reports">Reports</a>
+            <a href="#" class="nav-link" data-page="messages">View Alerts</a>
             <a href="#" class="nav-link" data-page="lab-management">Lab Management</a>
             <a href="#" class="nav-link" data-page="radiology">Radiology</a>
             <a href="#" class="nav-link" data-page="account-management">Account Management</a>
             <a href="#" class="nav-link" data-page="users">User Management</a>
             <a href="#" class="nav-link" data-page="administrator">Administrator</a>
-            <a href="#" class="nav-link" data-page="departments">Departments</a>
-            <a href="#" class="nav-link" data-page="wards">Wards &amp; Beds</a>
             <a href="#" class="nav-link" data-page="system-activities">System Activities</a>
         </nav>
 
