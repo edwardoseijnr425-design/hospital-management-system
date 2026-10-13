@@ -1,137 +1,159 @@
 ﻿<style>
     /* ============ PHARMACY MANAGEMENT ============
-       Scoped under #pharmacy. The shell supplies card/card-body/table/btn/modal/
-       form-group/form-row, so only the pharmacy-specific pieces are defined here. */
-    #pharmacy{--rx-blue:#1B659D;--rx-ink:#0F2D59;--rx-mute:#64748B;--rx-line:#DCE4EC}
+       Restyled to the rounded "workspace" look (soft cards, slate palette, pill
+       tabs). Scoped under #pharmacy; the shell supplies card/card-body/table/btn.
+       Every id and class the page JS renders (rx-tbl, pill, costbox, rx-btn,
+       panel, reqline, empty, drug/sub/num, ...) is preserved so the live API
+       data keeps working unchanged. */
+    #pharmacy{
+        --rx-blue:#1B659D; --rx-blue-dk:#155380; --rx-ink:#0F2D59;
+        --s50:#F8FAFC; --s100:#F1F5F9; --s200:#E2E8F0; --s300:#CBD5E1;
+        --s400:#94A3B8; --s500:#64748B; --s600:#475569; --s700:#334155; --s800:#1E293B;
+        --rx-line:#E2E8F0; --rx-rad:12px;
+        background:var(--s50); border-radius:var(--rx-rad); padding:14px;
+        font-size:12px; color:var(--s700);
+    }
 
     /* Header banner */
-    #rx-banner{background:var(--rx-blue);color:#fff;border-radius:5px;padding:12px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    #rx-banner{background:var(--rx-blue);color:#fff;border-radius:var(--rx-rad);padding:14px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 1px 2px rgba(15,23,42,.08)}
+    #rx-banner .rx-banner-main{display:flex;align-items:center;gap:11px;min-width:0}
+    #rx-banner .rx-banner-ico{width:38px;height:38px;min-width:38px;border-radius:9px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:17px;color:#DBEAFE}
     #rx-banner h5{margin:0;font-size:13.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
-    #rx-banner .sub{font-size:11px;opacity:.9;margin-top:3px}
-    #rx-banner .portal{background:#0A4A78;border:1px solid #14608F;color:#fff;border-radius:4px;padding:6px 12px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+    #rx-banner .sub{font-size:11px;color:#BFDBFE;margin-top:3px;line-height:1.4}
+    #rx-banner .portal{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:7px 13px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 
-    /* Stat strip: waiting to issue, issued today, stock units, items out of stock */
-    #rx-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-    #rx-stats .s{background:#fff;border:1px solid var(--rx-line);border-left:3px solid var(--rx-blue);border-radius:4px;padding:9px 12px}
-    #rx-stats .s.warn{border-left-color:#D97706}
-    #rx-stats .s.bad{border-left-color:#DC2626}
-    #rx-stats .s.good{border-left-color:#059669}
-    #rx-stats .lbl{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--rx-mute)}
-    #rx-stats .val{font-size:19px;font-weight:800;color:var(--rx-ink);line-height:1.25}
-    #rx-stats .sub{font-size:9.5px;color:var(--rx-mute)}
+    /* Stat tiles: awaiting dispense, issued today, stock units, out of stock */
+    #rx-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:12px;margin-bottom:14px}
+    #rx-stats .s{background:#fff;border:1px solid var(--rx-line);border-radius:var(--rx-rad);padding:13px 15px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+    #rx-stats .lbl{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--s400)}
+    #rx-stats .val{font-size:18px;font-weight:800;color:var(--s800);line-height:1.3}
+    #rx-stats .ico{width:40px;height:40px;min-width:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;border:1px solid var(--s200);background:var(--s100);color:var(--s600)}
+    #rx-stats .s.warn .val{color:var(--rx-blue)}
+    #rx-stats .s.warn .ico{background:#EFF6FF;border-color:#DBEAFE;color:var(--rx-blue)}
+    #rx-stats .s.good .val{color:#047857}
+    #rx-stats .s.good .ico{background:#ECFDF5;border-color:#A7F3D0;color:#059669}
+    #rx-stats .s.bad .val{color:#E11D48}
+    #rx-stats .s.bad .ico{background:#FFF1F2;border-color:#FECDD3;color:#E11D48}
 
     /* Sub-tabs */
-    #rx-tabbar{display:flex;flex-wrap:wrap;gap:6px;background:#fff;border:1px solid var(--rx-line);border-radius:5px;padding:8px;margin-bottom:14px}
-    #rx-tabbar button{background:#F1F5F9;color:#34495E;border:1px solid #CBD5E1;border-radius:4px;padding:8px 13px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:background .15s,color .15s}
-    #rx-tabbar button:hover{background:#E2E8F0}
-    #rx-tabbar button.active{background:var(--rx-blue);color:#fff;border-color:var(--rx-blue)}
-    #rx-pane{display:none}
-    #rx-pane.active{display:block}
+    #rx-tabbar{display:flex;flex-wrap:wrap;gap:8px;background:#fff;border:1px solid var(--rx-line);border-radius:var(--rx-rad);padding:10px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+    #rx-tabbar button{background:var(--s100);color:var(--s700);border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:7px;transition:background .15s,color .15s,box-shadow .15s}
+    #rx-tabbar button:hover{background:var(--s200)}
+    #rx-tabbar button.active{background:var(--rx-blue);color:#fff;box-shadow:0 2px 6px rgba(27,101,157,.35)}
+    /* Panes carry data-rx-pane (the JS toggles .active on them). */
+    #pharmacy [data-rx-pane]{display:none}
+    #pharmacy [data-rx-pane].active{display:block}
 
     /* Panels */
-    #pharmacy .panel{background:#fff;border:1px solid var(--rx-line);border-radius:5px;margin-bottom:14px;overflow:hidden}
-    #pharmacy .panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 14px;border-bottom:1px solid var(--rx-line);background:#F8FAFC}
+    #pharmacy .panel{background:#fff;border:1px solid var(--rx-line);border-radius:var(--rx-rad);margin-bottom:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+    #pharmacy .panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 15px;border-bottom:1px solid var(--rx-line)}
     #pharmacy .panel-head h3{margin:0;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--rx-blue);display:flex;align-items:center;gap:7px}
-    #pharmacy .panel-body{padding:13px 14px}
+    #pharmacy .panel-body{padding:14px 15px}
 
     /* Toolbar */
-    .rx-search{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #CBD5E1;border-radius:4px;padding:0 9px}
-    .rx-search svg{width:13px;height:13px;fill:none;stroke:var(--rx-mute);stroke-width:2;flex-shrink:0}
-    .rx-search input{border:none;outline:none;padding:6px 2px;font-size:11.5px;font-family:inherit;width:200px;background:transparent}
+    .rx-search{display:flex;align-items:center;gap:6px;background:var(--s50);border:1px solid var(--s300);border-radius:8px;padding:0 10px}
+    .rx-search svg{width:13px;height:13px;fill:none;stroke:var(--s400);stroke-width:2;flex-shrink:0}
+    .rx-search input{border:none;outline:none;padding:7px 2px;font-size:11.5px;font-family:inherit;width:200px;background:transparent}
 
     /* Tables */
-    #rx-table-wrap{overflow-x:auto}
+    .rx-table-wrap{overflow-x:auto}
     /* Every table on the page shares this styling, so it is selected by class
        rather than by a single id - ids must stay unique. */
     #pharmacy table.rx-tbl{width:100%;border-collapse:collapse;font-size:11.5px}
-    #pharmacy table.rx-tbl thead th{background:#F1F5F9;color:#475569;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;text-align:left;padding:8px 10px;border-bottom:2px solid var(--rx-line);white-space:nowrap}
-    #pharmacy table.rx-tbl tbody td{padding:8px 10px;border-bottom:1px solid #EDF2F7;vertical-align:top;color:#334155}
-    #pharmacy table.rx-tbl tbody tr:hover{background:#F8FAFC}
-    #pharmacy table.rx-tbl .drug{font-weight:700;color:var(--rx-ink)}
-    #pharmacy table.rx-tbl .sub{font-size:9.5px;color:var(--rx-mute);margin-top:2px}
+    #pharmacy table.rx-tbl thead th{background:var(--s100);color:var(--s500);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;text-align:left;padding:10px;border-bottom:1px solid var(--rx-line);white-space:nowrap}
+    #pharmacy table.rx-tbl tbody td{padding:10px;border-bottom:1px solid var(--s100);vertical-align:top;color:var(--s700)}
+    #pharmacy table.rx-tbl tbody tr:hover{background:var(--s50)}
+    #pharmacy table.rx-tbl .drug{font-weight:700;color:var(--s800)}
+    #pharmacy table.rx-tbl .sub{font-size:10px;color:var(--s400);margin-top:2px}
     #pharmacy table.rx-tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-    #pharmacy table.rx-tbl .warnq{color:#DC2626;font-weight:700}
+    #pharmacy table.rx-tbl .warnq{color:#E11D48;font-weight:700}
 
     /* Status pills */
-    #pharmacy .pill{display:inline-block;padding:2px 8px;border-radius:9px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;border:1px solid;white-space:nowrap}
+    #pharmacy .pill{display:inline-block;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;border:1px solid transparent;white-space:nowrap}
     #pharmacy .pill.amber{background:#FFFBEB;color:#B45309;border-color:#FDE68A}
     #pharmacy .pill.green{background:#ECFDF5;color:#047857;border-color:#A7F3D0}
-    #pharmacy .pill.grey{background:#F1F5F9;color:#475569;border-color:#CBD5E1}
+    #pharmacy .pill.grey{background:var(--s100);color:var(--s600);border-color:var(--s300)}
     #pharmacy .pill.red{background:#FEF2F2;color:#B91C1C;border-color:#FECACA}
 
     /* Allergies are a safety flag, not decoration - always shown in red. */
     #pharmacy .allergy{color:#B91C1C;font-weight:700}
-    #pharmacy .none{color:#94A3B8;font-style:italic}
+    #pharmacy .none{color:var(--s400);font-style:italic}
 
     /* ---- dispensing cost (unit price x quantity) ---- */
-    #pharmacy table.rx-tbl .cost{font-weight:700;color:var(--rx-ink);font-variant-numeric:tabular-nums;white-space:nowrap}
-    #pharmacy table.rx-tbl .cost .per{font-size:9.5px;color:var(--rx-mute);font-weight:600;margin-top:2px}
-    #pharmacy .costbox{background:#F1F5F9;border:1px solid var(--rx-line);border-radius:4px;padding:10px 12px;margin-top:13px}
-    #pharmacy .costbox .crow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:3px 0;font-size:11.5px;color:#475569}
-    #pharmacy .costbox .crow.total{border-top:1px solid var(--rx-line);margin-top:6px;padding-top:8px;font-weight:800;font-size:14px;color:var(--rx-ink)}
+    #pharmacy table.rx-tbl .cost{font-weight:700;color:var(--s800);font-variant-numeric:tabular-nums;white-space:nowrap}
+    #pharmacy table.rx-tbl .cost .per{font-size:10px;color:var(--s400);font-weight:600;margin-top:2px}
+    #pharmacy .costbox{background:var(--s50);border:1px solid var(--rx-line);border-radius:8px;padding:11px 13px;margin-top:13px}
+    #pharmacy .costbox .crow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:3px 0;font-size:11.5px;color:var(--s600)}
+    #pharmacy .costbox .crow.total{border-top:1px solid var(--rx-line);margin-top:6px;padding-top:9px;font-weight:800;font-size:14px;color:var(--rx-ink)}
     #pharmacy .costbox .crow .amt{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700;color:var(--rx-ink)}
     #pharmacy .costbox .crow.total .amt{font-weight:800}
 
     /* ---- pharmacist notepad / counselling note ---- */
-    #pharmacy .notepad{width:100%;min-height:62px;padding:8px 10px;border:1px solid var(--rx-line);border-radius:3px;font-size:11.5px;font-family:inherit;background:#F8FAFC;color:#334155;resize:vertical;box-sizing:border-box;line-height:1.5}
-    #pharmacy .notepad:focus{outline:none;background:#fff;border-color:var(--rx-blue);box-shadow:0 0 0 2px rgba(27,101,157,.12)}
-    #pharmacy .nothint{font-size:9.5px;color:var(--rx-mute);margin-top:4px;line-height:1.45}
-    #pharmacy table.rx-tbl .counsel{max-width:230px;white-space:pre-wrap;font-size:10.5px;color:#475569}
+    #pharmacy .notepad{width:100%;min-height:62px;padding:9px 11px;border:1px solid var(--rx-line);border-radius:8px;font-size:11.5px;font-family:inherit;background:var(--s50);color:var(--s700);resize:vertical;box-sizing:border-box;line-height:1.5}
+    #pharmacy .notepad:focus{outline:none;background:#fff;border-color:var(--rx-blue);box-shadow:0 0 0 3px rgba(27,101,157,.12)}
+    #pharmacy .nothint{font-size:10px;color:var(--s400);margin-top:4px;line-height:1.45}
+    #pharmacy table.rx-tbl .counsel{max-width:230px;white-space:pre-wrap;font-size:10.5px;color:var(--s600)}
 
     /* Buttons */
-    #pharmacy .rx-btn{border:none;border-radius:4px;padding:6px 13px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:filter .15s}
-    #pharmacy .rx-btn.blue{background:var(--rx-blue);color:#fff}
-    #pharmacy .rx-btn.blue:hover{filter:brightness(.88)}
-    #pharmacy .rx-btn.grey{background:#E2E8F0;color:#334155;border:1px solid #CBD5E1}
-    #pharmacy .rx-btn.grey:hover{background:#CBD5E1}
+    #pharmacy .rx-btn{border:none;border-radius:8px;padding:7px 14px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:background .15s,box-shadow .15s}
+    #pharmacy .rx-btn.blue{background:var(--rx-blue);color:#fff;box-shadow:0 1px 2px rgba(27,101,157,.25)}
+    #pharmacy .rx-btn.blue:hover{background:var(--rx-blue-dk)}
+    #pharmacy .rx-btn.grey{background:var(--s100);color:var(--s700);border:1px solid var(--s300)}
+    #pharmacy .rx-btn.grey:hover{background:var(--s200)}
     #pharmacy .rx-btn:disabled{opacity:.5;cursor:not-allowed}
 
     /* Empty / loading states */
-    #pharmacy .empty{padding:26px 14px;text-align:center;color:var(--rx-mute);font-size:11.5px;font-style:italic}
+    #pharmacy .empty{padding:26px 14px;text-align:center;color:var(--s400);font-size:11.5px;font-style:italic}
 
     /* Clinical entry cards (records tab) */
-    #rx-records .entry{border:1px solid var(--rx-line);border-left:3px solid var(--rx-blue);border-radius:4px;padding:10px 12px;margin-bottom:9px;background:#F8FAFC}
-    #rx-records .entry .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--rx-mute);border-bottom:1px solid var(--rx-line);padding-bottom:6px;margin-bottom:7px}
-    #rx-records .entry .top b{color:var(--rx-ink);font-size:11px}
+    #rx-records .entry{border:1px solid var(--rx-line);border-left:3px solid var(--rx-blue);border-radius:8px;padding:11px 13px;margin-bottom:9px;background:var(--s50)}
+    #rx-records .entry .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--s400);border-bottom:1px solid var(--rx-line);padding-bottom:6px;margin-bottom:7px}
+    #rx-records .entry .top b{color:var(--s800);font-size:11px}
     #rx-records .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:7px}
     #rx-records .fld .k{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--rx-blue);margin-bottom:2px}
-    #rx-records .fld .v{font-size:11.5px;color:#334155;white-space:pre-wrap;line-height:1.5}
+    #rx-records .fld .v{font-size:11.5px;color:var(--s700);white-space:pre-wrap;line-height:1.5}
 
-    /* Dispense dialog */
-    #rx-dispense-modal .modal-content{max-width:540px}
-    #rx-dispense-modal .modal-header{background:linear-gradient(135deg,#1B659D,#0F4C7C);color:#fff;padding:13px 18px}
+    /* Dispense dialog (sits outside #pharmacy, so colours are literal here) */
+    #rx-dispense-modal .modal-content{max-width:560px;border-radius:12px;overflow:hidden;border:none;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+    #rx-dispense-modal .modal-header{background:linear-gradient(135deg,#1B659D,#0F4C7C);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
     #rx-dispense-modal .modal-header h3{color:#fff;margin:0;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.4px}
     #rx-dispense-modal .modal-body{padding:16px 18px;background:#fff}
-    #rx-dispense-modal .modal-footer{background:#F8FAFC;padding:11px 18px;display:flex;justify-content:flex-end;gap:9px}
+    #rx-dispense-modal .modal-footer{background:#F8FAFC;padding:12px 18px;display:flex;justify-content:flex-end;gap:9px}
     #rx-dispense-modal label{display:block;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#475569;margin-bottom:4px}
-    #rx-dispense-modal input,#rx-dispense-modal select,#rx-dispense-modal textarea{width:100%;padding:7px 9px;border:1px solid #CBD5E1;border-radius:4px;font-size:12px;font-family:inherit;background:#F8FAFC;outline:none}
-    #rx-dispense-modal input:focus,#rx-dispense-modal textarea:focus{border-color:var(--rx-blue);background:#fff}
-    #rx-dispense-modal .hint{font-size:10px;color:var(--rx-mute);margin-top:4px}
-    #rx-dispense-modal .rx-line{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;padding:5px 0;border-bottom:1px dotted #CBD5E1}
-    #rx-dispense-modal .rx-line .k{color:var(--rx-mute)}
-    #rx-dispense-modal .rx-line .v{font-weight:700;color:var(--rx-ink);text-align:right}
-    #rx-dispense-modal .caps{margin-top:9px;padding:8px 10px;background:#FEF2F2;border:1px solid #FECACA;border-radius:4px;font-size:10.5px;color:#B91C1C;display:flex;align-items:center;gap:7px}
+    #rx-dispense-modal input,#rx-dispense-modal select,#rx-dispense-modal textarea{width:100%;padding:8px 10px;border:1px solid #CBD5E1;border-radius:8px;font-size:12px;font-family:inherit;background:#F8FAFC;outline:none;box-sizing:border-box}
+    #rx-dispense-modal input:focus,#rx-dispense-modal textarea:focus{border-color:#1B659D;background:#fff;box-shadow:0 0 0 3px rgba(27,101,157,.12)}
+    #rx-dispense-modal .hint{font-size:10px;color:#94A3B8;margin-top:4px}
+    #rx-dispense-modal .rx-line{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;padding:6px 0;border-bottom:1px dotted #CBD5E1}
+    #rx-dispense-modal .rx-line .k{color:#64748B}
+    #rx-dispense-modal .rx-line .v{font-weight:700;color:#0F2D59;text-align:right}
+    #rx-dispense-modal .caps{margin-top:9px;padding:9px 11px;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;font-size:10.5px;color:#B91C1C;display:flex;align-items:center;gap:7px}
 
     /* The dialog sits outside #pharmacy, so the payment panel and the notepad are
        styled here against the same literal colours the rest of the dialog uses. */
-    #rx-dispense-modal .costbox{background:#F1F5F9;border:1px solid #DCE4EC;border-radius:4px;padding:10px 12px;margin-top:13px}
+    #rx-dispense-modal .costbox{background:#F1F5F9;border:1px solid #E2E8F0;border-radius:8px;padding:11px 13px;margin-top:13px}
     #rx-dispense-modal .costbox .crow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:3px 0;font-size:11.5px;color:#475569}
-    #rx-dispense-modal .costbox .crow.total{border-top:1px solid #DCE4EC;margin-top:6px;padding-top:8px;font-weight:800;font-size:14px;color:#0F2D59}
+    #rx-dispense-modal .costbox .crow.total{border-top:1px solid #E2E8F0;margin-top:6px;padding-top:9px;font-weight:800;font-size:14px;color:#0F2D59}
     #rx-dispense-modal .costbox .crow .amt{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700;color:#0F2D59}
     #rx-dispense-modal .costbox .crow .none{color:#94A3B8;font-style:italic;font-weight:600}
     #rx-dispense-modal .notepad{min-height:62px;resize:vertical;line-height:1.5;color:#334155}
-    #rx-dispense-modal .nothint{font-size:9.5px;color:#64748B;margin-top:4px;line-height:1.45}
+    #rx-dispense-modal .nothint{font-size:10px;color:#94A3B8;margin-top:4px;line-height:1.45}
+    #rx-dispense-modal .rx-btn{border:none;border-radius:8px;padding:8px 15px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+    #rx-dispense-modal .rx-btn.blue{background:#1B659D;color:#fff}
+    #rx-dispense-modal .rx-btn.blue:hover{background:#155380}
+    #rx-dispense-modal .rx-btn.grey{background:#E2E8F0;color:#334155;border:1px solid #CBD5E1}
+    #rx-dispense-modal .rx-btn.grey:hover{background:#CBD5E1}
 
     /* Requisition form */
     #rx-req-form .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
     #rx-req-form label{display:block;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#475569;margin-bottom:4px}
-    #rx-req-form select,#rx-req-form input,#rx-req-form textarea{width:100%;padding:8px 10px;border:1px solid #CBD5E1;border-radius:4px;font-size:12px;font-family:inherit;background:#F8FAFC;outline:none}
-    #rx-req-form select:focus,#rx-req-form input:focus,#rx-req-form textarea:focus{border-color:var(--rx-blue);background:#fff}
-    #rx-req-form .reqline{display:flex;gap:8px;align-items:center;padding:7px 9px;border:1px solid var(--rx-line);border-radius:4px;margin-bottom:6px;background:#F8FAFC}
+    #rx-req-form select,#rx-req-form input,#rx-req-form textarea{width:100%;padding:9px 11px;border:1px solid #CBD5E1;border-radius:8px;font-size:12px;font-family:inherit;background:#F8FAFC;outline:none;box-sizing:border-box}
+    #rx-req-form select:focus,#rx-req-form input:focus,#rx-req-form textarea:focus{border-color:#1B659D;background:#fff;box-shadow:0 0 0 3px rgba(27,101,157,.12)}
+    #rx-req-form .reqline{display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid #E2E8F0;border-radius:8px;margin-bottom:6px;background:#F8FAFC}
     #rx-req-form .reqline select{flex:1}
     #rx-req-form .reqline input{width:88px}
-    #rx-req-form .reqline .stk{font-size:10px;color:var(--rx-mute);white-space:nowrap;min-width:78px}
-    #rx-req-form .reqline .rm{background:#FEE2E2;color:#B91C1C;border:none;border-radius:4px;padding:6px 9px;cursor:pointer;font-size:11px;font-family:inherit}
+    #rx-req-form .reqline .stk{font-size:10px;color:#64748B;white-space:nowrap;min-width:78px}
+    #rx-req-form .reqline .rm{background:#FEE2E2;color:#B91C1C;border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:11px;font-family:inherit}
+    #rx-req-form .reqline .rm:hover{background:#FECACA}
 
     @media (max-width:760px){
         #rx-records .grid,#rx-req-form .fgrid{grid-template-columns:1fr}
@@ -143,27 +165,42 @@
 
     <!-- Header banner -->
     <div id="rx-banner">
-        <div>
-            <h5><i class="fa-solid fa-pills"></i> Pharmacy Management System</h5>
-            <div class="sub">Dispense medications, review doctor prescriptions, manage drug inventories and issue store requisitions.</div>
+        <div class="rx-banner-main">
+            <span class="rx-banner-ico"><i class="fa-solid fa-pills"></i></span>
+            <div>
+                <h5>Pharmacy Management System</h5>
+                <div class="sub">Dispense medications, review doctor prescriptions, manage drug inventories and issue store requisitions.</div>
+            </div>
         </div>
         <div class="portal"><i class="fa-solid fa-house-medical"></i> Pharmacist Portal</div>
     </div>
 
     <!-- Stats -->
     <div id="rx-stats">
-        <div class="s warn"><div class="lbl">Awaiting Dispense</div><div class="val" id="rx-stat-pending">&mdash;</div><div class="sub">prescriptions on the queue</div></div>
-        <div class="s good"><div class="lbl">Issued Today</div><div class="val" id="rx-stat-issued">&mdash;</div><div class="sub">dispensed in the last 24h</div></div>
-        <div class="s"><div class="lbl">Units In Stock</div><div class="val" id="rx-stat-units">&mdash;</div><div class="sub">across all stocked items</div></div>
-        <div class="s bad"><div class="lbl">Out Of Stock</div><div class="val" id="rx-stat-oos">&mdash;</div><div class="sub">items needing restock</div></div>
+        <div class="s warn">
+            <div class="info"><span class="lbl">Awaiting Dispense</span><span class="val" id="rx-stat-pending">&mdash;</span></div>
+            <span class="ico"><i class="fa-solid fa-clock-rotate-left"></i></span>
+        </div>
+        <div class="s good">
+            <div class="info"><span class="lbl">Issued Today</span><span class="val" id="rx-stat-issued">&mdash;</span></div>
+            <span class="ico"><i class="fa-solid fa-circle-check"></i></span>
+        </div>
+        <div class="s">
+            <div class="info"><span class="lbl">Units In Stock</span><span class="val" id="rx-stat-units">&mdash;</span></div>
+            <span class="ico"><i class="fa-solid fa-boxes-stacked"></i></span>
+        </div>
+        <div class="s bad">
+            <div class="info"><span class="lbl">Out Of Stock</span><span class="val" id="rx-stat-oos">&mdash;</span></div>
+            <span class="ico"><i class="fa-solid fa-triangle-exclamation"></i></span>
+        </div>
     </div>
 
     <!-- Sub-tabs -->
     <div id="rx-tabbar">
-        <button type="button" class="active" data-rx-tab="dispense"><i class="fa-solid fa-prescription"></i> Prescribed Drugs / Dispense</button>
+        <button type="button" class="active" data-rx-tab="dispense"><i class="fa-solid fa-pills"></i> Prescribed Drugs / Dispense</button>
         <button type="button" data-rx-tab="patients"><i class="fa-solid fa-users"></i> Patient Profiles</button>
-        <button type="button" data-rx-tab="records"><i class="fa-solid fa-file-medical"></i> Doctor's Entries &amp; Records</button>
-        <button type="button" data-rx-tab="drugs"><i class="fa-solid fa-capsules"></i> Drugs Setup (Inventory)</button>
+        <button type="button" data-rx-tab="records"><i class="fa-solid fa-book-medical"></i> Doctor's Entries &amp; Records</button>
+        <button type="button" data-rx-tab="drugs"><i class="fa-solid fa-warehouse"></i> Drugs Setup (Inventory)</button>
         <button type="button" data-rx-tab="requisitions"><i class="fa-solid fa-boxes-stacked"></i> Requisitions (Stores)</button>
     </div>
 
@@ -171,7 +208,7 @@
     <div id="rx-pane-dispense" class="active" data-rx-pane="dispense">
         <div class="panel">
             <div class="panel-head">
-                <h3><i class="fa-solid fa-prescription"></i> Pending Doctor Prescriptions for Dispensing</h3>
+                <h3><i class="fa-solid fa-pills"></i> Pending Doctor Prescriptions for Dispensing</h3>
                 <div class="d-flex gap-2">
                     <div class="rx-search" id="rx-search-queue">
                         <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -263,7 +300,7 @@
     <div id="rx-pane-records" data-rx-pane="records">
         <div class="panel">
             <div class="panel-head">
-                <h3><i class="fa-solid fa-file-medical"></i> Doctor's Entries, Diagnosis &amp; Clinical Notes</h3>
+                <h3><i class="fa-solid fa-book-medical"></i> Doctor's Entries, Diagnosis &amp; Clinical Notes</h3>
                 <div class="d-flex gap-2">
                     <select id="rx-note-type" style="padding:6px 9px;border:1px solid #CBD5E1;border-radius:4px;font-size:11px;font-family:inherit;">
                         <option value="">All entry types</option>
@@ -284,7 +321,7 @@
     <div id="rx-pane-drugs" data-rx-pane="drugs">
         <div class="panel">
             <div class="panel-head">
-                <h3><i class="fa-solid fa-capsules"></i> Pharmacy Drug Inventory Setup</h3>
+                <h3><i class="fa-solid fa-warehouse"></i> Pharmacy Drug Inventory Setup</h3>
                 <div class="d-flex gap-2">
                     <div class="rx-search" id="rx-search-drugs">
                         <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
