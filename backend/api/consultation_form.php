@@ -24,6 +24,7 @@
 //    created. Reusing rather than always creating means repeated consultations
 //    during one attendance share a single visit.
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../includes/lab_tests.php';
 
 header('Content-Type: application/json');
 
@@ -43,13 +44,11 @@ requireRole(['super_admin', 'admin', 'doctor']);
 // goes to radiology_requests; the "Other" modality goes to other_requests. All
 // three tables exist, so each checkbox raises a real order that the respective
 // desk picks up, rather than a line of free text.
-const CONSULTATION_INVESTIGATIONS = [
-    // Laboratory
-    'lab:Malaria Parasite / RDT' => ['lab', 'Malaria Parasite / RDT', ''],
-    'lab:Full Blood Count (FBC)' => ['lab', 'Full Blood Count (FBC)', ''],
-    'lab:Urinalysis'             => ['lab', 'Urinalysis', ''],
-    'lab:Widal Test (Typhoid)'   => ['lab', 'Widal Test (Typhoid)', ''],
-    'lab:Blood Sugar (RBS / FBS)' => ['lab', 'Blood Sugar (RBS / FBS)', ''],
+//
+// Laboratory entries are generated from labTestCatalogue() (the same list
+// Service Prices prices), so a test can never be orderable-but-unpriceable or
+// priced-but-unorderable. Imaging and specialist entries are fixed presets.
+const CONSULTATION_IMAGING = [
     // Radiology
     'radiology:Chest X-Ray'      => ['radiology', 'Chest X-Ray', 'Chest'],
     'radiology:Abdominal Scan'   => ['radiology', 'Abdominal Scan', 'Abdomen'],
@@ -63,6 +62,18 @@ const CONSULTATION_INVESTIGATIONS = [
     'other:ECG'                        => ['other', 'ECG', ''],
     'other:Spirometry'                 => ['other', 'Spirometry / PFT', ''],
 ];
+
+// Full catalogue = laboratory (shared with Service Prices) + imaging presets.
+function consultationInvestigations(): array {
+    $investigations = [];
+    foreach (labTestCatalogue() as $test) {
+        $investigations['lab:' . $test] = ['lab', $test, ''];
+    }
+    foreach (CONSULTATION_IMAGING as $key => $spec) {
+        $investigations[$key] = $spec;
+    }
+    return $investigations;
+}
 
 // Separator used to round-trip the free-text medication notes inside
 // consultations.notes alongside the doctor's clinical notes.
@@ -197,7 +208,7 @@ function formContext() {
     }
 
     $catalogue = [];
-    foreach (CONSULTATION_INVESTIGATIONS as $key => $spec) {
+    foreach (consultationInvestigations() as $key => $spec) {
         $catalogue[] = [
             'key'   => $key,
             'label' => $spec[1],
@@ -342,7 +353,7 @@ function saveEncounter() {
     $investigationKeys = is_array($data['investigations'] ?? null)
         ? $data['investigations']
         : array_filter(array_map('trim', explode(',', (string)($data['investigations'] ?? ''))));
-    $unknown = array_diff($investigationKeys, array_keys(CONSULTATION_INVESTIGATIONS));
+    $unknown = array_diff($investigationKeys, array_keys(consultationInvestigations()));
     if ($unknown) {
         jsonResponse(['error' => 'Unknown investigation requested: ' . implode(', ', $unknown)], 400);
     }
@@ -555,8 +566,9 @@ function updateExistingConsultation($db, $consultationId, $type, $diagnosis, $no
 // Raise one investigation order. An identical order already pending on the same
 // visit is left alone, so re-saving a form does not stack duplicates.
 function raiseInvestigation($db, $visitId, $key, &$counts) {
-    if (!isset(CONSULTATION_INVESTIGATIONS[$key])) return false;
-    list($kind, $name, $bodyPart) = CONSULTATION_INVESTIGATIONS[$key];
+    $catalogue = consultationInvestigations();
+    if (!isset($catalogue[$key])) return false;
+    list($kind, $name, $bodyPart) = $catalogue[$key];
     $doctorId = getCurrentUserId();
 
     if ($kind === 'lab') {

@@ -27,6 +27,10 @@ if ($method === 'GET' && $action === 'schema') {
     ]);
 }
 
+if ($method === 'GET' && $action === 'export') {
+    handleExport();
+}
+
 if ($method === 'POST' && $action === 'import') {
     handleImport();
 }
@@ -91,6 +95,46 @@ function handleImport() {
     ]);
 
     jsonResponse(['success' => true] + $result);
+}
+
+function handleExport() {
+    // Exporting master data uses the same administrative guard as import; in
+    // particular the Users dataset is exported WITHOUT credential material.
+    requireRole(['super_admin', 'admin', 'it']);
+
+    $datasetKey = $_GET['dataset'] ?? '';
+    $catalog = hmsImportDatasetCatalog();
+    if (!isset($catalog[$datasetKey])) {
+        jsonResponse(['error' => 'Unknown dataset'], 400);
+    }
+    $ds = $catalog[$datasetKey];
+
+    // Column names come from the whitelist, never the request. The declared
+    // password field is dropped so password hashes can never be exported.
+    $columns = array_keys($ds['columns']);
+    if (!empty($ds['password_field'])) {
+        $columns = array_values(array_diff($columns, [$ds['password_field']]));
+    }
+
+    $db = Database::getInstance();
+    $quoted = implode(', ', array_map(function ($c) { return '`' . $c . '`'; }, $columns));
+    $rows = $db->fetchAll("SELECT {$quoted} FROM `{$ds['table']}`");
+
+    $filename = 'hms_' . preg_replace('/[^a-z0-9_]+/i', '_', $datasetKey) . '_' . date('Y-m-d') . '.csv';
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+    $out = fopen('php://output', 'w');
+    fputcsv($out, $columns);
+    foreach ($rows as $row) {
+        $line = [];
+        foreach ($columns as $col) {
+            $line[] = $row[$col] ?? null;
+        }
+        fputcsv($out, $line);
+    }
+    fclose($out);
+    exit;
 }
 
 function applyRow($db, array $ds, $keyField, $raw, array &$result) {

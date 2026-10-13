@@ -1,3 +1,13 @@
+<style>
+/* Scoped styles for the patient picker in the Assign Bed modal. */
+#assign-bed-modal .assign-results{margin-top:6px;max-height:190px;overflow-y:auto;border:1px solid #dfe6ee;border-radius:6px;background:#fff;}
+#assign-bed-modal .assign-results:empty{display:none;}
+#assign-bed-modal .assign-result{padding:8px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid #f0f4f8;color:#334155;}
+#assign-bed-modal .assign-result:last-child{border-bottom:none;}
+#assign-bed-modal .assign-result:hover{background:#eef6fd;}
+#assign-bed-modal .assign-hn{font-size:11px;color:#64748b;margin-left:4px;}
+#assign-bed-modal .assign-empty{padding:8px 10px;font-size:12px;color:#94a3b8;}
+</style>
 <div class="card">
     <div class="card-header">
         <h2>Bed Management</h2>
@@ -96,6 +106,35 @@
     </div>
 </div>
 
+<!-- Assign Bed Modal -->
+<div class="modal" id="assign-bed-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Assign Patient to <span id="assign-bed-label">Bed</span></h3>
+            <button class="modal-close" id="close-assign-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="assign-bed-form">
+                <input type="hidden" id="assign-bed-id">
+                <div class="form-group">
+                    <label for="assign-patient-search">Search Patient *</label>
+                    <input type="text" id="assign-patient-search" placeholder="Type a name, hospital number or phone...">
+                    <div id="assign-patient-results" class="assign-results"></div>
+                </div>
+                <div class="form-group">
+                    <label>Selected Patient</label>
+                    <input type="text" id="assign-patient-name" readonly placeholder="No patient selected">
+                    <input type="hidden" id="assign-patient-id">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Assign Bed</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-assign">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 let bedsData = [];
 let wardsData = [];
@@ -185,6 +224,28 @@ function setupEventListeners() {
     document.getElementById('cancel-bed').addEventListener('click', closeBedModal);
     
     document.getElementById('bed-form').addEventListener('submit', handleBedSubmit);
+    document.getElementById('close-assign-modal').addEventListener('click', function () {
+        document.getElementById('assign-bed-modal').classList.remove('show');
+    });
+    document.getElementById('cancel-assign').addEventListener('click', function () {
+        document.getElementById('assign-bed-modal').classList.remove('show');
+    });
+    document.getElementById('assign-bed-form').addEventListener('submit', handleAssignSubmit);
+    const assignSearch = document.getElementById('assign-patient-search');
+    if (assignSearch) {
+        assignSearch.addEventListener('input', function () { searchAssignPatients(this.value.trim()); });
+    }
+    const assignResults = document.getElementById('assign-patient-results');
+    if (assignResults) {
+        assignResults.addEventListener('click', function (e) {
+            const row = e.target.closest('.assign-result');
+            if (!row) return;
+            document.getElementById('assign-patient-id').value = row.dataset.id;
+            document.getElementById('assign-patient-name').value = row.dataset.name;
+            assignResults.innerHTML = '';
+            document.getElementById('assign-patient-search').value = row.dataset.name;
+        });
+    }
     
     document.getElementById('filter-bed-ward').addEventListener('change', function() {
         loadBeds({ ward_id: this.value });
@@ -260,12 +321,87 @@ async function handleBedSubmit(e) {
 }
 
 function assignBed(bedId) {
-    alert('Bed assignment to be implemented - will link to admissions');
+    const bed = bedsData.find(b => b.id === bedId);
+    const modal = document.getElementById('assign-bed-modal');
+    if (!modal) return;
+
+    document.getElementById('assign-bed-id').value = bedId;
+    document.getElementById('assign-bed-label').textContent = bed ? bed.bed_number : 'Bed';
+    document.getElementById('assign-patient-search').value = '';
+    document.getElementById('assign-patient-results').innerHTML = '';
+    document.getElementById('assign-patient-name').value = '';
+    document.getElementById('assign-patient-id').value = '';
+
+    modal.classList.add('show');
+    document.getElementById('assign-patient-search').focus();
 }
 
-function dischargeBed(bedId) {
-    if (confirm('Are you sure you want to discharge this patient from the bed?')) {
-        alert('Bed discharge to be implemented');
+function searchAssignPatients(query) {
+    const box = document.getElementById('assign-patient-results');
+    if (!box) return;
+    if (!query || query.length < 2) { box.innerHTML = ''; return; }
+
+    fetch('/hms/backend/api/patients.php?action=search&q=' + encodeURIComponent(query) + '&limit=10')
+        .then(r => r.json())
+        .then(data => {
+            const patients = (data && data.patients) || [];
+            if (!patients.length) { box.innerHTML = '<div class="assign-empty">No matching patients</div>'; return; }
+            box.innerHTML = patients.map(p => {
+                const name = [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(' ');
+                return '<div class="assign-result" data-id="' + p.id + '" data-name="' + name.replace(/"/g, '&quot;') + '">' +
+                    '<strong>' + name + '</strong>' +
+                    (p.hospital_number ? ' <span class="assign-hn">' + p.hospital_number + '</span>' : '') +
+                    '</div>';
+            }).join('');
+        })
+        .catch(err => { console.error('Patient search error:', err); box.innerHTML = '<div class="assign-empty">Search failed</div>'; });
+}
+
+async function handleAssignSubmit(e) {
+    e.preventDefault();
+    const bedId = document.getElementById('assign-bed-id').value;
+    const patientId = document.getElementById('assign-patient-id').value;
+    if (!patientId) { showAlert('Please select a patient to assign.', 'error'); return; }
+
+    try {
+        const response = await fetch('/hms/backend/api/beds.php?action=assign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bed_id: bedId, patient_id: patientId })
+        });
+        const result = await response.json();
+        if (result.success) {
+            showAlert(result.message || 'Bed assigned', 'success');
+            document.getElementById('assign-bed-modal').classList.remove('show');
+            await loadBeds();
+        } else {
+            showAlert((result.errors && Object.values(result.errors).join(', ')) || result.error || 'Assignment failed', 'error');
+        }
+    } catch (error) {
+        console.error('Bed assignment error:', error);
+        showAlert('Network error. Please try again.', 'error');
+    }
+}
+
+async function dischargeBed(bedId) {
+    if (!confirm('Are you sure you want to discharge this patient from the bed?')) return;
+
+    try {
+        const response = await fetch('/hms/backend/api/beds.php?action=release', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bed_id: bedId })
+        });
+        const result = await response.json();
+        if (result.success) {
+            showAlert(result.message || 'Bed released', 'success');
+            await loadBeds();
+        } else {
+            showAlert((result.errors && Object.values(result.errors).join(', ')) || result.error || 'Discharge failed', 'error');
+        }
+    } catch (error) {
+        console.error('Bed discharge error:', error);
+        showAlert('Network error. Please try again.', 'error');
     }
 }
 

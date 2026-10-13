@@ -227,6 +227,49 @@
     </div>
 </div>
 
+<!-- New Visit Modal -->
+<div class="modal" id="visit-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>New Visit</h3>
+            <button class="modal-close" id="close-visit-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="visit-form">
+                <input type="hidden" id="visit-patient-id">
+                <div class="form-group">
+                    <label>Patient</label>
+                    <input type="text" id="visit-patient-name" readonly>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="visit-type">Visit Type *</label>
+                        <select id="visit-type" name="visit_type" required>
+                            <option value="opd">OPD</option>
+                            <option value="ipd">IPD</option>
+                            <option value="emergency">Emergency</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="visit-department">Department *</label>
+                        <select id="visit-department" name="department_id" required>
+                            <option value="">Select Department</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="visit-complaint">Chief Complaint</label>
+                    <textarea id="visit-complaint" name="chief_complaint" rows="2"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Create Visit</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-visit">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 let patientsData = [];
 let sponsorsData = [];
@@ -424,6 +467,13 @@ function setupEventListeners() {
     });
     
     document.getElementById('patient-form').addEventListener('submit', handlePatientSubmit);
+    document.getElementById('close-visit-modal').addEventListener('click', () => {
+        document.getElementById('visit-modal').classList.remove('show');
+    });
+    document.getElementById('cancel-visit').addEventListener('click', () => {
+        document.getElementById('visit-modal').classList.remove('show');
+    });
+    document.getElementById('visit-form').addEventListener('submit', handleVisitSubmit);
     
     document.getElementById('search-patients').addEventListener('input', debounce(function() {
         if (patientsView === 'admitted') { loadAdmitted(); return; }
@@ -553,8 +603,70 @@ function populatePatientIdentificationBar(p) {
 }
 
 function createVisit(patientId) {
-    // TODO: Implement visit creation
-    alert('Visit creation to be implemented');
+    const modal = document.getElementById('visit-modal');
+    const form = document.getElementById('visit-form');
+    if (!modal || !form) return;
+    form.reset();
+    document.getElementById('visit-patient-id').value = patientId;
+
+    const p = (patientsData || []).find(function (x) { return String(x.id) === String(patientId); });
+    document.getElementById('visit-patient-name').value = p
+        ? [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(' ')
+        : ('Patient #' + patientId);
+
+    loadVisitDepartments();
+    modal.classList.add('show');
+}
+
+async function loadVisitDepartments() {
+    const sel = document.getElementById('visit-department');
+    if (!sel || sel.dataset.loaded === '1') return;
+    try {
+        const res = await fetch('/hms/backend/api/users.php?action=departments');
+        const data = await res.json();
+        const depts = (data && data.departments) || [];
+        sel.innerHTML = '<option value="">Select Department</option>' +
+            depts.map(function (d) { return '<option value="' + d.id + '">' + escPt(d.name) + '</option>'; }).join('');
+        sel.dataset.loaded = '1';
+    } catch (e) {
+        console.error('Departments load error:', e);
+    }
+}
+
+async function handleVisitSubmit(e) {
+    e.preventDefault();
+    const departmentId = document.getElementById('visit-department').value;
+    if (!departmentId) { alert('Please select a department.'); return; }
+
+    const payload = {
+        patient_id: document.getElementById('visit-patient-id').value,
+        visit_type: document.getElementById('visit-type').value,
+        department_id: departmentId,
+        chief_complaint: document.getElementById('visit-complaint').value
+    };
+
+    try {
+        const res = await fetch('/hms/backend/api/visits.php?action=create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('visit-modal').classList.remove('show');
+            if (typeof showAlert === 'function') {
+                showAlert('Visit created' + (data.visit && data.visit.visit_number ? ': ' + data.visit.visit_number : ''), 'success');
+            } else {
+                alert('Visit created successfully');
+            }
+            refreshPatientsView();
+        } else {
+            const msg = (data.errors && Object.values(data.errors).join(', ')) || data.error || 'Visit creation failed';
+            alert('Error: ' + msg);
+        }
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
 }
 
 function calculateAge(dateOfBirth) {

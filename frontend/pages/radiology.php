@@ -916,6 +916,14 @@ async function loadRadRequests() {
         if (modEl && modEl.value) {
             reqs = reqs.filter(function (x) { return RAD_MODALITY_OF[x.exam_type] === modEl.value; });
         }
+        // Sort by requested_at descending (newest first)
+        reqs.sort(function(a, b) {
+            var ta = new Date(a.requested_at || 0).getTime();
+            var tb = new Date(b.requested_at || 0).getTime();
+            if (isNaN(ta)) ta = 0;
+            if (isNaN(tb)) tb = 0;
+            return tb - ta;
+        });
         radData = reqs;
     } catch (e) {
         console.error('Radiology load error:', e);

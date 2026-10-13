@@ -541,17 +541,22 @@ function hcBrandLogo($px = 45) {
             <a href="#" class="nav-link" data-page="appointment-calendar">Appointment Calendar</a>
             <a href="#" class="nav-link" data-page="messages">Messages &amp; Alerts <span class="nav-msg-badge" id="msgs-nav-badge" style="display:none">0</span></a>
             <a href="#" class="nav-link" data-page="records">Patient Record Management</a>
+            <a href="#" class="nav-link" data-page="patients">Patients</a>
+            <a href="#" class="nav-link" data-page="visits">Visits</a>
+            <a href="#" class="nav-link" data-page="consultations">Consultations</a>
             <a href="#" class="nav-link" data-page="admissions">Admissions</a>
             <a href="#" class="nav-link" data-page="active-inpatients">Active In-Patients</a>
+            <a href="#" class="nav-link" data-page="beds">Bed Management</a>
             <a href="#" class="nav-link" data-page="pharmacy">Pharmacy</a>
             <a href="#" class="nav-link" data-page="prices">Service Prices</a>
-            <a href="#" class="nav-link" data-page="reports">View Alerts</a>
+            <a href="#" class="nav-link" data-page="reports">Reports</a>
             <a href="#" class="nav-link" data-page="lab-management">Lab Management</a>
             <a href="#" class="nav-link" data-page="radiology">Radiology</a>
             <a href="#" class="nav-link" data-page="account-management">Account Management</a>
             <a href="#" class="nav-link" data-page="users">User Management</a>
             <a href="#" class="nav-link" data-page="administrator">Administrator</a>
-            <a href="#" class="nav-link" data-page="wards">Departments</a>
+            <a href="#" class="nav-link" data-page="departments">Departments</a>
+            <a href="#" class="nav-link" data-page="wards">Wards &amp; Beds</a>
             <a href="#" class="nav-link" data-page="system-activities">System Activities</a>
         </nav>
 
@@ -750,7 +755,7 @@ function hcBrandLogo($px = 45) {
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                                     </div>
                                     <div class="text-center flex-grow-1 me-4">
-                                        <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">NHIA CLAIM</span>
+                                        <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">NHIA / SPONSORS</span>
                                     </div>
                                 </div>
                             </div>
@@ -858,13 +863,6 @@ function hcBrandLogo($px = 45) {
                 </button>
             </div>
             <div class="search-row">
-                <label for="p-moh">By MOH No</label>
-                <input id="p-moh" type="text" placeholder="MOH number">
-                <button type="button" class="btn-search" title="Search" aria-label="Search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-                </button>
-            </div>
-            <div class="search-row">
                 <label for="p-contact">By Contact Name</label>
                 <input id="p-contact" type="text" placeholder="Contact">
                 <button type="button" class="btn-search" title="Search" aria-label="Search">
@@ -881,13 +879,6 @@ function hcBrandLogo($px = 45) {
             <div class="search-row">
                 <label for="p-cemail">By Contact Email</label>
                 <input id="p-cemail" type="text" placeholder="Contact email">
-                <button type="button" class="btn-search" title="Search" aria-label="Search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-                </button>
-            </div>
-            <div class="search-row">
-                <label for="p-tag">By Patient Tag</label>
-                <input id="p-tag" type="text" placeholder="Tag">
                 <button type="button" class="btn-search" title="Search" aria-label="Search">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
                 </button>
@@ -1054,7 +1045,6 @@ function hcBrandLogo($px = 45) {
                     <div class="pp-field"><span>EMAIL</span><b id="pp-email">—</b></div>
                     <div class="pp-field"><span>RESIDENTIAL ADDRESS</span><b id="pp-address">—</b></div>
                     <div class="pp-field"><span>NHIS NUMBER</span><b id="pp-nhis">—</b></div>
-                    <div class="pp-field"><span>GHA / MOH NUMBER</span><b id="pp-gha">—</b></div>
                     <div class="pp-field"><span>SPONSOR</span><b id="pp-sponsor">—</b></div>
                     <div class="pp-field"><span>EMERGENCY CONTACT</span><b id="pp-emergency">—</b></div>
                     <div class="pp-field"><span>REGISTERED ON</span><b id="pp-registered">—</b></div>
@@ -1219,27 +1209,27 @@ window.fmtDateTime = fmtDateTime;
     }
     window.loadPage=loadPage; /* expose for navigateTo fallback — pages without a sidebar link */
     /* Module-card router : maps uniform grid module ids to the SPA page keys and navigates.
-       Kept global so inline onclick="loadModuleTab(...)" hooks on the dashboard grid work. */
+       Exposed as window.MODULE_PAGE_MAP so inline onclick="loadModuleTab(...)" hooks on the
+       dashboard grid work, and so adding a module card has one obvious place to update. */
+    window.MODULE_PAGE_MAP={
+        appointment_calendar:'appointment-calendar',
+        patient_records:'records',
+        administrator:'administrator',
+        accounts_management:'account-management',
+        investigations:'lab-management',
+        radiology:'radiology',
+        pharmacy_management:'pharmacy',
+        mis:'reports',
+        ipd_management:'ipd-management',
+        active_inpatients:'active-inpatients',
+        departments:'departments',
+        system_activities:'system-activities',
+        nhia_claim:'sponsors',
+        messages_alerts:'messages',
+        inventory_management:'inventory_management'
+    };
     window.loadModuleTab=function(moduleId){
-        var map={
-            appointment_calendar:'appointment-calendar',
-            patient_records:'records',
-            administrator:'administrator',
-            accounts_management:'account-management',
-            investigations:'lab-management',
-            radiology:'radiology',
-            pharmacy_management:'pharmacy',
-            mis:'reports',
-            ipd_management:'ipd-management',
-            active_inpatients:'active-inpatients',
-            departments:'departments',
-            system_activities:'system-activities',
-            nhia_claim:'sponsors',
-            radiology:'vitals',
-            messages_alerts:'messages',
-            inventory_management:'inventory_management'
-        };
-        var page=map[moduleId] || moduleId;
+        var page=window.MODULE_PAGE_MAP[moduleId] || moduleId;
         var target=document.querySelector('.side-nav .nav-link[data-page="'+page+'"]');
         loadPage(page, target || null);
     };
@@ -1640,11 +1630,9 @@ function showAlert(message,type){
         'p-nhis':'nhis',
         'p-area':'area',
         'p-mobile':'mobile',
-        'p-moh':'moh',
         'p-contact':'contact_name',
         'p-cno':'contact_number',
-        'p-cemail':'contact_email',
-        'p-tag':''
+        'p-cemail':'contact_email'
     };
     var resultsPanel=document.getElementById('patientSearchResults');
     var resultsList=document.getElementById('resultsList');
@@ -1686,7 +1674,6 @@ function showAlert(message,type){
                         '<div class="result-meta" style="display:none" data-detail="1">'+
                             (p.date_of_birth?'DOB: '+esc(p.date_of_birth):'')+
                             (p.gender?' &nbsp;·&nbsp; '+esc(p.gender.charAt(0).toUpperCase()+p.gender.slice(1)):'')+
-                            (p.gha_number?' &nbsp;·&nbsp; GHA '+esc(p.gha_number):'')+
                             '<br>'+(p.address?'📍 '+esc(p.address):'')+
                             (p.email?'<br>✉ '+esc(p.email):'')+
                             (p.emergency_contact_name?'<br>Emergency: '+esc(p.emergency_contact_name)+(p.emergency_contact_phone?' ('+esc(p.emergency_contact_phone)+')':''):'')+
@@ -1776,7 +1763,6 @@ function showAlert(message,type){
         fillPp('pp-email',p.email);
         fillPp('pp-address',p.address);
         fillPp('pp-nhis',p.nhia_number);
-        fillPp('pp-gha',p.gha_number);
         fillPp('pp-sponsor',p.sponsor_name||'Self-Pay');
         fillPp('pp-emergency',(p.emergency_contact_name||'')+(p.emergency_contact_phone?' ('+p.emergency_contact_phone+')':''));
         fillPp('pp-registered',p.registration_date?fmtDate(p.registration_date):null);

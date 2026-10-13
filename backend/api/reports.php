@@ -137,7 +137,7 @@ function generateConsultationsSummaryReport($db, $dateFrom, $dateTo) {
                 consultation_type,
                 COUNT(*) as total_consultations,
                 SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-                CONCAT(u.first_name, ' ', u.last_name) as doctor_name
+                u.full_name as doctor_name
             FROM consultations c
             JOIN users u ON c.doctor_id = u.id
             WHERE DATE(consultation_date) BETWEEN ? AND ?
@@ -288,7 +288,7 @@ function generateAuditLogReport($db, $dateFrom, $dateTo) {
                 action,
                 table_name,
                 COUNT(*) as total_actions,
-                CONCAT(u.first_name, ' ', u.last_name) as user_name
+                u.full_name as user_name
             FROM audit_trails a
             JOIN users u ON a.user_id = u.id
             WHERE DATE(a.created_at) BETWEEN ? AND ?

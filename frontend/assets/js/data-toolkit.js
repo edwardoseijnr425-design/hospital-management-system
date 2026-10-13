@@ -514,7 +514,8 @@
                 '</div>' +
                 '<div class="dt-modal-foot">' +
                     '<span class="dt-foot-note" id="dt-foot-note"></span>' +
-                    '<div><button class="dt-btn" id="dt-cancel" type="button">Cancel</button>' +
+                    '<div><button class="dt-btn" id="dt-export" type="button">Download current data</button>' +
+                    '<button class="dt-btn" id="dt-cancel" type="button">Cancel</button>' +
                     '<button class="dt-btn dt-import" id="dt-run" type="button" disabled>Import</button></div>' +
                 '</div>' +
             '</div>';
@@ -551,6 +552,12 @@
 
         overlay.querySelector('.dt-close').addEventListener('click', close);
         $('dt-cancel').addEventListener('click', close);
+        $('dt-export').addEventListener('click', function (e) {
+            e.preventDefault();
+            // Streams the current contents of the selected dataset, including
+            // datasets that have no rendered table on a page.
+            window.location.href = API + '?action=export&dataset=' + encodeURIComponent(state.datasetKey);
+        });
         overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
         document.addEventListener('keydown', onKey);
 

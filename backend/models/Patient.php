@@ -101,19 +101,55 @@ class Patient {
         return $this->db->fetchOne($sql, [$hospitalNumber]);
     }
     
-    public function search($query, $limit = 20) {
+    public function search($query, $limit = 20, $field = null) {
+        $field = is_string($field) ? $field : '';
+        $searchTerm = '%' . $query . '%';
+        $columns = $this->resolveSearchField($field);
+        
         $sql = "SELECT p.*, s.name as sponsor_name
                 FROM patient_registrations p
                 LEFT JOIN sponsors s ON p.sponsor_id = s.id
-                WHERE p.is_active = 1
-                AND (p.hospital_number LIKE ? 
-                     OR CONCAT(p.first_name, ' ', p.last_name) LIKE ?
-                     OR p.phone LIKE ?)
-                ORDER BY p.registration_date DESC
-                LIMIT ?";
+                WHERE p.is_active = 1";
         
-        $searchTerm = '%' . $query . '%';
-        return $this->db->fetchAll($sql, [$searchTerm, $searchTerm, $searchTerm, $limit]);
+        $params = [];
+        if ($columns) {
+            // Field-specific search: match any of the columns that back this field.
+            $parts = array_map(function ($col) {
+                return 'p.' . $col . ' LIKE ?';
+            }, $columns);
+            $sql .= ' AND (' . implode(' OR ', $parts) . ')';
+            $params = array_fill(0, count($columns), $searchTerm);
+        } else {
+            // Generic fallback (name, hospital number or phone).
+            $sql .= " AND (p.hospital_number LIKE ?
+                     OR CONCAT(p.first_name, ' ', p.last_name) LIKE ?
+                     OR p.phone LIKE ?)";
+            $params = [$searchTerm, $searchTerm, $searchTerm];
+        }
+        
+        $sql .= ' ORDER BY p.registration_date DESC LIMIT ?';
+        $params[] = $limit;
+        
+        return $this->db->fetchAll($sql, $params);
+    }
+    
+    /**
+     * Map a dashboard search-field key to the patient_registrations columns
+     * that back it. Unknown/empty keys return null so the caller falls back
+     * to the generic search instead of silently filtering on nothing.
+     */
+    private function resolveSearchField($field) {
+        $map = [
+            'name'           => ['first_name', 'middle_name', 'last_name'],
+            'patient_no'     => ['hospital_number'],
+            'nhis'           => ['nhia_number'],
+            'area'           => ['address'],
+            'mobile'         => ['phone', 'secondary_phone'],
+            'contact_name'   => ['emergency_contact_name'],
+            'contact_number' => ['emergency_contact_phone'],
+            'contact_email'  => ['email'],
+        ];
+        return $map[$field] ?? null;
     }
     
     public function getAll($filters = [], $page = 1, $perPage = ITEMS_PER_PAGE) {

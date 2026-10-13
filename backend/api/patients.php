@@ -61,9 +61,10 @@ function getPatients() {
 function searchPatients() {
     $query = $_GET['q'] ?? '';
     $limit = $_GET['limit'] ?? 20;
+    $field = $_GET['field'] ?? '';
     
     $patientModel = new Patient();
-    $patients = $patientModel->search($query, $limit);
+    $patients = $patientModel->search($query, $limit, $field);
     
     jsonResponse([
         'success' => true,

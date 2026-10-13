@@ -190,6 +190,7 @@ function openConsultationModal(consultation = null) {
     const form = document.getElementById('consultation-form');
     
     form.reset();
+    resetConsultationFormMode(form);
     document.getElementById('consultation-id').value = '';
     
     if (consultation) {
@@ -245,8 +246,45 @@ async function handleConsultationSubmit(e) {
     }
 }
 
+function resetConsultationFormMode(form) {
+    Array.from(form.elements).forEach(function (el) {
+        if (el.tagName !== 'BUTTON') el.disabled = false;
+    });
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.style.display = '';
+}
+
 function viewConsultation(consultationId) {
-    alert('Consultation detail view to be implemented');
+    const consultation = consultationsData.find(c => c.id === consultationId);
+    if (!consultation) return;
+
+    const modal = document.getElementById('consultation-modal');
+    const title = document.getElementById('consultation-modal-title');
+    const form = document.getElementById('consultation-form');
+
+    form.reset();
+    resetConsultationFormMode(form);
+    document.getElementById('consultation-id').value = '';
+    title.textContent = 'Consultation Detail';
+
+    const visitSel = document.getElementById('consultation-visit');
+    if (consultation.visit_id && !Array.from(visitSel.options).some(function (o) { return String(o.value) === String(consultation.visit_id); })) {
+        visitSel.innerHTML += '<option value="' + consultation.visit_id + '">' +
+            (consultation.visit_number || ('Visit #' + consultation.visit_id)) + ' - ' + (consultation.patient_name || '') + '</option>';
+    }
+    visitSel.value = consultation.visit_id || '';
+    document.getElementById('consultation-type').value = consultation.consultation_type || '';
+    document.getElementById('consultation-diagnosis').value = consultation.diagnosis || '';
+    document.getElementById('consultation-notes').value = consultation.notes || '';
+
+    // Read-only mode: lock the fields and hide the save button.
+    Array.from(form.elements).forEach(function (el) {
+        if (el.tagName !== 'BUTTON') el.disabled = true;
+    });
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.style.display = 'none';
+
+    modal.classList.add('show');
 }
 
 function editConsultation(consultationId) {
