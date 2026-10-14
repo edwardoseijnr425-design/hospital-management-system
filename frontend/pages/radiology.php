@@ -123,6 +123,35 @@ foreach ($__radCatalog as $__mod => $__studies) {
 #rad-page .rad-field textarea{resize:vertical}
 #rad-page .rad-field select:focus,#rad-page .rad-field input:focus,#rad-page .rad-field textarea:focus{outline:none;border-color:#1b659d;background:#fff;box-shadow:0 0 0 2px rgba(27,101,157,.18)}
 #rad-page .rad-field input[readonly]{background:#f1f5f9;color:#15803d;font-weight:700;cursor:not-allowed}
+/* Patient search (name / hospital number) + resolved visit */
+#rad-page .rad-pt-search{position:relative}
+#rad-page .rad-pt-search .rad-pt-ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;fill:none;stroke:#94a3b8;stroke-width:2;pointer-events:none}
+#rad-page .rad-pt-search input{padding-left:30px;padding-right:26px}
+#rad-page .rad-pt-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:#e2e8f0;color:#475569;width:18px;height:18px;border-radius:50%;font-size:13px;line-height:1;cursor:pointer;padding:0}
+#rad-page .rad-pt-clear:hover{background:#cbd5e1}
+#rad-page .rad-pt-results{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 10px 24px rgba(15,23,42,.16);max-height:240px;overflow:auto;z-index:40;display:none}
+#rad-page .rad-pt-results.show{display:block}
+#rad-page .rad-pt-opt{padding:8px 10px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid #f1f5f9}
+#rad-page .rad-pt-opt:last-child{border-bottom:none}
+#rad-page .rad-pt-opt:hover{background:#eff6ff}
+#rad-page .rad-pt-opt .nm{font-weight:700;color:#1e293b;display:block}
+#rad-page .rad-pt-opt .sub{display:block;font-size:10px;color:#94a3b8;font-weight:600}
+#rad-page .rad-pt-opt .num{color:#1b659d;font-weight:700;white-space:nowrap}
+#rad-page .rad-pt-results .rad-pt-empty{padding:10px;color:#94a3b8;font-weight:600}
+#rad-page .rad-pt-selected{margin-top:2px}
+#rad-page .rad-pt-card{display:flex;align-items:center;gap:9px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px}
+#rad-page .rad-pt-card>i{color:#1b659d;font-size:16px}
+#rad-page .rad-pt-card-txt{min-width:0}
+#rad-page .rad-pt-card-txt p{margin:0}
+#rad-page #radPtName{font-weight:800;color:#0f2d59;font-size:12px}
+#rad-page #radPtMeta{font-size:10px;color:#64748b;font-weight:600}
+#rad-page .rad-pt-visit{margin-top:9px;display:flex;flex-direction:column;gap:5px}
+#rad-page .rad-pt-visit label{font-weight:700;color:#475569;font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+#rad-page .rad-pt-visit label .req{color:#e11d48}
+#rad-page .rad-pt-visit select{width:100%;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;background:#f8fafc;color:#334155;font-family:inherit}
+#rad-page .rad-pt-visit select:focus{outline:none;border-color:#1b659d;background:#fff;box-shadow:0 0 0 2px rgba(27,101,157,.18)}
+#rad-page .rad-hint{margin:0;font-size:10.5px;color:#64748b;font-weight:600}
+#rad-page .rad-hint.warn{color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:6px 8px}
 #rad-page .span-2,#rad-page .span-3,#rad-page .span-4{grid-column:span 1}
 #rad-page .span-6{grid-column:span 2}
 #rad-page .rad-form-actions{grid-column:span 2;display:flex;justify-content:flex-end;gap:10px;margin-top:4px}
@@ -323,10 +352,27 @@ foreach ($__radCatalog as $__mod => $__studies) {
       </div>
       <form class="rad-form" id="radEntryForm">
         <div class="rad-field span-3">
-          <label for="radPatient">Patient / Visit <span class="req">*</span></label>
-          <select id="radPatient" required>
-            <option value="">-- Select Patient --</option>
-          </select>
+          <label for="radPtSearch">Patient — search name or ID <span class="req">*</span></label>
+          <div class="rad-pt-search">
+            <svg class="rad-pt-ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="radPtSearch" placeholder="Type a patient name or hospital number..." autocomplete="off">
+            <button type="button" class="rad-pt-clear" id="radPtClearBtn" onclick="radClearPatient()" title="Clear patient" style="display:none">&times;</button>
+            <div class="rad-pt-results" id="radPtResults"></div>
+          </div>
+          <div class="rad-pt-selected" id="radPtSelected" style="display:none">
+            <div class="rad-pt-card">
+              <i class="fa-solid fa-user-injured"></i>
+              <div class="rad-pt-card-txt">
+                <p id="radPtName">Patient</p>
+                <p id="radPtMeta">--</p>
+              </div>
+            </div>
+            <div class="rad-pt-visit" id="radVisitWrap">
+              <label for="radVisit">Visit to attach <span class="req">*</span></label>
+              <select id="radVisit" onchange="radVisitChanged()"></select>
+              <p class="rad-hint" id="radVisitHint"></p>
+            </div>
+          </div>
         </div>
 
         <div class="rad-field span-2">
@@ -658,7 +704,9 @@ var RAD_PRICE_OF = (function () {
     return out;
 })();
 
-var radVisits = [];
+var radSelectedPatient = null;   // {id, name, number, gender, age} chosen via the order-form search
+var radSelectedVisitId = null;   // visit_id the imaging order will attach to
+var radPtSearchTimer = null;
 var radData = [];
 var radView = 'worklist';
 var radKnownIds = {};
@@ -669,8 +717,19 @@ var RAD_POLL_MS = 20000;
 
 async function initRadiology() {
     setupRadEvents();
-    await Promise.all([loadRadVisits(), loadRadRequests()]);
+    initRadPatientSearch();
+    await loadRadRequests();
     startRadRefresh();
+    // Cross-station handoff: "Sonography / Radiology" from the patient folder
+    // banner lands here. Mount the shared folder for that patient and preload
+    // them into the order form's patient search.
+    var pfCtx = (typeof window.hmsConsumePatientContext === 'function') ? window.hmsConsumePatientContext() : null;
+    if (pfCtx && pfCtx.patientId) {
+        var host = document.getElementById('hmsPatientFolder');
+        if (window.HMSPatientFolder && host) window.HMSPatientFolder.mount(host, pfCtx.patientId, { station: 'radiology' });
+        radPtSelectPatientById(pfCtx.patientId);
+        try { if (host) host.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+    }
 }
 
 function setupRadEvents() {
@@ -761,28 +820,173 @@ async function radLivePoll() {
     }
 }
 
-/* ================= VISITS / PATIENT SELECT ================= */
-async function loadRadVisits() {
-    try {
-        var r = await fetch('/hms/backend/api/visits.php');
-        var d = await r.json();
-        if (d.success) radVisits = d.visits || [];
-    } catch (e) {
-        console.error('Visits load error:', e);
-        radVisits = [];
-    }
-    renderRadVisitSelect();
+/* ============ PATIENT SEARCH (name / hospital number -> visit) ============
+   Replaces the old "every visit in a <select>" control. A clinician types a
+   name or hospital number, picks the patient, and the form resolves the visit
+   the imaging order will hang off (visit_id is still what the API stores). */
+function initRadPatientSearch() {
+    var input = document.getElementById('radPtSearch');
+    if (!input) return;
+    input.addEventListener('input', function () {
+        if (radPtSearchTimer) clearTimeout(radPtSearchTimer);
+        radPtSearchTimer = setTimeout(function () { radPtDoSearch(input.value); }, 300);
+    });
+    input.addEventListener('blur', function () { setTimeout(radHidePtResults, 150); });
 }
 
-function renderRadVisitSelect() {
-    var sel = document.getElementById('radPatient');
-    if (!sel) return;
-    var keep = sel.value;
-    sel.innerHTML = '<option value="">-- Select Patient --</option>'
-        + radVisits.map(function (v) {
-            return '<option value="' + v.id + '">' + escHtml(v.visit_number + ' - ' + v.patient_name + ' (' + v.hospital_number + ')') + '</option>';
+function radHidePtResults() {
+    var box = document.getElementById('radPtResults');
+    if (box) box.classList.remove('show');
+}
+
+async function radPtDoSearch(q) {
+    var box = document.getElementById('radPtResults');
+    if (!box) return;
+    q = (q || '').trim();
+    if (q.length < 2) { radHidePtResults(); return; }
+    try {
+        // One term is offered to both the name and the patient-number columns,
+        // which the endpoint ORs together, so either kind of search matches.
+        var r = await fetch('/hms/backend/api/search_patients.php?name=' + encodeURIComponent(q)
+            + '&patient_no=' + encodeURIComponent(q));
+        var d = await r.json();
+        var list = (d && d.patients) || [];
+        if (!list.length) {
+            box.innerHTML = '<div class="rad-pt-empty">No matching patient found</div>';
+            box.classList.add('show');
+            return;
+        }
+        box.innerHTML = list.map(function (p, i) {
+            var sub = [p.gender ? (p.gender.charAt(0).toUpperCase() + p.gender.slice(1)) : '', (p.age != null ? p.age + ' yrs' : '')].filter(Boolean).join(', ');
+            return '<div class="rad-pt-opt" data-idx="' + i + '">'
+                + '<span><span class="nm">' + escHtml(p.patient_name || '--') + '</span>'
+                + '<span class="sub">' + escHtml(sub || '&nbsp;') + '</span></span>'
+                + '<span class="num">' + escHtml(p.patient_number || '') + '</span></div>';
         }).join('');
-    if (keep) sel.value = keep;
+        box.querySelectorAll('.rad-pt-opt').forEach(function (el) {
+            el.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                radPtChoose(list[parseInt(el.getAttribute('data-idx'), 10)]);
+            });
+        });
+        box.classList.add('show');
+    } catch (err) {
+        console.error('Patient search error:', err);
+        box.innerHTML = '<div class="rad-pt-empty">Search failed — try again</div>';
+        box.classList.add('show');
+    }
+}
+
+function radPtChoose(p) {
+    if (!p) return;
+    radSelectedPatient = {
+        id: p.id,
+        name: p.patient_name,
+        number: p.patient_number,
+        gender: p.gender,
+        age: p.age
+    };
+    var input = document.getElementById('radPtSearch');
+    if (input) input.value = (p.patient_name || 'Patient') + (p.patient_number ? ' (' + p.patient_number + ')' : '');
+    radHidePtResults();
+    radRenderSelectedPatient();
+    radLoadVisits(p.id);
+}
+
+/* Preload a patient by id — used by the patient-folder handoff, where we only
+   know the id and must fetch the display name. */
+async function radPtSelectPatientById(patientId) {
+    if (!patientId) return;
+    try {
+        var r = await fetch('/hms/backend/api/patients.php?action=summary&id=' + encodeURIComponent(patientId));
+        var d = await r.json();
+        if (!d || !d.success || !d.patient) return;
+        var p = d.patient;
+        radPtChoose({
+            id: p.patient_id,
+            patient_name: p.full_name,
+            patient_number: p.hospital_number,
+            gender: p.gender,
+            age: p.age
+        });
+    } catch (e) { /* handoff is best-effort */ }
+}
+
+function radRenderSelectedPatient() {
+    var p = radSelectedPatient;
+    var wrap = document.getElementById('radPtSelected');
+    var clearBtn = document.getElementById('radPtClearBtn');
+    if (clearBtn) clearBtn.style.display = p ? 'inline-block' : 'none';
+    if (!p) { if (wrap) wrap.style.display = 'none'; return; }
+    if (wrap) wrap.style.display = 'block';
+    var nameEl = document.getElementById('radPtName');
+    var metaEl = document.getElementById('radPtMeta');
+    if (nameEl) nameEl.textContent = p.name || 'Patient';
+    var bits = [];
+    if (p.number) bits.push('ID: ' + p.number);
+    if (p.gender) bits.push(p.gender);
+    if (p.age != null && p.age !== '') bits.push(p.age + ' yrs');
+    if (metaEl) metaEl.textContent = bits.join('   |   ');
+}
+
+async function radLoadVisits(patientId) {
+    var sel = document.getElementById('radVisit');
+    var hint = document.getElementById('radVisitHint');
+    radSelectedVisitId = null;
+    if (sel) sel.innerHTML = '<option value="">Loading visits...</option>';
+    if (hint) { hint.textContent = ''; hint.className = 'rad-hint'; }
+    try {
+        var r = await fetch('/hms/backend/api/visits.php?patient_id=' + encodeURIComponent(patientId) + '&per_page=50');
+        var d = await r.json();
+        var visits = (d && d.visits) || [];
+        if (!visits.length) {
+            if (sel) sel.innerHTML = '<option value="">No visit on record</option>';
+            if (hint) { hint.textContent = 'This patient has no visit on record. Register a visit before ordering imaging.'; hint.className = 'rad-hint warn'; }
+            return;
+        }
+        if (sel) {
+            sel.innerHTML = '<option value="">-- Select visit --</option>' + visits.map(function (v) {
+                var st = String(v.status || '').replace(/_/g, ' ');
+                var when = v.visit_date ? (window.fmtDateTime ? fmtDateTime(v.visit_date) : v.visit_date) : '';
+                var label = (v.visit_number || ('Visit #' + v.id)) + (st ? '  •  ' + st : '') + (when ? '  •  ' + when : '');
+                return '<option value="' + v.id + '">' + escHtml(label) + '</option>';
+            }).join('');
+        }
+        // Newest still-open visit wins; otherwise the newest on record.
+        var open = visits.find(function (v) { return v.status === 'pending' || v.status === 'in_progress'; });
+        var pick = open || visits[0];
+        if (sel) sel.value = String(pick.id);
+        radSelectedVisitId = String(pick.id);
+        if (hint) {
+            hint.textContent = visits.length + ' visit' + (visits.length === 1 ? '' : 's') + ' on record — the newest open one is preselected.';
+            hint.className = 'rad-hint';
+        }
+    } catch (e) {
+        console.error('Visits load error:', e);
+        if (sel) sel.innerHTML = '<option value="">Could not load visits</option>';
+        if (hint) { hint.textContent = "Could not load this patient's visits."; hint.className = 'rad-hint warn'; }
+    }
+}
+
+function radVisitChanged() {
+    var sel = document.getElementById('radVisit');
+    radSelectedVisitId = sel ? sel.value : null;
+}
+
+function radClearPatient() {
+    radSelectedPatient = null;
+    radSelectedVisitId = null;
+    var input = document.getElementById('radPtSearch');
+    if (input) { input.value = ''; input.focus(); }
+    var wrap = document.getElementById('radPtSelected');
+    if (wrap) wrap.style.display = 'none';
+    var clearBtn = document.getElementById('radPtClearBtn');
+    if (clearBtn) clearBtn.style.display = 'none';
+    var sel = document.getElementById('radVisit');
+    if (sel) sel.innerHTML = '';
+    var hint = document.getElementById('radVisitHint');
+    if (hint) { hint.textContent = ''; hint.className = 'rad-hint'; }
+    radHidePtResults();
 }
 
 /* ================= MODALITY / STUDY CASCADE ================= */
@@ -834,13 +1038,15 @@ function syncRadBodyPart() {
 /* ================= ORDER SUBMIT ================= */
 async function handleRadEntrySubmit(e) {
     e.preventDefault();
-    var visitId = document.getElementById('radPatient').value;
+    var visitSel = document.getElementById('radVisit');
+    var visitId = radSelectedVisitId || (visitSel ? visitSel.value : '');
     var mod = document.getElementById('radModality').value;
     var studySel = document.getElementById('radStudy');
     var study = studySel.value;
     var latEl = document.getElementById('radLaterality');
 
-    if (!visitId) { showAlert('Select the patient / visit first.', 'error'); return; }
+    if (!radSelectedPatient) { showAlert('Search and select the patient first.', 'error'); return; }
+    if (!visitId) { showAlert('Select the visit to attach this imaging order to.', 'error'); return; }
     if (!mod) { showAlert('Select the imaging modality.', 'error'); return; }
     if (!study) { showAlert('Select the examination to be performed.', 'error'); return; }
 
@@ -874,6 +1080,7 @@ async function handleRadEntrySubmit(e) {
             showAlert(msg, 'success');
             document.getElementById('radEntryForm').reset();
             document.getElementById('radUrgency').value = 'routine';
+            radClearPatient();
             updateRadStudies();
             syncRadBodyPart();
             radSwitchTab('pending');
