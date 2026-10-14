@@ -25,6 +25,10 @@ switch ($method) {
     case 'POST':
         if ($action === 'create') {
             createPatient();
+        } elseif ($action === 'pregnancy') {
+            savePregnancy();
+        } elseif ($action === 'mortality') {
+            saveMortality();
         } else {
             jsonResponse(['error' => 'Invalid action'], 400);
         }
@@ -160,6 +164,92 @@ function getPatientStats() {
     ]);
 }
 
+// Register / open an ANC (pregnancy) record for a patient, from the
+// system-wide Patient Master Folder banner's "Tick if Pregnant" action.
+function savePregnancy() {
+    requireRole(['admin', 'records', 'nurse', 'doctor']);
+    $data = getPostData();
+
+    $patientId = (int)($data['patient_id'] ?? 0);
+    if (!$patientId) {
+        jsonResponse(['success' => false, 'error' => 'Patient ID is required'], 400);
+    }
+
+    $db = Database::getInstance();
+    $patient = $db->fetchOne("SELECT id, gender FROM patient_registrations WHERE id = ?", [$patientId]);
+    if (!$patient) {
+        jsonResponse(['success' => false, 'error' => 'Patient not found'], 404);
+    }
+    if (strtolower($patient['gender']) !== 'female') {
+        jsonResponse(['success' => false, 'error' => 'Pregnancy records can only be added for female patients.'], 422);
+    }
+
+    $gestAge = ($data['gestational_age'] ?? '') !== '' ? (int)$data['gestational_age'] : null;
+    $lmp     = !empty($data['lmp_date']) ? $data['lmp_date'] : null;
+    $edd     = !empty($data['edd_date']) ? $data['edd_date'] : null;
+    // Derive the expected delivery date (LMP + 280 days) when it was not given.
+    if (!$edd && $lmp) {
+        $edd = date('Y-m-d', strtotime($lmp . ' +280 days'));
+    }
+
+    // Only one pregnancy is "current" at a time; retire any open record first.
+    $db->query("UPDATE patient_pregnancies SET status = 'closed' WHERE patient_id = ? AND status = 'active'", [$patientId]);
+
+    $id = $db->insert('patient_pregnancies', [
+        'patient_id'      => $patientId,
+        'gestational_age' => $gestAge,
+        'lmp_date'        => $lmp,
+        'edd_date'        => $edd,
+        'status'          => 'active',
+        'recorded_by'     => getCurrentUserId(),
+    ]);
+
+    logAudit('CREATE', 'patient_pregnancies', $id, null, [
+        'patient_id' => $patientId, 'gestational_age' => $gestAge, 'lmp_date' => $lmp, 'edd_date' => $edd,
+    ]);
+
+    jsonResponse(['success' => true, 'id' => $id]);
+}
+
+// Register a mortality (death) record for a patient, from the system-wide
+// Patient Master Folder banner's "Tick if Deceased / Died" action.
+function saveMortality() {
+    requireRole(['admin', 'records', 'nurse', 'doctor']);
+    $data = getPostData();
+
+    $patientId = (int)($data['patient_id'] ?? 0);
+    if (!$patientId) {
+        jsonResponse(['success' => false, 'error' => 'Patient ID is required'], 400);
+    }
+
+    $db = Database::getInstance();
+    $patient = $db->fetchOne("SELECT id FROM patient_registrations WHERE id = ?", [$patientId]);
+    if (!$patient) {
+        jsonResponse(['success' => false, 'error' => 'Patient not found'], 404);
+    }
+
+    $deathDateTime = !empty($data['death_datetime']) ? str_replace('T', ' ', $data['death_datetime']) : null;
+    $cause         = trim($data['cause_primary'] ?? '');
+    $doctor        = trim($data['certifying_doctor'] ?? '');
+    if ($cause === '') {
+        jsonResponse(['success' => false, 'error' => 'Primary cause of death is required.'], 422);
+    }
+
+    $id = $db->insert('patient_deaths', [
+        'patient_id'        => $patientId,
+        'death_datetime'    => $deathDateTime,
+        'cause_primary'     => $cause,
+        'certifying_doctor' => $doctor !== '' ? $doctor : null,
+        'recorded_by'       => getCurrentUserId(),
+    ]);
+
+    logAudit('CREATE', 'patient_deaths', $id, null, [
+        'patient_id' => $patientId, 'death_datetime' => $deathDateTime, 'cause_primary' => $cause,
+    ]);
+
+    jsonResponse(['success' => true, 'id' => $id]);
+}
+
 // Patient identification summary (old EHMS patient bar): demographics + current bed/ward + latest vitals/diagnosis/prescription
 function getPatientSummary() {
     $patientId = $_GET['id'] ?? null;
@@ -173,10 +263,12 @@ function getPatientSummary() {
         "SELECT p.*,
                 CONCAT_WS(' ', p.first_name, NULLIF(p.middle_name, ''), p.last_name) AS full_name,
                 TIMESTAMPDIFF(YEAR, p.date_of_birth, CURDATE()) AS age,
+                s.name AS sponsor_name, s.type AS sponsor_type,
                 b.id AS bed_id, b.bed_number,
                 r.id AS room_id, r.room_number,
                 w.id AS ward_id, w.ward_name, w.ward_code
            FROM patient_registrations p
+           LEFT JOIN sponsors s ON s.id = p.sponsor_id
            LEFT JOIN beds b ON b.current_patient_id = p.id
            LEFT JOIN rooms r ON r.id = b.room_id
            LEFT JOIN wards w ON w.id = b.ward_id
@@ -237,6 +329,45 @@ function getPatientSummary() {
         ($patient['bed_number'] ? ' / Bed ' . $patient['bed_number'] : '')
     );
 
+    // Patient Master Folder additions -----------------------------------------
+    // The current open pregnancy (if any) and the mortality record (if any).
+    // Existence of a patient_deaths row is what marks a patient as deceased.
+    $pregnancy = $db->fetchOne(
+        "SELECT id, gestational_age, lmp_date, edd_date, status, created_at
+           FROM patient_pregnancies
+          WHERE patient_id = ? AND status = 'active'
+          ORDER BY created_at DESC
+          LIMIT 1",
+        [(int)$patientId]
+    );
+
+    $death = $db->fetchOne(
+        "SELECT id, death_datetime, cause_primary, certifying_doctor, created_at
+           FROM patient_deaths
+          WHERE patient_id = ?
+          ORDER BY created_at DESC
+          LIMIT 1",
+        [(int)$patientId]
+    );
+
+    // Exact age as years/months/days ("71Y 11M 11D") from the date of birth.
+    $ageParts = ['years' => null, 'months' => null, 'days' => null];
+    if (!empty($patient['date_of_birth'])) {
+        try {
+            $diff = (new DateTime($patient['date_of_birth']))->diff(new DateTime());
+            $ageParts = ['years' => $diff->y, 'months' => $diff->m, 'days' => $diff->d];
+        } catch (Exception $e) {
+            // leave nulls on an unparseable date
+        }
+    }
+
+    // NHIS patient when an NHIA number is on file or the sponsor is the NHIA.
+    $paymentType = (!empty($patient['nhia_number']) || ($patient['sponsor_type'] ?? '') === 'nhia')
+        ? 'NHIS' : 'Self Pay';
+
+    // Adult vs Child (paediatric threshold: under 18).
+    $patientType = (($patient['age'] !== null) && (int)$patient['age'] < 18) ? 'Child' : 'Adult';
+
     jsonResponse([
         'success' => true,
         'patient' => [
@@ -245,7 +376,45 @@ function getPatientSummary() {
             'full_name'       => $patient['full_name'],
             'gender'          => $patient['gender'] ? ucfirst($patient['gender']) : '',
             'age'             => $patient['age'],
+            'age_parts'       => $ageParts,
+            'age_text'        => ($ageParts['years'] !== null)
+                                    ? $ageParts['years'] . 'Y ' . $ageParts['months'] . 'M ' . $ageParts['days'] . 'D'
+                                    : null,
+            'patient_type'    => $patientType,
             'blood_group'     => $patient['blood_group'],
+            // Master-folder demographics captured at registration.
+            'first_name'      => $patient['first_name'],
+            'middle_name'     => $patient['middle_name'],
+            'last_name'       => $patient['last_name'],
+            'date_of_birth'   => $patient['date_of_birth'],
+            'registration_date' => $patient['registration_date'],
+            'marital_status'  => $patient['marital_status'],
+            'occupation'      => $patient['occupation'],
+            // WhatsApp is stored in the generic secondary phone column.
+            'whatsapp'        => $patient['secondary_phone'],
+            'email'           => $patient['email'],
+            'nationality'     => $patient['nationality'],
+            'emergency_contact_name'  => $patient['emergency_contact_name'],
+            'emergency_contact_phone' => $patient['emergency_contact_phone'],
+            'sponsor_name'    => $patient['sponsor_name'],
+            'payment_type'    => $paymentType,
+            'is_pregnant'     => (bool)$pregnancy,
+            'pregnancy'       => $pregnancy ? [
+                'id'              => (int)$pregnancy['id'],
+                'gestational_age' => $pregnancy['gestational_age'],
+                'lmp_date'        => $pregnancy['lmp_date'],
+                'edd_date'        => $pregnancy['edd_date'],
+                'status'          => $pregnancy['status'],
+                'recorded_at'     => $pregnancy['created_at'],
+            ] : null,
+            'is_deceased'     => (bool)$death,
+            'death'           => $death ? [
+                'id'                => (int)$death['id'],
+                'death_datetime'    => $death['death_datetime'],
+                'cause_primary'     => $death['cause_primary'],
+                'certifying_doctor' => $death['certifying_doctor'],
+                'recorded_at'       => $death['created_at'],
+            ] : null,
             'nhia_number'     => $patient['nhia_number'],
             // NHIS card data captured at registration. nhis_active is derived:
             // the patient is on cover when an NHIA number is on file and the

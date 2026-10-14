@@ -1,0 +1,121 @@
+/* ============================================================================
+   Patient Master Folder Banner — system-wide patient header.
+   Shared component: rendered by assets/js/patient-folder.js into any host
+   element. Plain CSS (the project ships no Tailwind/Alpine). Everything is
+   namespaced under .hms-pf so it can sit above any module page without clashing.
+   ============================================================================ */
+.hms-pf{
+  --pf-brand:#1b659d;--pf-brand-dk:#155380;--pf-ink:#0F2D59;--pf-mute:#64748B;
+  --pf-line:#E2E8F0;--pf-bg:#F8FAFC;
+  font-family:inherit;color:#334155;font-size:12px;
+}
+.hms-pf *,.hms-pf *::before,.hms-pf *::after{box-sizing:border-box}
+.hms-pf .hms-pf-stack{display:flex;flex-direction:column;gap:10px}
+.hms-pf-empty{background:#fff;border:1px dashed var(--pf-line);border-radius:12px;padding:14px 16px;color:var(--pf-mute);font-size:12px}
+
+/* ---- compact header bar ---- */
+.hms-pf-bar{
+  background:#fff;border:1px solid var(--pf-line);border-radius:12px;
+  box-shadow:0 1px 2px rgba(15,23,42,.05);
+  padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px 14px;
+  align-items:center;justify-content:space-between;
+}
+.hms-pf-idwrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.hms-pf-avatar{
+  width:34px;height:34px;min-width:34px;border-radius:50%;
+  background:var(--pf-brand);color:#fff;display:flex;align-items:center;
+  justify-content:center;font-size:15px;font-weight:800;text-transform:uppercase;
+}
+.hms-pf-name{
+  font-size:14px;font-weight:900;letter-spacing:.3px;text-transform:uppercase;
+  color:var(--pf-ink);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.hms-pf-pill{
+  font-size:10px;font-weight:900;letter-spacing:.4px;padding:2px 8px;border-radius:999px;
+  border:1px solid var(--pf-line);background:var(--pf-bg);color:var(--pf-mute);
+  text-transform:uppercase;white-space:nowrap;
+}
+.hms-pf-pill.id{background:var(--pf-brand);border-color:var(--pf-brand);color:#fff}
+.hms-pf-pill.nhis-on{background:#ECFDF5;border-color:#A7F3D0;color:#047857}
+.hms-pf-pill.nhis-off{background:#FFF1F2;border-color:#FECDD3;color:#BE123C}
+.hms-pf-pill.selfpay{background:#FFFBEB;border-color:#FDE68A;color:#B45309}
+.hms-pf-pill.type{background:#F1F5F9;border-color:#CBD5E1;color:#334155}
+.hms-pf-pill.deceased{background:#0F172A;border-color:#0F172A;color:#fff}
+.hms-pf-pill .hms-pf-dot{
+  display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;
+  background:currentColor;vertical-align:middle;animation:hms-pf-pulse 1.6s infinite;
+}
+@keyframes hms-pf-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.hms-pf-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hms-pf-dues{font-size:11px;font-weight:900;padding:4px 10px;border-radius:6px;color:#fff;background:#047857;white-space:nowrap}
+.hms-pf-dues.owed{background:#BE123C}
+.hms-pf-btn{
+  border:none;border-radius:8px;font-size:11px;font-weight:800;letter-spacing:.3px;
+  padding:7px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  background:var(--pf-brand);color:#fff;transition:background .15s ease;
+}
+.hms-pf-btn:hover{background:var(--pf-brand-dk)}
+.hms-pf-btn.ghost{background:#fff;color:var(--pf-ink);border:1px solid var(--pf-line)}
+.hms-pf-btn.ghost:hover{background:var(--pf-bg)}
+.hms-pf-close{border:none;background:none;color:var(--pf-mute);font-size:20px;line-height:1;cursor:pointer;padding:0 2px}
+.hms-pf-close:hover{color:#BE123C}
+
+/* ---- expanded folder ---- */
+.hms-pf-folder{
+  background:#fff;border:1px solid var(--pf-line);border-radius:12px;
+  box-shadow:0 1px 2px rgba(15,23,42,.05);overflow:hidden;
+}
+.hms-pf-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:2px 22px;
+  padding:14px 16px;border-bottom:1px solid var(--pf-line);
+}
+@media(max-width:720px){.hms-pf-grid{grid-template-columns:1fr}}
+.hms-pf-row{display:flex;gap:8px;padding:3px 0;font-size:12px;line-height:1.4}
+.hms-pf-row .k{flex:0 0 118px;color:var(--pf-mute);font-weight:700;font-size:11px}
+.hms-pf-row .v{color:#0f172a;font-weight:600;word-break:break-word}
+.hms-pf-row .v.strong{font-weight:900;text-transform:uppercase}
+.hms-pf-row .v.brand{color:var(--pf-brand);font-weight:900}
+
+/* ---- special clinical actions ---- */
+.hms-pf-actions-bar{
+  display:flex;flex-wrap:wrap;gap:14px;align-items:center;
+  background:var(--pf-bg);padding:10px 16px;
+}
+.hms-pf-actions-bar .lead{
+  font-size:10px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;color:var(--pf-mute);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.hms-pf-check{display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:11px;font-weight:800}
+.hms-pf-check input{width:15px;height:15px;cursor:pointer}
+.hms-pf-check.preg{color:#BE185D}
+.hms-pf-check.dead{color:#0F172A}
+
+/* ---- inline forms ---- */
+.hms-pf-form{border-top:1px solid var(--pf-line);padding:12px 16px}
+.hms-pf-form.preg{background:#FDF2F8}
+.hms-pf-form.dead{background:#0F172A;color:#E2E8F0}
+.hms-pf-form-head{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  font-size:11px;font-weight:900;letter-spacing:.4px;text-transform:uppercase;margin-bottom:10px;
+}
+.hms-pf-form.preg .hms-pf-form-head{color:#9D174D}
+.hms-pf-form.dead .hms-pf-form-head{color:#FDA4AF}
+.hms-pf-form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 12px}
+@media(max-width:720px){.hms-pf-form-grid{grid-template-columns:1fr}}
+.hms-pf-field label{
+  display:block;font-size:9.5px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;
+}
+.hms-pf-form.preg .hms-pf-field label{color:#831843}
+.hms-pf-form.dead .hms-pf-field label{color:#94A3B8}
+.hms-pf-field input{
+  width:100%;border-radius:8px;padding:7px 9px;font-size:12px;font-family:inherit;
+  border:1px solid var(--pf-line);background:#fff;color:#0f172a;
+}
+.hms-pf-form.preg .hms-pf-field input{border-color:#F9A8D4}
+.hms-pf-form.dead .hms-pf-field input{border-color:#475569;background:#F1F5F9}
+.hms-pf-field input:focus{outline:none;border-color:var(--pf-brand);box-shadow:0 0 0 2px rgba(27,101,157,.15)}
+.hms-pf-form-foot{display:flex;justify-content:flex-end;margin-top:10px}
+.hms-pf-form.dead .hms-pf-btn{background:#BE123C}
+.hms-pf-form.dead .hms-pf-btn:hover{background:#9F1239}
+.hms-pf-note{font-size:11px;color:var(--pf-mute);margin-top:8px;line-height:1.5}
+.hms-pf-form.dead .hms-pf-note{color:#94A3B8}

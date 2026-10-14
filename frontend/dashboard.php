@@ -52,6 +52,7 @@ function hcBrandLogo($px = 45) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EHMS - Eddie Healthcare Solutions</title>
     <link rel="stylesheet" href="assets/css/date-picker.css">
+    <link rel="stylesheet" href="assets/css/patient-folder.css">
     <link rel="stylesheet" href="assets/css/data-toolkit.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
@@ -121,6 +122,9 @@ function hcBrandLogo($px = 45) {
         /* ================= CENTER WORKSPACE : MODULE GRID ================= */
         .main-content{padding:16px;background-color:#EBF0F5 !important;min-width:0;display:flex;flex-direction:column}
         .dashboard-fill{min-height:calc(100vh - 90px);display:flex;flex-direction:column}
+        /* System-wide Patient Master Folder banner host (outside #page-content) */
+        .hms-pf-host{padding:12px 12px 0}
+        .hms-pf-host:empty{display:none}
         .central-dash{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0}
 
         /* System Support Footer Bar */
@@ -588,6 +592,10 @@ function hcBrandLogo($px = 45) {
     <!-- ============ CENTER WORKSPACE : MODULE CARDS (2-COLUMN GRID) ============ -->
     <main class="main-content">
         <div class="dashboard-fill">
+            <!-- System-wide Patient Master Folder banner. Sits outside
+                 #page-content so it survives SPA navigation; mounted by the
+                 right-sidebar patient search via HMSPatientFolder.mount(). -->
+            <div id="hmsPatientFolder" class="hms-pf-host"></div>
             <div class="central-dash" id="page-content">
                 <!-- SYSTEM DASHBOARD GRID CONTAINER -->
                 <div class="container-fluid p-3">
@@ -1076,6 +1084,7 @@ function hcBrandLogo($px = 45) {
 </div>
 
 <script src="assets/js/date-picker.js"></script>
+<script src="assets/js/patient-folder.js"></script>
 <script src="assets/js/data-toolkit.js"></script>
 <script>
 /* Server login time (epoch ms) injected by PHP — consumed by initGMTDashboardTimer() */
@@ -1732,7 +1741,15 @@ function showAlert(message,type){
             var viewBtn=e.target.closest('.result-view-btn');
             if(viewBtn){
                 e.stopPropagation();
-                openPatientProfile(parseInt(viewBtn.getAttribute('data-view'),10));
+                var pid=parseInt(viewBtn.getAttribute('data-view'),10);
+                var folderHost=document.getElementById('hmsPatientFolder');
+                if(window.HMSPatientFolder && folderHost){
+                    window.HMSPatientFolder.mount(folderHost, pid);
+                    if(resultsPanel) resultsPanel.style.display='none';
+                    try{ folderHost.scrollIntoView({behavior:'smooth',block:'start'}); }catch(err){ folderHost.scrollIntoView(); }
+                } else {
+                    openPatientProfile(pid);
+                }
                 return;
             }
             var item=e.target.closest('.result-item');

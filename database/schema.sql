@@ -175,6 +175,9 @@ CREATE TABLE patient_registrations (
     phone VARCHAR(20),
     email VARCHAR(100),
     address TEXT,
+    -- Nationality is free text (e.g. Ghanaian, Nigerian). Surfaced by the
+    -- system-wide Patient Master Folder banner; optional at registration.
+    nationality VARCHAR(60) DEFAULT NULL,
     emergency_contact_name VARCHAR(100),
     emergency_contact_phone VARCHAR(20),
     blood_group ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'),
@@ -705,6 +708,40 @@ CREATE TABLE dhims_indicator_overrides (
     UNIQUE KEY uniq_indicator_month (indicator_key, report_month)
 );
 
+-- Patient Pregnancies (ANC / maternity registrations)
+-- A single running record per pregnancy, created from the "Tick if Pregnant"
+-- action on the Patient Master Folder banner. Status lets the banner show only
+-- the current, open pregnancy; older rows are kept as history.
+CREATE TABLE patient_pregnancies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT NOT NULL,
+    gestational_age INT DEFAULT NULL,
+    lmp_date DATE DEFAULT NULL,
+    edd_date DATE DEFAULT NULL,
+    status ENUM('active', 'delivered', 'closed') NOT NULL DEFAULT 'active',
+    recorded_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patient_registrations(id),
+    FOREIGN KEY (recorded_by) REFERENCES users(id)
+);
+
+-- Patient Deaths (mortality registrations)
+-- Created from the "Tick if Deceased / Died" action on the Patient Master
+-- Folder banner. Existence of a row is what marks a patient as deceased, so no
+-- flag column is needed on patient_registrations.
+CREATE TABLE patient_deaths (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT NOT NULL,
+    death_datetime DATETIME DEFAULT NULL,
+    cause_primary VARCHAR(255) DEFAULT NULL,
+    certifying_doctor VARCHAR(150) DEFAULT NULL,
+    recorded_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patient_registrations(id),
+    FOREIGN KEY (recorded_by) REFERENCES users(id)
+);
+
 -- Create indexes for performance
 CREATE INDEX idx_dhims_overrides_month ON dhims_indicator_overrides(report_month);
 CREATE INDEX idx_patient_registrations_hospital_number ON patient_registrations(hospital_number);
@@ -729,6 +766,8 @@ CREATE INDEX idx_audit_trails_user ON audit_trails(user_id);
 CREATE INDEX idx_audit_trails_action ON audit_trails(action);
 CREATE INDEX idx_audit_trails_table ON audit_trails(table_name);
 CREATE INDEX idx_audit_trails_created ON audit_trails(created_at);
+CREATE INDEX idx_patient_pregnancies_patient ON patient_pregnancies(patient_id);
+CREATE INDEX idx_patient_deaths_patient ON patient_deaths(patient_id);
 
 -- Insert default departments (old EHMS roster)
 INSERT INTO departments (name, code, description) VALUES
