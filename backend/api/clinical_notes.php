@@ -18,7 +18,11 @@ $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? 'list';
 
 requireLogin();
-requireRole(['admin', 'doctor', 'nurse']);
+// The laboratory workspace reads clinical entries for context when processing
+// and dispatching specimens, so the read actions are shared with the 'lab'
+// role. Creating and deleting entries stays with the clinical team (enforced
+// again inside createNote()/deleteNote()).
+requireRole(['admin', 'doctor', 'nurse', 'lab']);
 
 // Declared before the dispatcher below: PHP executes top-level statements in
 // order and does not hoist const, so a const placed after the dispatch block
@@ -32,8 +36,10 @@ if ($method === 'GET' && $action === 'inpatients') {
 } elseif ($method === 'GET') {
     listNotes();
 } elseif ($method === 'POST' && $action === 'create') {
+    requireRole(['admin', 'doctor', 'nurse']);
     createNote();
 } elseif ($method === 'DELETE' && $action === 'delete') {
+    requireRole(['admin', 'doctor', 'nurse']);
     deleteNote();
 } else {
     jsonResponse(['error' => 'Invalid request'], 400);

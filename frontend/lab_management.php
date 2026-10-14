@@ -129,13 +129,13 @@ body{margin:0;background:var(--s50);color:var(--s700);font-family:'Segoe UI',Tah
 .railcard.brand .rail-head{border-bottom:1px solid rgba(255,255,255,.25)}
 .railcard .rail-body{padding:10px 12px}
 
-/* Quick-links card (white with blue title bar, like the mock) */
-.quickcard{background:#fff;border:1px solid var(--s200);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
-.quickcard .qh{background:var(--brand);color:#fff;padding:6px 12px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
-.quickcard .qbody{padding:4px}
-.qlink{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 9px;border:none;background:none;border-radius:var(--radius-sm);color:var(--s600);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer}
-.qlink:hover{background:var(--s100)}
-.qlink.active{background:#EFF6FF;color:var(--brand);font-weight:800;border-left:3px solid var(--brand)}
+/* Quick-links card (navy rail, white type, amber active marker) */
+.quickcard{background:var(--brand);border:1px solid var(--brand);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05);color:#fff}
+.quickcard .qh{padding:11px 12px;color:#fff;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid rgba(255,255,255,.25)}
+.quickcard .qbody{padding:8px}
+.qlink{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 9px;border:none;background:none;border-radius:var(--radius-sm);color:#DBEAFE;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer}
+.qlink:hover{background:rgba(255,255,255,.10);color:#fff}
+.qlink.active{background:rgba(255,255,255,.20);color:#fff;font-weight:800;border-left:3px solid #FBBF24}
 .qlink .qb{background:var(--rose);color:#fff;font-size:9px;font-weight:800;border-radius:999px;padding:1px 6px}
 .btn-send{width:100%;background:var(--amber);color:#fff;border:none;border-radius:var(--radius-sm);padding:9px 12px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;font-family:inherit;box-shadow:0 1px 2px rgba(15,23,42,.08)}
 .btn-send:hover{background:#D97706}

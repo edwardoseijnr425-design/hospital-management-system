@@ -7,13 +7,18 @@ $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
 requireLogin();
-requireRole(['doctor', 'admin']);
+// Read access is shared with the laboratory workspace: a lab technician needs a
+// patient's diagnosis history alongside their specimens, and dispatching a
+// report without it risks handing over the wrong context. Writes stay clinical.
+requireRole(['doctor', 'admin', 'lab']);
 
 if ($method === 'GET') {
     getConsultations();
 } elseif ($method === 'POST' && $action === 'create') {
+    requireRole(['doctor', 'admin']);
     createConsultation();
 } elseif ($method === 'PUT') {
+    requireRole(['doctor', 'admin']);
     updateConsultation();
 } else {
     jsonResponse(['error' => 'Invalid request'], 400);
