@@ -181,6 +181,9 @@ CREATE TABLE patient_registrations (
     emergency_contact_name VARCHAR(100),
     emergency_contact_phone VARCHAR(20),
     blood_group ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'),
+    -- Genotype (sickle-cell status). Optional at registration; surfaced by the
+    -- system-wide Patient Master Folder banner alongside the blood group.
+    genotype ENUM('AA', 'AS', 'SS', 'AC', 'SC', 'CC') DEFAULT NULL,
     -- Known allergies, free text and comma separated ("Penicillin, Sulfa drugs").
     -- Free text rather than a child table because the only thing that reads it is
     -- the clinical alert badge on the Doctor Station patient header, and the

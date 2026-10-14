@@ -533,6 +533,10 @@ async function initVitals() {
     await filterVitalsByWard();
     setupDraftAutosave();
     checkDraftOnLoad();
+    // Cross-station handoff: "Nurse Triage / Vitals" from the patient folder
+    // banner opens the shared folder for that patient here.
+    var pfCtx = (typeof window.hmsConsumePatientContext === 'function') ? window.hmsConsumePatientContext() : null;
+    if (pfCtx && pfCtx.patientId) openPatientFolder(pfCtx.patientId);
 }
 
 /* ============================ WARDS ============================ */
@@ -831,7 +835,7 @@ function renderPatientCard(ctx) {
             </tr>`).join('')
         : '<tr><td colspan="8" style="color:#94A3B8;padding:12px;">No vital signs recorded yet — click + RECORD VITALS to add the first reading.</td></tr>';
 
-    const demoLine = `${escHtml(s.gender || '--')} | ${s.age != null ? escHtml(s.age) + ' Yrs' : '--'} | Genotype: -- | Blood Group: ${escHtml(s.blood_group || '--')}`;
+    const demoLine = `${escHtml(s.gender || '--')} | ${s.age != null ? escHtml(s.age) + ' Yrs' : '--'} | Genotype: ${escHtml(s.genotype || '--')} | Blood Group: ${escHtml(s.blood_group || '--')}`;
 
     // Discharge is performed from the Admissions page: it needs a final diagnosis
     // and one of seven outcomes, and that action already validates both. This
@@ -864,6 +868,10 @@ function renderPatientCard(ctx) {
                 <button class="btn btn-sm btn-outline-info text-dark d-flex align-items-center gap-1 font-weight-bold px-2 py-1" style="font-size: 11px;" onclick="openMedicalRecords(${pid})">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                     Medical Records
+                </button>
+                <button class="btn btn-sm btn-outline-secondary text-dark d-flex align-items-center gap-1 font-weight-bold px-2 py-1" style="font-size: 11px;" onclick="openPatientFolder(${pid})">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    Patient Folder
                 </button>
             </div>
         </div>
@@ -1653,6 +1661,16 @@ async function handleTransferSubmit(e) {
 }
 
 /* ============================ MEDICAL RECORDS (patient entries recorded by doctors & nurses) ============================ */
+/* Mount the system-wide Patient Master Folder banner (shared by every clinical
+   station) for this patient and scroll it into view. */
+function openPatientFolder(pid) {
+    var host = document.getElementById('hmsPatientFolder');
+    if (!window.HMSPatientFolder || !host || !pid) return;
+    window.HMSPatientFolder.mount(host, pid, { station: 'nurse' });
+    try { host.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    catch (e) { if (host.scrollIntoView) host.scrollIntoView(); }
+}
+
 function openMedicalRecords(pid) {
     const ctx = patientContext[pid];
     if (!ctx) return;

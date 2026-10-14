@@ -315,7 +315,7 @@ function getPatientSummary() {
     // Exposes status (Admitted|Discharged) plus discharge_outcome, which is
     // free text (e.g. Discharged, Died, Absconded) recorded at finalisation.
     $admission = $db->fetchOne(
-        "SELECT a.admission_code, a.admission_date, a.status,
+        "SELECT a.id AS admission_id, a.admission_code, a.admission_date, a.status,
                 a.discharged_at, a.discharge_outcome
            FROM admissions a
           WHERE a.patient_id = ?
@@ -382,6 +382,7 @@ function getPatientSummary() {
                                     : null,
             'patient_type'    => $patientType,
             'blood_group'     => $patient['blood_group'],
+            'genotype'        => $patient['genotype'],
             // Master-folder demographics captured at registration.
             'first_name'      => $patient['first_name'],
             'middle_name'     => $patient['middle_name'],
@@ -433,6 +434,7 @@ function getPatientSummary() {
             'ward_code'       => $patient['ward_code'],
             'bed_ward'        => $bedWard,
             'admission'       => $admission ? [
+                'admission_id'      => (int)$admission['admission_id'],
                 'admission_code'    => $admission['admission_code'],
                 'admission_date'    => $admission['admission_date'],
                 'status'            => $admission['status'],

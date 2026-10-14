@@ -490,7 +490,12 @@ function initDoctorStation() {
         search.addEventListener('keydown', function (e) { if (e.key === 'Enter') loadDoctorStation(); });
     }
 
-    loadWards().then(loadDoctorStation);
+    loadWards().then(loadDoctorStation).then(function () {
+        // Cross-station handoff: "Route to Doctor" from the patient folder
+        // banner lands here; open the folder for that patient.
+        var pfCtx = (typeof window.hmsConsumePatientContext === 'function') ? window.hmsConsumePatientContext() : null;
+        if (pfCtx && pfCtx.patientId) dsOpenFolder(pfCtx.patientId);
+    });
 }
 
 /* ============================ WARDS ============================ */
@@ -693,7 +698,7 @@ function renderPatientCard(ctx) {
 
     var demoLine = escHtml(s.gender || row.gender || '--') + ' | '
         + ((s.age != null ? s.age : row.age) != null ? escHtml(s.age != null ? s.age : row.age) + ' Yrs' : '--')
-        + ' | Genotype: -- | Blood Group: ' + escHtml(s.blood_group || '--')
+        + ' | Genotype: ' + escHtml(s.genotype || '--') + ' | Blood Group: ' + escHtml(s.blood_group || '--')
         + (s.nhia_number ? ' | NHIS No: ' + escHtml(s.nhia_number) : '');
 
     var allergy = (s.allergies && String(s.allergies).trim())
@@ -712,6 +717,7 @@ function renderPatientCard(ctx) {
             + '<div class="right">'
                 + '<button type="button" class="ds-btn outline sm" onclick="dsTransfer()"><i class="fa-solid fa-right-left"></i> Change Bed / Transfer Patient</button>'
                 + '<button type="button" class="ds-btn outline sm" onclick="dsOpenMedicalRecords(' + pid + ')"><i class="fa-solid fa-file-medical"></i> Medical Records</button>'
+                + '<button type="button" class="ds-btn outline sm" onclick="dsOpenFolder(' + pid + ')"><i class="fa-solid fa-folder-open"></i> Patient Folder</button>'
             + '</div>'
         + '</div>'
 
@@ -1826,6 +1832,17 @@ function markSaved(pid) {
     if (!el) return;
     el.classList.add('show');
     setTimeout(function () { el.classList.remove('show'); }, 3500);
+}
+
+/* ============================ PATIENT FOLDER ============================ */
+/* Mount the system-wide Patient Master Folder banner (shared across every
+   clinical station) for one patient card and scroll it into view. */
+function dsOpenFolder(pid) {
+    var host = document.getElementById('hmsPatientFolder');
+    if (!window.HMSPatientFolder || !host) return;
+    window.HMSPatientFolder.mount(host, pid, { station: 'doctor' });
+    try { host.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    catch (e) { if (host.scrollIntoView) host.scrollIntoView(); }
 }
 
 /* ============================ MEDICAL RECORDS MODAL ============================ */

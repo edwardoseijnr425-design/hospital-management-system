@@ -1,13 +1,22 @@
 /* ============================================================================
    Patient Master Folder Banner — shared, system-wide patient header.
-   Ported from the pasted Tailwind/Alpine "System-Wide Patient Master Folder
-   Banner" mock into plain JS (the project ships no Tailwind/Alpine), wired to
-   the live APIs:
+   Ported from the pasted Tailwind/Alpine "Unified Patient Master Folder Banner"
+   mock into plain JS (the project ships no Tailwind/Alpine), wired to the live
+   APIs:
 
      GET  patients.php?action=summary&id=N          -> folder demographics
      GET  invoices.php?action=patient_billing&...    -> outstanding dues
      POST patients.php?action=pregnancy              -> save an ANC record
      POST patients.php?action=mortality              -> save a mortality record
+
+   The banner is the single, unified patient header for EVERY clinical station
+   (doctor, nurse/vitals, laboratory, sonography/radiology, records). Stations
+   mount it into the shell host #hmsPatientFolder when a patient is selected, so
+   one instance is shown above whichever module page is open.
+
+   Cross-station handoff: the "Clinical Actions" dropdown sets
+   window.HMS_PATIENT_CONTEXT = {patientId, action, admissionId, ...} and then
+   navigates. The target page reads and clears that context during its init.
 
    Public API:
      HMSPatientFolder.mount(host, patientId[, opts])
@@ -15,13 +24,23 @@
      HMSPatientFolder.clear(host)
      HMSPatientFolder.get(host, 'patientId'|'data'|'billing')
 
-   opts: { showBilling:true, onClose:fn }
+   opts: { station:'doctor'|'nurse'|'lab'|'radiology'|..., showBilling:true,
+           showFolder:false, onClose:fn }
    ============================================================================ */
 window.HMSPatientFolder = (function () {
     'use strict';
 
     var API = '/hms/backend/api';
     var HKEY = '__hmsPatientFolder';
+
+    /* Map a clinical action to the SPA page that handles it. */
+    var ACTION_PAGE = {
+        discharge: 'admissions',
+        doctor:    'doctor-station',
+        vitals:    'vitals',
+        lab:       'lab-management',
+        radiology: 'radiology'
+    };
 
     function esc(s) {
         var d = document.createElement('div');
@@ -76,17 +95,22 @@ window.HMSPatientFolder = (function () {
     function rowHTML(label, valueHTML) {
         return '<div class="hms-pf-row"><span class="k">' + esc(label) + '</span><span class="v">' + valueHTML + '</span></div>';
     }
+    function field(label, inputHTML) {
+        return '<div class="hms-pf-field"><label>' + label + '</label>' + inputHTML + '</div>';
+    }
 
     function render(state) {
         var p = state.data || {};
         var b = state.billing || null;
         var due = (b && b.outstanding != null) ? Number(b.outstanding) : 0;
+        var adm = p.admission || null;
+        var admitted = !!(adm && adm.status === 'Admitted');
 
-        var initials = (p.first_name || p.full_name || '?').charAt(0);
-
-        /* ---- status pills ---- */
+        /* ---- header pills ---- */
         var pills = '';
-        pills += '<span class="hms-pf-pill id">' + val(p.hospital_number || ('P' + p.patient_id)) + '</span>';
+        pills += '<span class="hms-pf-pill id">ID: ' + val(p.hospital_number || ('P' + p.patient_id)) + '</span>';
+        pills += '<span class="hms-pf-pill admit ' + (admitted ? 'on' : 'off') + '">' +
+                 '<span class="hms-pf-dot"></span>' + (admitted ? 'Admitted' : 'Not Admitted') + '</span>';
         if (isNHIS(p)) {
             var nhisOn = !!p.nhis_active;
             pills += '<span class="hms-pf-pill ' + (nhisOn ? 'nhis-on' : 'nhis-off') + '">' +
@@ -99,29 +123,70 @@ window.HMSPatientFolder = (function () {
         pills += '<span class="hms-pf-pill type">Type: ' + val(p.patient_type) + '</span>';
         if (p.is_deceased) pills += '<span class="hms-pf-pill deceased">\u2020 DECEASED</span>';
 
-        /* ---- demographics grid ---- */
+        /* ---- one-line demographics strip under the name ---- */
         var ageTxt = p.age_text ? val(p.age_text) : (p.age != null ? esc(p.age) + ' Yrs' : '\u2014');
+        var sep = ' <span class="sep">|</span> ';
+        var subline =
+            '<span class="hms-pf-sub"><b>Gender:</b> ' + val(p.gender) + '</span>' + sep +
+            '<span class="hms-pf-sub"><b>Age:</b> ' + ageTxt + '</span>' + sep +
+            '<span class="hms-pf-sub"><b>Genotype:</b> ' + val(p.genotype) + '</span>' + sep +
+            '<span class="hms-pf-sub"><b>Blood Group:</b> ' + val(p.blood_group) + '</span>';
+
+        /* ---- clinical actions dropdown ---- */
+        var actions = [
+            { key: 'discharge', icon: 'fa-right-from-bracket', label: 'Process Discharge',        hint: admitted ? (adm.admission_code || '') : 'No active admission', enabled: admitted },
+            { key: 'doctor',    icon: 'fa-user-doctor',        label: 'Route to Doctor',          hint: 'Consultation / review', enabled: true },
+            { key: 'vitals',    icon: 'fa-heart-pulse',        label: 'Nurse Triage / Vitals',    hint: admitted ? 'Bedside vitals' : 'No active admission', enabled: admitted },
+            { key: 'lab',       icon: 'fa-flask-vial',         label: 'Request Lab',              hint: 'Investigations', enabled: true },
+            { key: 'radiology', icon: 'fa-x-ray',              label: 'Sonography / Radiology',   hint: 'Imaging request', enabled: true }
+        ];
+        var caButtons = actions.map(function (a) {
+            var dis = a.enabled ? '' : ' disabled';
+            return '<button type="button" class="hms-pf-ca-btn' + (a.enabled ? '' : ' is-disabled') + '"' +
+                ' data-pf-action="' + a.key + '"' + dis + ' title="' + attr(a.hint) + '">' +
+                '<i class="fa-solid ' + a.icon + '"></i>' +
+                '<span class="t">' + esc(a.label) + '</span>' +
+                '<span class="h">' + esc(a.hint) + '</span>' +
+                '</button>';
+        }).join('');
+
+        var caPanel =
+            '<div class="hms-pf-ca" data-pf-ca' + (state.showActions ? '' : ' hidden') + '>' +
+                '<div class="hms-pf-ca-head"><i class="fa-solid fa-bolt"></i> Clinical Actions' +
+                    '<span class="sub">' + val(p.full_name) + '</span></div>' +
+                '<div class="hms-pf-ca-grid">' + caButtons + '</div>' +
+            '</div>';
+
+        /* ---- demographics grid (two columns) ---- */
+        var emg = '';
+        if (p.emergency_contact_name || p.emergency_contact_phone) {
+            emg = val(p.emergency_contact_name);
+            if (p.emergency_contact_phone) emg += ' \u00b7 <b>' + esc(p.emergency_contact_phone) + '</b>';
+        } else {
+            emg = '\u2014';
+        }
+        var bloodGeno = val(p.blood_group);
+        if (p.genotype) bloodGeno += ' \u00b7 ' + esc(p.genotype);
         var left = [
             rowHTML('Name', '<span class="v strong">' + val(p.full_name) + '</span>'),
             rowHTML('Gender', val(p.gender)),
             rowHTML('Age', ageTxt),
+            rowHTML('Date of Birth', val(fmtD(p.date_of_birth))),
             rowHTML('Marital Status', val(p.marital_status)),
+            rowHTML('Nationality', val(p.nationality)),
             rowHTML('Contact', '<b>' + val(p.phone) + '</b>'),
-            rowHTML('Occupation', val(p.occupation)),
-            rowHTML('WhatsApp Number', val(p.whatsapp))
+            rowHTML('Email', val(p.email))
         ].join('');
         var right = [
             rowHTML('Patient No.', '<span class="v brand">' + val(p.hospital_number || ('P' + p.patient_id)) + '</span>'),
             rowHTML('Type', '<b>' + val(p.patient_type) + '</b>'),
-            rowHTML('Date of Birth', val(fmtD(p.date_of_birth))),
             rowHTML('Register Date', val(fmtD(p.registration_date))),
-            rowHTML('Address', '<b>' + val(p.address) + '</b>'),
-            rowHTML('Email', val(p.email)),
-            rowHTML('Nationality', '<b>' + val(p.nationality) + '</b>'),
-            rowHTML('Blood Group', val(p.blood_group) + (p.allergies ? ' \u00b7 <span style="color:#BE123C;font-weight:800">Allergies: ' + esc(p.allergies) + '</span>' : ''))
+            rowHTML('Residential Address', '<b>' + val(p.address) + '</b>'),
+            rowHTML('Emergency Contact', emg),
+            rowHTML('Blood Group / Genotype', bloodGeno)
         ].join('');
 
-        /* ---- special clinical actions ---- */
+        /* ---- special clinical actions (pregnancy / mortality) ---- */
         var pregChecked = state.showPreg ? ' checked' : '';
         var deadChecked = state.showDeath ? ' checked' : '';
         var pregBox = isFemale(p)
@@ -182,12 +247,21 @@ window.HMSPatientFolder = (function () {
             '<div class="hms-pf-stack">' +
                 '<div class="hms-pf-bar">' +
                     '<div class="hms-pf-idwrap">' +
-                        '<div class="hms-pf-avatar">' + esc(initials) + '</div>' +
-                        '<h3 class="hms-pf-name">' + val(p.full_name) + '</h3>' +
-                        pills +
+                        '<div class="hms-pf-avatar"><i class="fa-solid fa-user"></i></div>' +
+                        '<div class="hms-pf-idtext">' +
+                            '<div class="hms-pf-nameline">' +
+                                '<h3 class="hms-pf-name">' + val(p.full_name) + '</h3>' +
+                                pills +
+                            '</div>' +
+                            '<div class="hms-pf-subline">' + subline + '</div>' +
+                        '</div>' +
                     '</div>' +
                     '<div class="hms-pf-actions">' +
                         '<span class="hms-pf-dues' + (due > 0 ? ' owed' : '') + '">' + money(due) + ' Due</span>' +
+                        '<button type="button" class="hms-pf-link" data-pf-ca-toggle>' +
+                            '<i class="fa-solid fa-bolt"></i> Discharge from Admissions / Clinical Actions ' +
+                            '<i class="fa-solid fa-chevron-' + (state.showActions ? 'up' : 'down') + '"></i>' +
+                        '</button>' +
                         '<button type="button" class="hms-pf-btn ghost" data-pf-toggle>' +
                             '<i class="fa-solid ' + (state.showFolder ? 'fa-chevron-up' : 'fa-chevron-down') + '"></i>' +
                             '<span data-pf-toggle-label>' + (state.showFolder ? 'Hide Profile' : 'Show Profile') + '</span>' +
@@ -195,12 +269,9 @@ window.HMSPatientFolder = (function () {
                         '<button type="button" class="hms-pf-close" data-pf-close title="Close patient folder">&times;</button>' +
                     '</div>' +
                 '</div>' +
+                caPanel +
                 folder +
             '</div>';
-    }
-
-    function field(label, inputHTML) {
-        return '<div class="hms-pf-field"><label>' + label + '</label>' + inputHTML + '</div>';
     }
 
     function paint(host) {
@@ -208,6 +279,31 @@ window.HMSPatientFolder = (function () {
         if (!st || !st.data) return;
         host.innerHTML = '<div class="hms-pf">' + render(st) + '</div>';
         bind(host);
+    }
+
+    /* Set the cross-station handoff context and navigate to the target page. */
+    function dispatchAction(st, action) {
+        var p = st.data || {};
+        window.HMS_PATIENT_CONTEXT = {
+            patientId: st.patientId,
+            hospitalNumber: p.hospital_number || null,
+            fullName: p.full_name || null,
+            admissionId: (p.admission && p.admission.admission_id) ? p.admission.admission_id : null,
+            admitted: !!(p.admission && p.admission.status === 'Admitted'),
+            action: action
+        };
+        var page = ACTION_PAGE[action] || action;
+        try {
+            if (typeof window.navigateTo === 'function') {
+                window.navigateTo(page, action);
+            } else if (typeof window.loadPage === 'function') {
+                window.loadPage(page, null, { intent: action });
+            } else {
+                window.location.href = '/hms/frontend/dashboard.php#page=' + page;
+            }
+        } catch (e) {
+            if (window.showAlert) showAlert('Could not open ' + page + '.', 'error');
+        }
     }
 
     function bind(host) {
@@ -223,11 +319,22 @@ window.HMSPatientFolder = (function () {
             paint(host);
         });
 
+        var caToggle = qa('[data-pf-ca-toggle]');
+        if (caToggle) caToggle.addEventListener('click', function () {
+            st.showActions = !st.showActions;
+            paint(host);
+        });
+
         var close = qa('[data-pf-close]');
         if (close) close.addEventListener('click', function () {
             var cb = st.opts && st.opts.onClose;
             clear(host);
             if (typeof cb === 'function') cb(st.patientId);
+        });
+
+        Array.prototype.forEach.call(root.querySelectorAll('[data-pf-action]'), function (btn) {
+            if (btn.disabled) return;
+            btn.addEventListener('click', function () { dispatchAction(st, btn.getAttribute('data-pf-action')); });
         });
 
         var pregToggle = qa('[data-pf-preg-toggle]');
@@ -306,10 +413,12 @@ window.HMSPatientFolder = (function () {
         opts = opts || {};
         var st = host[HKEY] || (host[HKEY] = {
             patientId: null, data: null, billing: null,
-            showFolder: true, showPreg: false, showDeath: false, opts: {}
+            showFolder: false, showActions: false, showPreg: false, showDeath: false, opts: {}
         });
         st.patientId = patientId;
         st.opts = opts;
+        // Collapsed-by-default folder; opt back in per call-site if needed.
+        st.showFolder = (opts.showFolder === true);
 
         host.innerHTML = '<div class="hms-pf"><div class="hms-pf-stack"><div class="hms-pf-empty">Loading patient folder\u2026</div></div></div>';
 
@@ -317,7 +426,6 @@ window.HMSPatientFolder = (function () {
             .then(function (summary) {
                 if (!summary || !summary.success || !summary.patient) throw new Error('not found');
                 st.data = summary.patient;
-                st.showFolder = true;
                 // Re-open the relevant form when a record already exists.
                 st.showPreg = !!st.data.is_pregnant;
                 st.showDeath = !!st.data.is_deceased;

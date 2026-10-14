@@ -159,6 +159,18 @@
                             <option value="O-">O-</option>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label for="patient-genotype">Genotype</label>
+                        <select id="patient-genotype" name="genotype">
+                            <option value="">Select Genotype</option>
+                            <option value="AA">AA</option>
+                            <option value="AS">AS</option>
+                            <option value="SS">SS</option>
+                            <option value="AC">AC</option>
+                            <option value="SC">SC</option>
+                            <option value="CC">CC</option>
+                        </select>
+                    </div>
                 </div>
                 
                 <h4>Contact Information</h4>
@@ -703,6 +715,7 @@ function openPatientModal(patient = null) {
         document.getElementById('patient-dob').value = patient.date_of_birth;
         document.getElementById('patient-gender').value = patient.gender;
         document.getElementById('patient-bloodgroup').value = patient.blood_group || '';
+        document.getElementById('patient-genotype').value = patient.genotype || '';
         document.getElementById('patient-phone').value = patient.phone || '';
         document.getElementById('patient-email').value = patient.email || '';
         document.getElementById('patient-address').value = patient.address || '';

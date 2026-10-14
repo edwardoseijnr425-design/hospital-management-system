@@ -605,6 +605,14 @@ async function initLabManagement() {
     setupLabEvents();
     await Promise.all([loadVisits(), loadLabRequests()]);
     startLiveRefresh();
+    // Cross-station handoff: "Request Lab" from the patient folder banner lands
+    // here. Mount the shared folder for that patient and open their overview.
+    var pfCtx = (typeof window.hmsConsumePatientContext === 'function') ? window.hmsConsumePatientContext() : null;
+    if (pfCtx && pfCtx.patientId) {
+        var host = document.getElementById('hmsPatientFolder');
+        if (window.HMSPatientFolder && host) window.HMSPatientFolder.mount(host, pfCtx.patientId, { station: 'lab' });
+        try { if (host) host.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+    }
 }
 
 function setupLabEvents() {

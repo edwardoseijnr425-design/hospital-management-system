@@ -28,6 +28,7 @@ class Patient {
             'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
             'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
             'blood_group' => $data['blood_group'] ?? null,
+            'genotype'    => trim((string)($data['genotype'] ?? '')) === '' ? null : trim((string)$data['genotype']),
             'allergies'   => trim((string)($data['allergies'] ?? '')) === '' ? null : trim((string)$data['allergies']),
             'sponsor_id' => $data['sponsor_id'] ?? null,
             'nhia_number' => $data['nhia_number'] ?? null,
@@ -54,7 +55,7 @@ class Patient {
         
         $allowedFields = ['first_name', 'middle_name', 'last_name', 'date_of_birth', 'gender', 
                          'phone', 'email', 'address', 'emergency_contact_name', 
-                         'emergency_contact_phone', 'blood_group', 'allergies', 'sponsor_id',
+                         'emergency_contact_phone', 'blood_group', 'genotype', 'allergies', 'sponsor_id',
                          'nhia_number', 'claim_check_code', 'nhis_expiry_date'];
         
         foreach ($allowedFields as $field) {
@@ -62,7 +63,7 @@ class Patient {
                 // Free-text / generated fields (clinical allergy list, NHIA CCC)
                 // are normalised the same way register() does, otherwise clearing
                 // them stores whitespace and downstream readers render it as data.
-                $normalise = in_array($field, ['allergies', 'claim_check_code', 'nhis_expiry_date'], true);
+                $normalise = in_array($field, ['allergies', 'claim_check_code', 'nhis_expiry_date', 'genotype'], true);
                 $updateData[$field] = $normalise
                     ? (trim((string)$data[$field]) === '' ? null : trim((string)$data[$field]))
                     : $data[$field];

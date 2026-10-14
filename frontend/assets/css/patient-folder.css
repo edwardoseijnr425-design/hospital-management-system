@@ -20,22 +20,31 @@
   padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px 14px;
   align-items:center;justify-content:space-between;
 }
-.hms-pf-idwrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.hms-pf-idwrap{display:flex;align-items:center;gap:11px;flex-wrap:wrap;min-width:0}
 .hms-pf-avatar{
-  width:34px;height:34px;min-width:34px;border-radius:50%;
-  background:var(--pf-brand);color:#fff;display:flex;align-items:center;
-  justify-content:center;font-size:15px;font-weight:800;text-transform:uppercase;
+  width:40px;height:40px;min-width:40px;border-radius:11px;
+  background:#0F2942;color:#fff;display:flex;align-items:center;
+  justify-content:center;font-size:17px;
 }
+.hms-pf-idtext{display:flex;flex-direction:column;gap:4px;min-width:0}
+.hms-pf-nameline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
 .hms-pf-name{
   font-size:14px;font-weight:900;letter-spacing:.3px;text-transform:uppercase;
   color:var(--pf-ink);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
+.hms-pf-subline{display:flex;align-items:center;flex-wrap:wrap;gap:2px;font-size:11px;color:#475569}
+.hms-pf-subline .hms-pf-sub b{color:var(--pf-mute);font-weight:800;text-transform:uppercase;font-size:10px;letter-spacing:.3px;margin-right:3px}
+.hms-pf-subline .sep{color:#CBD5E1;margin:0 3px}
 .hms-pf-pill{
   font-size:10px;font-weight:900;letter-spacing:.4px;padding:2px 8px;border-radius:999px;
   border:1px solid var(--pf-line);background:var(--pf-bg);color:var(--pf-mute);
   text-transform:uppercase;white-space:nowrap;
 }
 .hms-pf-pill.id{background:var(--pf-brand);border-color:var(--pf-brand);color:#fff}
+.hms-pf-pill.admit.on{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8}
+.hms-pf-pill.admit.off{background:#F1F5F9;border-color:#CBD5E1;color:#64748B}
+.hms-pf-pill.admit.on .hms-pf-dot{background:#1D4ED8}
+.hms-pf-pill.admit.off .hms-pf-dot{background:#94A3B8;animation:none}
 .hms-pf-pill.nhis-on{background:#ECFDF5;border-color:#A7F3D0;color:#047857}
 .hms-pf-pill.nhis-off{background:#FFF1F2;border-color:#FECDD3;color:#BE123C}
 .hms-pf-pill.selfpay{background:#FFFBEB;border-color:#FDE68A;color:#B45309}
@@ -49,6 +58,13 @@
 .hms-pf-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .hms-pf-dues{font-size:11px;font-weight:900;padding:4px 10px;border-radius:6px;color:#fff;background:#047857;white-space:nowrap}
 .hms-pf-dues.owed{background:#BE123C}
+.hms-pf-link{
+  border:none;background:none;cursor:pointer;padding:4px 2px;
+  font-size:11px;font-weight:900;letter-spacing:.3px;color:var(--pf-brand);
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.hms-pf-link:hover{color:var(--pf-brand-dk);text-decoration:underline}
+.hms-pf-link .fa-bolt{color:#B45309}
 .hms-pf-btn{
   border:none;border-radius:8px;font-size:11px;font-weight:800;letter-spacing:.3px;
   padding:7px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
@@ -59,6 +75,36 @@
 .hms-pf-btn.ghost:hover{background:var(--pf-bg)}
 .hms-pf-close{border:none;background:none;color:var(--pf-mute);font-size:20px;line-height:1;cursor:pointer;padding:0 2px}
 .hms-pf-close:hover{color:#BE123C}
+
+/* ---- clinical actions dropdown ---- */
+.hms-pf-ca{
+  background:#fff;border:1px solid var(--pf-line);border-radius:12px;
+  box-shadow:0 8px 24px rgba(15,23,42,.08);padding:12px 14px;
+}
+.hms-pf-ca-head{
+  display:flex;align-items:center;gap:7px;font-size:11px;font-weight:900;
+  letter-spacing:.4px;text-transform:uppercase;color:var(--pf-ink);margin-bottom:10px;
+}
+.hms-pf-ca-head .fa-bolt{color:#B45309}
+.hms-pf-ca-head .sub{
+  margin-left:auto;font-weight:700;color:var(--pf-mute);text-transform:none;
+  letter-spacing:0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.hms-pf-ca-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+@media(max-width:900px){.hms-pf-ca-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.hms-pf-ca-grid{grid-template-columns:1fr}}
+.hms-pf-ca-btn{
+  display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;
+  border:1px solid var(--pf-line);background:var(--pf-bg);border-radius:9px;
+  padding:9px 10px;cursor:pointer;font-family:inherit;transition:border-color .15s ease,background .15s ease;
+}
+.hms-pf-ca-btn:hover{border-color:var(--pf-brand);background:#fff}
+.hms-pf-ca-btn i{font-size:14px;color:var(--pf-brand)}
+.hms-pf-ca-btn .t{font-size:11px;font-weight:900;color:var(--pf-ink);letter-spacing:.2px}
+.hms-pf-ca-btn .h{font-size:9.5px;font-weight:700;color:var(--pf-mute);letter-spacing:.2px}
+.hms-pf-ca-btn.is-disabled{cursor:not-allowed;opacity:.55}
+.hms-pf-ca-btn.is-disabled:hover{border-color:var(--pf-line);background:var(--pf-bg)}
+.hms-pf-ca-btn.is-disabled i{color:#94A3B8}
 
 /* ---- expanded folder ---- */
 .hms-pf-folder{

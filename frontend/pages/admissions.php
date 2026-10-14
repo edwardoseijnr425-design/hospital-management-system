@@ -646,6 +646,20 @@ async function initAdmissions() {
     } else if (intent === 'drafts') {
         revealDraftSection();
     }
+
+    // Cross-station handoff from the unified patient folder's "Process Discharge"
+    // action. The banner has already set window.HMS_PATIENT_CONTEXT; read and
+    // clear it, then open the discharge dialog for the patient's open admission.
+    const pfCtx = (typeof window.hmsConsumePatientContext === 'function') ? window.hmsConsumePatientContext() : null;
+    if (pfCtx && pfCtx.action === 'discharge' && pfCtx.patientId) {
+        const adm = (pfCtx.admissionId && admissionsData.find(a => a.id === pfCtx.admissionId))
+            || admissionsData.find(a => String(a.patient_id) === String(pfCtx.patientId) && String(a.status).toLowerCase() === 'admitted');
+        if (adm) {
+            openDischargeModal(adm.id);
+        } else if (window.showAlert) {
+            showAlert('No open admission found for this patient — nothing to discharge.', 'warning');
+        }
+    }
 }
 
 // Scrolls the draft table into view and flashes it so DRAFT ADMISSIONS lands

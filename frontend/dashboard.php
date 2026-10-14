@@ -1188,6 +1188,14 @@ window.fmtDateTime = fmtDateTime;
        later, unrelated visit. The consuming init reads it and nulls it. */
     function loadPage(page, linkEl, opts){
         window.__pageIntent = (opts && opts.intent) ? opts.intent : null;
+        /* The unified Patient Master Folder banner is a shell-level element that
+           survives page swaps. On an ordinary navigation clear it so a stale
+           patient is not shown in the next module; a cross-station handoff
+           (window.HMS_PATIENT_CONTEXT) deliberately keeps it in place. */
+        if(!window.HMS_PATIENT_CONTEXT && window.HMSPatientFolder){
+            var pfHost=document.getElementById('hmsPatientFolder');
+            if(pfHost) window.HMSPatientFolder.clear(pfHost);
+        }
         if(page!==currentPage){
             if(!backNav && currentPage!=='dashboard') pageStack.push(currentPage);
             currentPage=page;
@@ -1618,6 +1626,15 @@ function navigateTo(page, intent){
     if(typeof window.loadPage==='function'){ window.loadPage(page, l, {intent: intent}); return; }
     if(l) l.click();
 }
+window.navigateTo=navigateTo; /* exposed so the patient folder's Clinical Actions can route across stations */
+/* Cross-station patient handoff. The unified patient folder banner sets
+   window.HMS_PATIENT_CONTEXT before navigating; the target page's init calls
+   hmsConsumePatientContext() to read-and-clear it exactly once. */
+window.hmsConsumePatientContext=function(){
+    var c=window.HMS_PATIENT_CONTEXT;
+    window.HMS_PATIENT_CONTEXT=null;
+    return c||null;
+};
 /* Global feedback toast used by SPA page scripts (showAlert) — self-contained,
    no Bootstrap dependency; floats above modals so saves/errors stay visible. */
 function showAlert(message,type){
@@ -1728,7 +1745,7 @@ function showAlert(message,type){
                 var pid=parseInt(viewBtn.getAttribute('data-view'),10);
                 var folderHost=document.getElementById('hmsPatientFolder');
                 if(window.HMSPatientFolder && folderHost){
-                    window.HMSPatientFolder.mount(folderHost, pid);
+                    window.HMSPatientFolder.mount(folderHost, pid, {station:'shell', showFolder:true});
                     if(resultsPanel) resultsPanel.style.display='none';
                     try{ folderHost.scrollIntoView({behavior:'smooth',block:'start'}); }catch(err){ folderHost.scrollIntoView(); }
                 } else {

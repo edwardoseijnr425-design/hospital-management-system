@@ -254,6 +254,21 @@ function pstaInit() {
         window.patientStationSeed = null;
         pstaLoadPatient(parseInt(seed.patientId, 10));
     }
+    // Cross-station handoff from the unified patient folder banner.
+    var pfCtx = (typeof window.hmsConsumePatientContext === 'function') ? window.hmsConsumePatientContext() : null;
+    if (pfCtx && pfCtx.patientId) {
+        pstaLoadPatient(parseInt(pfCtx.patientId, 10));
+    }
+}
+
+/* Mount the system-wide Patient Master Folder banner into the shell host so
+   the diagnostics workspace shares the exact same patient header as every
+   other clinical station. */
+function pstaMountFolder(pid) {
+    var host = document.getElementById('hmsPatientFolder');
+    if (window.HMSPatientFolder && host && pid) {
+        window.HMSPatientFolder.mount(host, pid, { station: 'patient' });
+    }
 }
 
 /* ---------- patient search ---------- */
@@ -336,6 +351,7 @@ async function pstaLoadPatient(pid) {
         pstaRenderHeader();
         pstaRenderFeed();
         pstaEnableActions(true);
+        pstaMountFolder(pid);
     } catch (e) {
         console.error('Patient Station load error:', e);
         if (feed) feed.innerHTML = '<div class="psta-empty">Failed to load investigations.</div>';
