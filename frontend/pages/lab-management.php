@@ -871,7 +871,8 @@ function standardRequestTable(rows, q, actionCell, emptyMsg) {
                     + '<td style="font-weight:700;">' + escHtml((r.patient_name || '--') + (r.hospital_number ? ' (' + r.hospital_number + ')' : '')) + '</td>'
                     + '<td>' + escHtml(r.test_type || '--') + '</td>'
                     + '<td>' + escHtml(r.doctor_name || '--')
-                        + (r.patient_id ? '<button type="button" class="lab-link-btn" onclick="labOpenPatientDiagnosis(' + r.patient_id + ')">[View Doctor Entry / Diagnosis]</button>' : '')
+                        + (r.patient_id ? '<button type="button" class="lab-link-btn" onclick="labOpenPatientDiagnosis(' + r.patient_id + ')">[View Doctor Entry / Diagnosis]</button>'
+                            + '<button type="button" class="lab-link-btn" onclick="labOpenPatientStation(' + r.patient_id + ')">[Patient Station]</button>' : '')
                         + '</td>'
                     + '<td>' + fmtLabTime(r.requested_at) + '</td>'
                     + '<td>' + labStatusBadge(r.status) + labCrInfo(r) + '</td>'
@@ -1367,6 +1368,15 @@ async function labOpenPatientDiagnosis(patientId) {
     html += '</div>';
 
     labSetModalBody('labDiagnosisBody', html);
+}
+
+/* Open the diagnostics workspace for a patient straight from the worklist.
+   The station reads window.patientStationSeed when it initialises. */
+function labOpenPatientStation(patientId) {
+    if (!patientId) return;
+    window.patientStationSeed = { patientId: parseInt(patientId, 10) };
+    if (typeof window.navigateTo === 'function') navigateTo('patient-station');
+    else if (typeof window.loadPage === 'function') loadPage('patient-station');
 }
 
 /* ================= HELPERS ================= */

@@ -340,6 +340,9 @@
                         </div>
                         <p class="pcp-meta" id="pcpMeta">&nbsp;</p>
                     </div>
+                    <button type="button" onclick="pcpOpenPatientStation()" style="margin-left:auto;align-self:flex-start;background:#1b659d;color:#fff;border:none;border-radius:8px;padding:8px 13px;font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;">
+                        <i class="fa-solid fa-heart-pulse"></i> Open Patient Station
+                    </button>
                 </div>
 
                 <!-- Tabs -->
@@ -757,6 +760,17 @@ function viewPatient(patientId) {
     loadPatientSummary(patientId);
 }
 
+/* Jump from a patient's chart to the diagnostics workspace, carrying the
+   patient with us (the station reads window.patientStationSeed on load). */
+function pcpOpenPatientStation() {
+    if (!window.__pcpPatientId) return;
+    window.patientStationSeed = { patientId: parseInt(window.__pcpPatientId, 10) };
+    var m = document.getElementById('patient-summary-modal');
+    if (m) m.classList.remove('show');
+    if (typeof window.navigateTo === 'function') navigateTo('patient-station');
+    else if (typeof window.loadPage === 'function') loadPage('patient-station');
+}
+
 /* ============ PATIENT CLINICAL PROFILE (Health Records "View") ============
    Read-only chart assembled from five endpoints fetched in parallel:
      patients.php?action=summary      -> header + NHIS status
@@ -801,6 +815,9 @@ function pcpSwitchTab(tab) {
 
 async function loadPatientSummary(patientId) {
     pcpSwitchTab('entries');
+    // Remember whose chart this is so the header's "Open Patient Station"
+    // button can hand the same patient to the diagnostics workspace.
+    window.__pcpPatientId = patientId;
 
     // Reset to a loading state so a slow fetch never shows the last patient's chart.
     document.getElementById('pcpName').textContent = 'Loading…';

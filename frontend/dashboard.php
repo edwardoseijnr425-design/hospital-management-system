@@ -552,6 +552,7 @@ function hcBrandLogo($px = 45) {
             <a href="#" class="nav-link" data-page="messages">View Alerts</a>
             <a href="#" class="nav-link" data-page="lab-management">Lab Management</a>
             <a href="#" class="nav-link" data-page="radiology">Radiology</a>
+            <a href="#" class="nav-link" data-page="patient-station">Patient Station</a>
             <a href="#" class="nav-link" data-page="account-management">Account Management</a>
             <a href="#" class="nav-link" data-page="users">User Management</a>
             <a href="#" class="nav-link" data-page="administrator">Administrator</a>
@@ -591,7 +592,7 @@ function hcBrandLogo($px = 45) {
                 <!-- SYSTEM DASHBOARD GRID CONTAINER -->
                 <div class="container-fluid p-3">
 
-                    <!-- 14-MODULE 2-COLUMN UNIFORM GRID -->
+                    <!-- 15-MODULE 2-COLUMN UNIFORM GRID -->
                     <div class="row g-3">
 
                         <!-- 1. APPOINTMENT CALENDAR -->
@@ -799,6 +800,21 @@ function hcBrandLogo($px = 45) {
                                     </div>
                                     <div class="text-center flex-grow-1 me-4">
                                         <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">INVENTORY MANAGEMENT</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 15. PATIENT STATION (diagnostic investigations workspace) -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm p-3 h-100 hms-module-card" style="border-radius: 8px; background: #FFFFFF; cursor: pointer;" onclick="loadModuleTab('patient_station')">
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(0, 114, 188, 0.08); border-radius: 6px;">
+                                        <!-- Diagnostics / activity monitor icon -->
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0072BC" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                                    </div>
+                                    <div class="text-center flex-grow-1 me-4">
+                                        <span class="font-weight-bold text-uppercase" style="color: #0F2D59; font-size: 13px; letter-spacing: 0.5px;">PATIENT STATION</span>
                                     </div>
                                 </div>
                             </div>
@@ -1216,6 +1232,7 @@ window.fmtDateTime = fmtDateTime;
         accounts_management:'account-management',
         investigations:'lab-management',
         radiology:'radiology',
+        patient_station:'patient-station',
         pharmacy_management:'pharmacy',
         mis:'reports',
         ipd_management:'ipd-management',
