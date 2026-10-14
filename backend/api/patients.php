@@ -16,6 +16,8 @@ switch ($method) {
             getPatientStats();
         } elseif ($action === 'summary') {
             getPatientSummary();
+        } elseif ($action === 'clinical-history') {
+            getPatientClinicalHistory();
         } else {
             getPatients();
         }
@@ -284,5 +286,68 @@ function getPatientSummary() {
             'latest_rx'       => $rx ? ($rx['drug_name'] . ($rx['dosage'] ? ' ' . $rx['dosage'] : '')) : null
         ]
     ]);
+}
+
+// Read-only clinical timeline for one patient (doctor consultations + clinical
+// notes), used by the laboratory workspace's "Clinical Care Entries" and
+// "Doctor Entry / Diagnosis" panels. getPatientSummary() above returns only the
+// single latest consultation; a technician processing a specimen often needs
+// the running history, so both tables are projected into one date-sorted feed.
+// Like summary, this is a read projection and needs nothing more than a login.
+function getPatientClinicalHistory() {
+    $patientId = (int)($_GET['id'] ?? 0);
+    if (!$patientId) {
+        jsonResponse(['error' => 'Patient ID is required'], 400);
+    }
+
+    $db = Database::getInstance();
+
+    // Doctor consultations: structured diagnosis + free-text notes, tied to a visit.
+    $consultations = $db->fetchAll(
+        "SELECT c.id,
+                c.consultation_date AS entry_date,
+                c.consultation_type AS entry_kind,
+                c.diagnosis,
+                c.notes,
+                c.status,
+                IFNULL(u.full_name, '') AS author,
+                v.visit_number,
+                v.visit_type,
+                v.chief_complaint,
+                NULL AS clinical_note
+           FROM consultations c
+           JOIN patient_visits v ON v.id = c.visit_id
+           LEFT JOIN users u ON u.id = c.doctor_id
+          WHERE v.patient_id = ?
+          ORDER BY c.consultation_date DESC",
+        [$patientId]
+    );
+
+    // Clinical notes: single free-text note_type entry (OPD / IPD / progress / discharge).
+    $notes = $db->fetchAll(
+        "SELECT n.id,
+                n.created_at AS entry_date,
+                n.note_type AS entry_kind,
+                NULL AS diagnosis,
+                NULL AS notes,
+                NULL AS status,
+                IFNULL(u.full_name, '') AS author,
+                NULL AS visit_number,
+                NULL AS visit_type,
+                NULL AS chief_complaint,
+                n.clinical_note
+           FROM clinical_notes n
+           LEFT JOIN users u ON u.id = n.doctor_id
+          WHERE n.patient_id = ?
+          ORDER BY n.created_at DESC",
+        [$patientId]
+    );
+
+    $entries = array_merge($notes, $consultations);
+    usort($entries, function ($a, $b) {
+        return strcmp((string)$b['entry_date'], (string)$a['entry_date']);
+    });
+
+    jsonResponse(['success' => true, 'entries' => $entries]);
 }
 ?>

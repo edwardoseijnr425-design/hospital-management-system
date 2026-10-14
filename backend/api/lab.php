@@ -38,6 +38,7 @@ if ($method === 'GET' && $action === 'stats') {
 function labRequests() {
     $db = Database::getInstance();
     $sql = "SELECT r.*,
+                   v.patient_id,
                    CONCAT(TRIM(CONCAT(p.first_name, ' ', IFNULL(p.middle_name, ''))), ' ', p.last_name) AS patient_name,
                    p.hospital_number,
                    v.visit_number,

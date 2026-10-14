@@ -210,6 +210,7 @@ body{margin:0;background:var(--s50);color:var(--s700);font-family:'Segoe UI',Tah
 .btn-success{background:#059669;color:#fff}.btn-success:hover{background:#047857}
 .btn-ghost{background:#fff;color:var(--brand);border:1px solid var(--s300)}.btn-ghost:hover{background:var(--s100)}
 .btn-sm{padding:5px 12px;font-size:10px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 
 /* ---- CANCEL / RESCHEDULE ---- */
 .cr-divider{height:2px;background:#FECDD3;border-radius:2px;position:relative;cursor:pointer;margin:0 18px 12px;user-select:none;transition:background .2s}
@@ -278,7 +279,7 @@ table.lab-table tbody tr:hover{background:var(--s50)}
 .ps-results{margin-top:8px}
 .ps-count{background:#EFF6FF;color:var(--brand);font-size:9px;font-weight:800;padding:2px 7px;border-radius:999px;white-space:nowrap}
 .ps-list{max-height:240px;overflow-y:auto}
-.ps-item{display:block;width:100%;text-align:left;background:var(--s50);border:1px solid var(--s200);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:6px;cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s}
+.ps-item{display:block;width:100%;text-align:left;background:var(--s50);border:1px solid var(--s200);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:6px;cursor:default;font-family:inherit;transition:background .15s,border-color .15s}
 .ps-item:hover{border-color:var(--brand);background:#EFF6FF}
 .ps-item-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .ps-item .pn{font-size:11px;font-weight:800;color:var(--s800)}
@@ -302,6 +303,43 @@ table.lab-table tbody tr:hover{background:var(--s50)}
 #labToast{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px;max-width:340px}
 .toast{background:var(--s800);color:#fff;border-radius:var(--radius-sm);padding:10px 14px;font-size:11.5px;font-weight:600;box-shadow:0 8px 24px rgba(15,23,42,.35);border-left:4px solid var(--brand)}
 .toast.success{border-left-color:#10B981}.toast.error{border-left-color:#EF4444}.toast.info{border-left-color:#3B82F6}
+
+/* ---- PATIENT SEARCH RESULT ACTIONS ---- */
+.ps-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--s200)}
+.ps-actions .btn{padding:5px 4px;font-size:9.5px;justify-content:center}
+.btn-amber{background:#B45309;color:#fff}.btn-amber:hover{background:#92400E}
+
+/* ---- WORKLIST "VIEW DOCTOR ENTRY" LINK ---- */
+.link-btn{display:block;margin-top:2px;background:none;border:none;padding:0;color:var(--brand);font-family:inherit;font-size:9px;font-weight:800;cursor:pointer;text-align:left}
+.link-btn:hover{text-decoration:underline}
+
+/* ---- PATIENT INFO MODALS ---- */
+.modal-box.wide{width:min(820px,100%)}
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+@media (max-width:640px){.info-grid{grid-template-columns:repeat(2,1fr)}}
+.info-cell{background:#fff;border:1px solid var(--s200);border-radius:var(--radius-sm);padding:9px 11px}
+.info-cell .il{display:block;font-size:9px;font-weight:800;color:var(--s400);text-transform:uppercase;letter-spacing:.3px}
+.info-cell .iv{font-size:12px;font-weight:800;color:var(--s800);word-break:break-word}
+.panel-sub{background:#fff;border:1px solid var(--s200);border-radius:var(--radius-sm);padding:11px 13px;margin-bottom:12px}
+.panel-sub h4{margin:0 0 7px;font-size:10px;font-weight:800;color:var(--brand);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--s200);padding-bottom:5px}
+.panel-sub p{margin:3px 0;font-size:11.5px;white-space:pre-line}
+.panel-sub.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.panel-sub.two>div{min-width:0}
+@media (max-width:640px){.panel-sub.two{grid-template-columns:1fr}}
+.vitals-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:640px){.vitals-grid{grid-template-columns:repeat(2,1fr)}}
+.vitals-grid .vc{background:#fff;border:1px solid #BFDBFE;border-radius:var(--radius-sm);padding:8px;text-align:center}
+.vitals-grid .vc .vl{display:block;font-size:9px;font-weight:800;color:var(--s400);text-transform:uppercase;letter-spacing:.3px}
+.vitals-grid .vc .vv{font-size:13px;font-weight:800;color:var(--s800)}
+.badge-soft{display:inline-block;background:#EFF6FF;color:var(--brand);border-radius:4px;padding:1px 7px;font-size:9px;font-weight:800}
+.entry{border:1px solid var(--s200);border-radius:var(--radius-sm);padding:11px 13px;margin-bottom:10px;background:#fff}
+.entry-head{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--s200);padding-bottom:6px;margin-bottom:8px;flex-wrap:wrap}
+.entry-head .ea{font-size:12px;font-weight:800;color:var(--brand)}
+.entry-head .ek{font-size:10px;font-weight:800;color:var(--s700);text-transform:uppercase;letter-spacing:.3px}
+.entry-head .ed{font-size:10px;font-weight:700;color:var(--s500)}
+.entry-body p{margin:5px 0;font-size:11.5px;white-space:pre-line}
+.entry-body .el{display:block;font-size:9px;font-weight:800;color:var(--brand);text-transform:uppercase;letter-spacing:.3px;margin-bottom:1px}
+.entry .dx{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:var(--radius-sm);padding:8px 10px;font-weight:800;color:#065F46;font-size:11.5px;margin-top:6px;white-space:pre-line}
 </style>
 </head>
 <body>
@@ -341,6 +379,7 @@ table.lab-table tbody tr:hover{background:var(--s50)}
         </button>
         <button type="button" class="qlink" data-view="notready" onclick="labCardTab('notready')">Not Ready Labs</button>
         <button type="button" class="qlink" data-view="dispatched" onclick="labCardTab('dispatched')">Dispatched Labs</button>
+        <button type="button" class="qlink" data-view="cancelled" onclick="labCardTab('cancelled')">Cancelled &amp; Rescheduled</button>
         <button type="button" class="qlink" onclick="labGoSection('crSection')">Cancel / Reschedule</button>
         <button type="button" class="qlink" onclick="labGoSection('sysMessages')">Messages &amp; Alerts</button>
       </div>
@@ -519,6 +558,7 @@ table.lab-table tbody tr:hover{background:var(--s50)}
         <button type="button" class="tab" data-view="ready" onclick="labSwitchTab('ready')">Ready Labs</button>
         <button type="button" class="tab" data-view="notready" onclick="labSwitchTab('notready')">Not Ready Labs</button>
         <button type="button" class="tab" data-view="dispatched" onclick="labSwitchTab('dispatched')">Dispatched Labs</button>
+        <button type="button" class="tab" data-view="cancelled" onclick="labSwitchTab('cancelled')">Cancelled &amp; Rescheduled</button>
       </div>
       <div class="toolbar">
         <div class="search">
@@ -534,7 +574,8 @@ table.lab-table tbody tr:hover{background:var(--s50)}
           <span>Pending: <b id="cPending">0</b></span> |
           <span>In Progress: <b id="cNotReady">0</b></span> |
           <span>Ready: <b id="cReady">0</b></span> |
-          <span>Dispatched: <b id="cDispatched">0</b></span>
+          <span>Dispatched: <b id="cDispatched">0</b></span> |
+          <span>Cancelled / Resched: <b id="cCancelled">0</b></span>
         </div>
       </div>
       <div class="table-wrap">
@@ -543,6 +584,7 @@ table.lab-table tbody tr:hover{background:var(--s50)}
         <div class="pane" id="paneReady"></div>
         <div class="pane" id="paneNotReady"></div>
         <div class="pane" id="paneDispatched"></div>
+        <div class="pane" id="paneCancelled"></div>
       </div>
     </div>
 
@@ -728,6 +770,33 @@ table.lab-table tbody tr:hover{background:var(--s50)}
   </div>
 </div>
 
+<!-- ================= PATIENT PROFILE OVERVIEW MODAL ================= -->
+<div class="modal" id="profileModal">
+  <div class="modal-box wide">
+    <div class="modal-head"><span><i class="fa-solid fa-user-circle"></i> Patient Profile Overview</span><button type="button" class="x" onclick="closePatientModals()">&times;</button></div>
+    <div class="modal-body" id="profileBody"><div class="empty">Loading...</div></div>
+    <div class="modal-foot"><button type="button" class="btn btn-primary" onclick="closePatientModals()">Close Overview</button></div>
+  </div>
+</div>
+
+<!-- ================= CLINICAL CARE ENTRIES MODAL ================= -->
+<div class="modal" id="clinicalModal">
+  <div class="modal-box wide">
+    <div class="modal-head"><span><i class="fa-solid fa-notes-medical"></i> Clinical Care Entries &amp; Doctor Notes Timeline</span><button type="button" class="x" onclick="closePatientModals()">&times;</button></div>
+    <div class="modal-body" id="clinicalBody"><div class="empty">Loading...</div></div>
+    <div class="modal-foot"><button type="button" class="btn btn-primary" onclick="closePatientModals()">Close Timeline</button></div>
+  </div>
+</div>
+
+<!-- ================= DOCTOR ENTRY / DIAGNOSIS MODAL ================= -->
+<div class="modal" id="diagnosisModal">
+  <div class="modal-box">
+    <div class="modal-head"><span><i class="fa-solid fa-stethoscope"></i> Doctor Entry / Diagnosis</span><button type="button" class="x" onclick="closePatientModals()">&times;</button></div>
+    <div class="modal-body" id="diagnosisBody"><div class="empty">Loading...</div></div>
+    <div class="modal-foot"><button type="button" class="btn btn-primary" onclick="closePatientModals()">Close</button></div>
+  </div>
+</div>
+
 <div id="labToast"></div>
 
 <script src="assets/js/date-picker.js"></script>
@@ -746,7 +815,7 @@ var visitsCache = [];
 var knownReqIds = {};
 var LAB_VIEW = 'doctors';
 var POLL_INTERVAL_MS = 20000;
-var LAB_VIEWS = ['doctors', 'pending', 'ready', 'notready', 'dispatched'];
+var LAB_VIEWS = ['doctors', 'pending', 'ready', 'notready', 'dispatched', 'cancelled'];
 var selectedPatient = null;      /* { name, hospital_number } from the rail search */
 var labMessages = [];
 var psTimer = null;
@@ -1034,6 +1103,7 @@ function renderLabPanes() {
     });
     var pending = labData.filter(function (r) { return r.status === 'pending'; });
     var notReady = labData.filter(function (r) { return r.status === 'in_progress'; });
+    var cancelled = labData.filter(function (r) { return r.status === 'cancelled' || r.rescheduled_to; });
 
     /* counts */
     setCount('cAll', labData.length);
@@ -1041,14 +1111,19 @@ function renderLabPanes() {
     setCount('cNotReady', notReady.length);
     setCount('cReady', ready.length);
     setCount('cDispatched', dispatched.length);
+    setCount('cCancelled', cancelled.length);
     renderPatientChip();
 
     var headBase = '<th class="first-col">Req ID</th><th>Patient ID/Name</th><th>Lab Test Requested</th><th>Doctor</th><th>Date &amp; Time</th><th>Status</th><th class="act-col">Action</th>';
     var rowBase = function (r) {
+        var doc = escHtml(r.doctor_name || '--');
+        if (r.patient_id) {
+            doc += '<button type="button" class="link-btn" onclick="openPatientDiagnosis(' + r.patient_id + ')">[View Doctor Entry / Diagnosis]</button>';
+        }
         return '<td class="first-col cell-strong">LAB ' + escHtml(r.id) + '</td>'
             + '<td class="cell-strong">' + escHtml((r.patient_name || '--') + (r.hospital_number ? ' (' + r.hospital_number + ')' : '')) + '</td>'
             + '<td>' + escHtml(r.test_type || '--') + '</td>'
-            + '<td>' + escHtml(r.doctor_name || '--') + '</td>'
+            + '<td>' + doc + '</td>'
             + '<td>' + fmtTime(r.requested_at) + '</td>'
             + '<td>' + labStatusBadge(r.status) + crNote(r) + '</td>';
     };
@@ -1104,6 +1179,14 @@ function renderLabPanes() {
         }).join('')
         : '<tr><td colspan="5" class="empty">No dispatched reports yet - dispatch a ready lab above.</td></tr>') + '</tbody></table>';
     setPane('paneDispatched', dHtml);
+
+    /* Cancelled & Rescheduled - audit view of tests stopped or moved. */
+    var cancelRows = cancelled.filter(function (r) { return matchesFilter(r, q); });
+    setPane('paneCancelled', requestTable(cancelRows, headBase, function (r) {
+        var label = r.status === 'cancelled' ? '<span class="muted">Cancelled</span>'
+            : '<span class="muted">Rescheduled</span>';
+        return rowBase(r) + '<td class="act-col">' + label + '</td>';
+    }, 'No cancelled or rescheduled tests on record.'));
 }
 
 function setCount(id, n) {
@@ -1179,11 +1262,23 @@ function renderPatientSearchResults() {
     box.innerHTML = '<div class="ps-list">' + psList.map(function (p, i) {
         var gender = p.gender ? cap(p.gender) : '--';
         var age = (p.age === null || p.age === undefined || p.age === '') ? '--' : p.age + ' Yrs';
-        return '<button type="button" class="ps-item" onclick="selectPatientByIndex(' + i + ')">'
-            + '<span class="ps-item-top"><span class="pn">' + escHtml(p.patient_name || '--') + '</span><span class="ps-link">LINK</span></span>'
+        var pid = (p.id === null || p.id === undefined) ? '' : p.id;
+        var actions = '<div class="ps-actions">'
+            + '<button type="button" class="btn btn-primary" onclick="selectPatientByIndex(' + i + ')">Link</button>';
+        if (pid !== '') {
+            actions += '<button type="button" class="btn btn-ghost" onclick="openPatientOverview(' + pid + ')">Overview</button>'
+                + '<button type="button" class="btn btn-amber" onclick="openPatientClinical(' + pid + ')">Care Entries</button>';
+        } else {
+            actions += '<button type="button" class="btn btn-ghost" disabled>Overview</button>'
+                + '<button type="button" class="btn btn-amber" disabled>Care Entries</button>';
+        }
+        actions += '</div>';
+        return '<div class="ps-item">'
+            + '<span class="ps-item-top"><span class="pn">' + escHtml(p.patient_name || '--') + '</span><span class="ps-link">FOUND</span></span>'
             + '<span class="ps-no">' + escHtml(p.patient_number || '--') + '</span>'
             + '<span class="ps-meta"><span>' + escHtml(gender + ' | ' + age) + '</span><span>NHIS: ' + escHtml(p.nhis_number || '--') + '</span></span>'
-            + '</button>';
+            + actions
+            + '</div>';
     }).join('') + '</div>';
 }
 
@@ -1237,6 +1332,178 @@ function renderPatientChip() {
     } else {
         chip.style.display = 'none';
     }
+}
+
+/* ================= PATIENT OVERVIEW / CLINICAL / DIAGNOSIS =================
+   Read-only patient context for the lab technician. Patient demographics and
+   the latest vitals/diagnosis come from patients.php?action=summary; the running
+   clinical timeline comes from patients.php?action=clinical-history. Both are
+   read projections on the existing Patients API (no new data path). */
+function openPatientModal(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.add('show');
+}
+function closePatientModals() {
+    ['profileModal', 'clinicalModal', 'diagnosisModal'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.remove('show');
+    });
+}
+function setModalBody(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+
+async function fetchPatientSummary(patientId) {
+    var r = await fetch(API + '/patients.php?action=summary&id=' + encodeURIComponent(patientId));
+    var d = await r.json();
+    return (d && d.success) ? d.patient : null;
+}
+
+async function fetchClinicalHistory(patientId) {
+    var r = await fetch(API + '/patients.php?action=clinical-history&id=' + encodeURIComponent(patientId));
+    var d = await r.json();
+    return (d && d.success && Array.isArray(d.entries)) ? d.entries : [];
+}
+
+function infoCell(label, value) {
+    return '<div class="info-cell"><span class="il">' + escHtml(label) + '</span>'
+        + '<span class="iv">' + escHtml(value === null || value === undefined || value === '' ? '--' : value) + '</span></div>';
+}
+
+async function openPatientOverview(patientId) {
+    if (!patientId) return;
+    openPatientModal('profileModal');
+    setModalBody('profileBody', '<div class="empty">Loading patient overview...</div>');
+    var p;
+    try { p = await fetchPatientSummary(patientId); }
+    catch (e) { setModalBody('profileBody', '<div class="empty">Could not load patient overview.</div>'); return; }
+    if (!p) { setModalBody('profileBody', '<div class="empty">Patient not found.</div>'); return; }
+
+    var adm = p.admission || null;
+    var statusLabel = adm && adm.status ? adm.status : (p.is_active ? 'Active' : 'Inactive');
+    var nhisLabel = p.nhis_active ? ('Active' + (p.nhis_expiry_date ? ' (exp ' + p.nhis_expiry_date + ')' : '')) : 'Not on cover';
+
+    var html = '<div class="info-grid">'
+        + infoCell('Full Name', p.full_name)
+        + infoCell('Patient Number', p.hospital_number)
+        + infoCell('Gender / Age', (p.gender || '--') + ' / ' + (p.age !== null && p.age !== undefined && p.age !== '' ? p.age + ' Yrs' : '--'))
+        + infoCell('NHIS Number', p.nhia_number)
+        + '</div>';
+
+    html += '<div class="panel-sub two">'
+        + '<div><h4>Medical Biometrics</h4>'
+        + '<p><strong>Blood Group:</strong> ' + escHtml(p.blood_group || '--') + '</p>'
+        + '<p><strong>Known Allergies:</strong> <span style="color:#B91C1C;font-weight:800">' + escHtml(p.allergies || 'None') + '</span></p>'
+        + '<p><strong>NHIS Cover:</strong> ' + escHtml(nhisLabel) + '</p>'
+        + '<p><strong>Status:</strong> <span class="badge-soft">' + escHtml(statusLabel) + '</span></p>'
+        + '</div>'
+        + '<div><h4>Contact &amp; Admission</h4>'
+        + '<p><strong>Mobile No:</strong> ' + escHtml(p.phone || '--') + '</p>'
+        + '<p><strong>Residential Area:</strong> ' + escHtml(p.address || '--') + '</p>'
+        + '<p><strong>Bed / Ward:</strong> ' + escHtml(p.bed_ward || '--') + '</p>'
+        + (adm && adm.admission_code ? '<p><strong>Admission:</strong> ' + escHtml(adm.admission_code) + '</p>' : '')
+        + '</div></div>';
+
+    if (p.vitals) {
+        var v = p.vitals;
+        html += '<div class="panel-sub"><h4>Latest Vital Signs'
+            + (v.recorded_at ? ' <span style="color:#94A3B8;font-weight:600;text-transform:none">(' + escHtml(fmtTime(v.recorded_at)) + ')</span>' : '')
+            + '</h4><div class="vitals-grid">'
+            + '<div class="vc"><span class="vl">Blood Pressure</span><span class="vv">' + escHtml(v.blood_pressure || '--') + '</span></div>'
+            + '<div class="vc"><span class="vl">Pulse Rate</span><span class="vv">' + escHtml(v.pulse !== null && v.pulse !== undefined ? v.pulse + ' bpm' : '--') + '</span></div>'
+            + '<div class="vc"><span class="vl">Temperature</span><span class="vv">' + escHtml(v.temperature !== null && v.temperature !== undefined ? v.temperature + ' \u00B0C' : '--') + '</span></div>'
+            + '<div class="vc"><span class="vl">SpO2</span><span class="vv">' + escHtml(v.spo2 !== null && v.spo2 !== undefined ? v.spo2 + '%' : '--') + '</span></div>'
+            + '</div></div>';
+    }
+
+    if (p.diagnosis || p.consultation_notes) {
+        html += '<div class="panel-sub"><h4>Latest Doctor Diagnosis</h4>'
+            + (p.diagnosis ? '<p><strong>Diagnosis:</strong> ' + escHtml(p.diagnosis) + '</p>' : '')
+            + (p.consultation_notes ? '<p><strong>Notes:</strong> ' + escHtml(p.consultation_notes) + '</p>' : '')
+            + '</div>';
+    }
+
+    setModalBody('profileBody', html);
+}
+
+function humanizeEntryKind(kind) {
+    var k = String(kind || '').toUpperCase();
+    var map = {
+        'OPD_NOTE': 'OPD Consultation Note',
+        'IPD_NOTE': 'IPD Clinical Round Note',
+        'PROGRESS_NOTE': 'Progress Note',
+        'DISCHARGE_SUMMARY': 'Discharge Summary',
+        'NEW': 'New Consultation',
+        'FOLLOW_UP': 'Follow-up Consultation',
+        'EMERGENCY': 'Emergency Consultation'
+    };
+    return map[k] || (k ? k.replace(/_/g, ' ') : 'Clinical Entry');
+}
+
+function renderClinicalEntry(e) {
+    var html = '<div class="entry"><div class="entry-head">'
+        + '<span><span class="ea">' + escHtml(e.author || 'Unknown Author') + '</span> '
+        + '<span class="ek">' + escHtml(humanizeEntryKind(e.entry_kind)) + '</span></span>'
+        + '<span class="ed">' + escHtml(fmtTime(e.entry_date)) + '</span>'
+        + '</div><div class="entry-body">';
+    if (e.chief_complaint) html += '<p><span class="el">Chief Complaint</span>' + escHtml(e.chief_complaint) + '</p>';
+    if (e.clinical_note) html += '<p><span class="el">Clinical Note</span>' + escHtml(e.clinical_note) + '</p>';
+    if (e.notes) html += '<p><span class="el">Examinations / Findings</span>' + escHtml(e.notes) + '</p>';
+    if (e.diagnosis) html += '<div class="dx"><span class="el" style="color:#065F46">Diagnosis</span>' + escHtml(e.diagnosis) + '</div>';
+    if (!e.chief_complaint && !e.clinical_note && !e.notes && !e.diagnosis) {
+        html += '<p class="muted">No narrative recorded for this entry.</p>';
+    }
+    html += '</div></div>';
+    return html;
+}
+
+async function openPatientClinical(patientId) {
+    if (!patientId) return;
+    openPatientModal('clinicalModal');
+    setModalBody('clinicalBody', '<div class="empty">Loading clinical entries...</div>');
+    var entries;
+    try { entries = await fetchClinicalHistory(patientId); }
+    catch (e) { setModalBody('clinicalBody', '<div class="empty">Could not load clinical entries.</div>'); return; }
+    if (!entries.length) {
+        setModalBody('clinicalBody', '<div class="empty">No clinical entries recorded for this patient yet.</div>');
+        return;
+    }
+    setModalBody('clinicalBody', entries.map(renderClinicalEntry).join(''));
+}
+
+async function openPatientDiagnosis(patientId) {
+    if (!patientId) return;
+    openPatientModal('diagnosisModal');
+    setModalBody('diagnosisBody', '<div class="empty">Loading doctor entry...</div>');
+    var results;
+    try {
+        results = await Promise.all([fetchPatientSummary(patientId), fetchClinicalHistory(patientId)]);
+    } catch (e) { setModalBody('diagnosisBody', '<div class="empty">Could not load the doctor entry.</div>'); return; }
+    var p = results[0];
+    var entries = results[1] || [];
+
+    /* Prefer the most recent consultation-style entry (one that carries a
+       diagnosis or narrative); fall back to the patient summary. */
+    var entry = entries.find(function (e) { return e.diagnosis || e.notes || e.chief_complaint; }) || entries[0] || null;
+
+    var html = '<div class="panel-sub two" style="margin-bottom:14px">'
+        + '<div><span class="el" style="color:#94A3B8">Patient</span>'
+        + '<p style="font-weight:800;color:#1E293B;margin:2px 0">' + escHtml(p ? p.full_name : '--') + '</p>'
+        + '<p style="color:#94A3B8;font-weight:700;margin:0">' + escHtml(p ? p.hospital_number : '') + '</p></div>'
+        + '<div style="text-align:right"><span class="el" style="color:#94A3B8">Entry Date</span>'
+        + '<p style="font-weight:800;color:#1E293B;margin:2px 0">' + escHtml(entry ? fmtTime(entry.entry_date) : '--') + '</p>'
+        + (entry ? '<p style="color:#94A3B8;font-weight:700;margin:0">' + escHtml(entry.author || '') + '</p>' : '')
+        + '</div></div>';
+
+    var diagnosis = entry && entry.diagnosis ? entry.diagnosis : (p ? p.diagnosis : null);
+    var notes = entry && (entry.notes || entry.clinical_note) ? (entry.notes || entry.clinical_note) : (p ? p.consultation_notes : null);
+    var complaint = entry ? entry.chief_complaint : null;
+
+    html += '<div class="panel-sub"><h4 style="margin-bottom:9px">Doctor\'s Clinical Context</h4>';
+    html += '<p><span class="el">Chief Complaints</span>' + escHtml(complaint || '--') + '</p>';
+    html += '<p><span class="el">Examinations &amp; Findings</span>' + escHtml(notes || '--') + '</p>';
+    html += '<div class="dx" style="margin-top:8px"><span class="el" style="color:#065F46">Diagnosis</span>' + escHtml(diagnosis || 'No diagnosis recorded') + '</div>';
+    html += '</div>';
+
+    setModalBody('diagnosisBody', html);
 }
 
 /* ================= PROCESS / RESULT ENTRY ================= */

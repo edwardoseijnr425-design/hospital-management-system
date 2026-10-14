@@ -230,6 +230,38 @@ foreach ($__labCatalog as $__cat => $__items) {
 @media (max-width:760px){
   #lab-page .lab-cr-hint{grid-column:span 1}
 }
+
+/* ---- PATIENT CONTEXT (overview / clinical entries / diagnosis) ---- */
+#lab-page .lab-link-btn{display:block;margin-top:2px;background:none;border:none;padding:0;color:var(--brand);font-family:inherit;font-size:9px;font-weight:800;cursor:pointer;text-align:left}
+#lab-page .lab-link-btn:hover{text-decoration:underline}
+#lab-page .modal-content.wide{width:min(820px,100%)}
+#lab-page .lab-info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+#lab-page .lab-info-cell{background:#fff;border:1px solid var(--s200);border-radius:8px;padding:9px 11px}
+#lab-page .lab-info-cell .il{display:block;font-size:9px;font-weight:800;color:var(--s400);text-transform:uppercase;letter-spacing:.3px}
+#lab-page .lab-info-cell .iv{font-size:12px;font-weight:800;color:var(--s800);word-break:break-word}
+#lab-page .lab-panel-sub{background:#fff;border:1px solid var(--s200);border-radius:8px;padding:11px 13px;margin-bottom:12px}
+#lab-page .lab-panel-sub h4{margin:0 0 7px;font-size:10px;font-weight:800;color:var(--brand);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--s200);padding-bottom:5px}
+#lab-page .lab-panel-sub p{margin:3px 0;font-size:11.5px;white-space:pre-line}
+#lab-page .lab-panel-sub.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#lab-page .lab-panel-sub.two>div{min-width:0}
+#lab-page .lab-vitals-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+#lab-page .lab-vitals-grid .vc{background:#fff;border:1px solid #BFDBFE;border-radius:8px;padding:8px;text-align:center}
+#lab-page .lab-vitals-grid .vc .vl{display:block;font-size:9px;font-weight:800;color:var(--s400);text-transform:uppercase;letter-spacing:.3px}
+#lab-page .lab-vitals-grid .vc .vv{font-size:13px;font-weight:800;color:var(--s800)}
+#lab-page .lab-badge-soft{display:inline-block;background:#EFF6FF;color:var(--brand);border-radius:4px;padding:1px 7px;font-size:9px;font-weight:800}
+#lab-page .lab-entry{border:1px solid var(--s200);border-radius:8px;padding:11px 13px;margin-bottom:10px;background:#fff}
+#lab-page .lab-entry-head{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--s200);padding-bottom:6px;margin-bottom:8px;flex-wrap:wrap}
+#lab-page .lab-entry-head .ea{font-size:12px;font-weight:800;color:var(--brand)}
+#lab-page .lab-entry-head .ek{font-size:10px;font-weight:800;color:var(--s700);text-transform:uppercase;letter-spacing:.3px}
+#lab-page .lab-entry-head .ed{font-size:10px;font-weight:700;color:var(--s500)}
+#lab-page .lab-entry-body p{margin:5px 0;font-size:11.5px;white-space:pre-line}
+#lab-page .lab-entry-body .el{display:block;font-size:9px;font-weight:800;color:var(--brand);text-transform:uppercase;letter-spacing:.3px;margin-bottom:1px}
+#lab-page .lab-dx{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;padding:8px 10px;font-weight:800;color:#065F46;font-size:11.5px;margin-top:6px;white-space:pre-line}
+@media (max-width:640px){
+  #lab-page .lab-info-grid{grid-template-columns:repeat(2,1fr)}
+  #lab-page .lab-panel-sub.two{grid-template-columns:1fr}
+  #lab-page .lab-vitals-grid{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 
 <!-- LAB MANAGEMENT & INVESTIGATION MODULE -->
@@ -415,6 +447,7 @@ foreach ($__labCatalog as $__cat => $__items) {
           <button type="button" class="lab-tab" id="labTabReady" onclick="labSwitchTab('ready')">Ready Labs</button>
           <button type="button" class="lab-tab" id="labTabNotReady" onclick="labSwitchTab('notready')">Not Ready Labs</button>
           <button type="button" class="lab-tab" id="labTabDispatched" onclick="labSwitchTab('dispatched')">Dispatched Labs</button>
+          <button type="button" class="lab-tab" id="labTabCancelled" onclick="labSwitchTab('cancelled')">Cancelled &amp; Rescheduled</button>
         </div>
       </div>
 
@@ -429,6 +462,7 @@ foreach ($__labCatalog as $__cat => $__items) {
           <span>In Progress: <b id="cNotReady">0</b></span>
           <span>Ready: <b id="cReady">0</b></span>
           <span>Dispatched: <b id="cDispatched">0</b></span>
+          <span>Cancelled/Resched: <b id="cCancelled">0</b></span>
         </div>
       </div>
 
@@ -438,6 +472,7 @@ foreach ($__labCatalog as $__cat => $__items) {
         <div class="lab-pane" id="labPaneReady"></div>
         <div class="lab-pane" id="labPaneNotReady"></div>
         <div class="lab-pane" id="labPaneDispatched"></div>
+        <div class="lab-pane" id="labPaneCancelled"></div>
       </div>
     </div>
 
@@ -504,6 +539,48 @@ foreach ($__labCatalog as $__cat => $__items) {
             <button type="submit" class="btn btn-primary" data-save="final">Mark as Ready &amp; Save</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patient Profile Overview Modal -->
+  <div class="modal" id="labProfileModal">
+    <div class="modal-content wide">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-circle"></i> Patient Profile Overview</h3>
+        <button class="modal-close" onclick="labClosePatientModals()">&times;</button>
+      </div>
+      <div class="modal-body" id="labProfileBody"><div class="lab-empty">Loading...</div></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" onclick="labClosePatientModals()">Close Overview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clinical Care Entries Modal -->
+  <div class="modal" id="labClinicalModal">
+    <div class="modal-content wide">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-notes-medical"></i> Clinical Care Entries &amp; Doctor Notes Timeline</h3>
+        <button class="modal-close" onclick="labClosePatientModals()">&times;</button>
+      </div>
+      <div class="modal-body" id="labClinicalBody"><div class="lab-empty">Loading...</div></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" onclick="labClosePatientModals()">Close Timeline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Doctor Entry / Diagnosis Modal -->
+  <div class="modal" id="labDiagnosisModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-stethoscope"></i> Doctor Entry / Diagnosis</h3>
+        <button class="modal-close" onclick="labClosePatientModals()">&times;</button>
+      </div>
+      <div class="modal-body" id="labDiagnosisBody"><div class="lab-empty">Loading...</div></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" onclick="labClosePatientModals()">Close</button>
       </div>
     </div>
   </div>
@@ -752,7 +829,7 @@ async function loadLabResults() {
 }
 
 /* ================= TABS ================= */
-var LAB_TABS = ['doctors', 'pending', 'ready', 'notready', 'dispatched'];
+var LAB_TABS = ['doctors', 'pending', 'ready', 'notready', 'dispatched', 'cancelled'];
 
 function labSwitchTab(view) {
     if (LAB_TABS.indexOf(view) === -1) view = 'doctors';
@@ -793,7 +870,9 @@ function standardRequestTable(rows, q, actionCell, emptyMsg) {
                     + '<td class="first-col" style="font-weight:700;">LAB ' + escHtml(r.id) + '</td>'
                     + '<td style="font-weight:700;">' + escHtml((r.patient_name || '--') + (r.hospital_number ? ' (' + r.hospital_number + ')' : '')) + '</td>'
                     + '<td>' + escHtml(r.test_type || '--') + '</td>'
-                    + '<td>' + escHtml(r.doctor_name || '--') + '</td>'
+                    + '<td>' + escHtml(r.doctor_name || '--')
+                        + (r.patient_id ? '<button type="button" class="lab-link-btn" onclick="labOpenPatientDiagnosis(' + r.patient_id + ')">[View Doctor Entry / Diagnosis]</button>' : '')
+                        + '</td>'
                     + '<td>' + fmtLabTime(r.requested_at) + '</td>'
                     + '<td>' + labStatusBadge(r.status) + labCrInfo(r) + '</td>'
                     + '<td class="act-col">' + actionCell(r) + '</td>'
@@ -829,6 +908,7 @@ function renderLabPanes() {
     setCount('cNotReady', labData.filter(function (r) { return r.status === 'in_progress'; }).length);
     setCount('cReady', labData.filter(function (r) { return r.status === 'completed'; }).length);
     setCount('cDispatched', dispatched.length);
+    setCount('cCancelled', labData.filter(function (r) { return r.status === 'cancelled' || r.rescheduled_to; }).length);
 
     /* Doctor Requests - every request raised by a doctor */
     setPane('labPaneDoctors', standardRequestTable(
@@ -887,6 +967,14 @@ function renderLabPanes() {
         + '<th class="first-col">Dispatch ID</th><th>Patient Name</th><th>Lab Test</th><th>Dispatch Date</th><th class="act-col">Report</th>'
         + '</tr></thead><tbody>' + (dlist || '<tr><td colspan="5" class="lab-empty">No dispatched reports yet - dispatch a ready lab above.</td></tr>')
         + '</tbody></table>');
+
+    /* Cancelled & Rescheduled - audit view of tests stopped or moved. */
+    var cancelRows = labData.filter(function (r) { return r.status === 'cancelled' || r.rescheduled_to; }).filter(pass);
+    setPane('labPaneCancelled', standardRequestTable(
+        cancelRows, q,
+        function (r) { return '<span style="color:#8a94a6;">' + (r.status === 'cancelled' ? 'Cancelled' : 'Rescheduled') + '</span>'; },
+        q ? 'No cancelled or rescheduled tests match "' + q + '".' : 'No cancelled or rescheduled tests on record.'
+    ));
 }
 
 function setCount(id, val) {
@@ -1113,6 +1201,172 @@ function dispatchReport(requestId) {
 function printReport(requestId) {
     var r = labData.find(function (x) { return String(x.id) === String(requestId); });
     showAlert('Report LAB ' + (r ? r.id : '') + ' queued for printing - use Ctrl+P to export the PDF.', 'info');
+}
+
+/* ================= PATIENT OVERVIEW / CLINICAL / DIAGNOSIS =================
+   Read-only patient context for the lab technician. Demographics and latest
+   vitals/diagnosis come from patients.php?action=summary; the running clinical
+   timeline comes from patients.php?action=clinical-history. */
+function labOpenPatientModal(id) { var el = document.getElementById(id); if (el) el.classList.add('show'); }
+function labClosePatientModals() {
+    ['labProfileModal', 'labClinicalModal', 'labDiagnosisModal'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.remove('show');
+    });
+}
+function labSetModalBody(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+
+async function labFetchPatientSummary(patientId) {
+    var r = await fetch('/hms/backend/api/patients.php?action=summary&id=' + encodeURIComponent(patientId));
+    var d = await r.json();
+    return (d && d.success) ? d.patient : null;
+}
+
+async function labFetchClinicalHistory(patientId) {
+    var r = await fetch('/hms/backend/api/patients.php?action=clinical-history&id=' + encodeURIComponent(patientId));
+    var d = await r.json();
+    return (d && d.success && Array.isArray(d.entries)) ? d.entries : [];
+}
+
+function labInfoCell(label, value) {
+    return '<div class="lab-info-cell"><span class="il">' + escHtml(label) + '</span>'
+        + '<span class="iv">' + escHtml(value === null || value === undefined || value === '' ? '--' : value) + '</span></div>';
+}
+
+async function labOpenPatientOverview(patientId) {
+    if (!patientId) return;
+    labOpenPatientModal('labProfileModal');
+    labSetModalBody('labProfileBody', '<div class="lab-empty">Loading patient overview...</div>');
+    var p;
+    try { p = await labFetchPatientSummary(patientId); }
+    catch (e) { labSetModalBody('labProfileBody', '<div class="lab-empty">Could not load patient overview.</div>'); return; }
+    if (!p) { labSetModalBody('labProfileBody', '<div class="lab-empty">Patient not found.</div>'); return; }
+
+    var adm = p.admission || null;
+    var statusLabel = adm && adm.status ? adm.status : (p.is_active ? 'Active' : 'Inactive');
+    var nhisLabel = p.nhis_active ? ('Active' + (p.nhis_expiry_date ? ' (exp ' + p.nhis_expiry_date + ')' : '')) : 'Not on cover';
+
+    var html = '<div class="lab-info-grid">'
+        + labInfoCell('Full Name', p.full_name)
+        + labInfoCell('Patient Number', p.hospital_number)
+        + labInfoCell('Gender / Age', (p.gender || '--') + ' / ' + (p.age !== null && p.age !== undefined && p.age !== '' ? p.age + ' Yrs' : '--'))
+        + labInfoCell('NHIS Number', p.nhia_number)
+        + '</div>';
+
+    html += '<div class="lab-panel-sub two">'
+        + '<div><h4>Medical Biometrics</h4>'
+        + '<p><strong>Blood Group:</strong> ' + escHtml(p.blood_group || '--') + '</p>'
+        + '<p><strong>Known Allergies:</strong> <span style="color:#B91C1C;font-weight:800">' + escHtml(p.allergies || 'None') + '</span></p>'
+        + '<p><strong>NHIS Cover:</strong> ' + escHtml(nhisLabel) + '</p>'
+        + '<p><strong>Status:</strong> <span class="lab-badge-soft">' + escHtml(statusLabel) + '</span></p>'
+        + '</div>'
+        + '<div><h4>Contact &amp; Admission</h4>'
+        + '<p><strong>Mobile No:</strong> ' + escHtml(p.phone || '--') + '</p>'
+        + '<p><strong>Residential Area:</strong> ' + escHtml(p.address || '--') + '</p>'
+        + '<p><strong>Bed / Ward:</strong> ' + escHtml(p.bed_ward || '--') + '</p>'
+        + (adm && adm.admission_code ? '<p><strong>Admission:</strong> ' + escHtml(adm.admission_code) + '</p>' : '')
+        + '</div></div>';
+
+    if (p.vitals) {
+        var v = p.vitals;
+        html += '<div class="lab-panel-sub"><h4>Latest Vital Signs'
+            + (v.recorded_at ? ' <span style="color:#94A3B8;font-weight:600;text-transform:none">(' + escHtml(fmtLabTime(v.recorded_at)) + ')</span>' : '')
+            + '</h4><div class="lab-vitals-grid">'
+            + '<div class="vc"><span class="vl">Blood Pressure</span><span class="vv">' + escHtml(v.blood_pressure || '--') + '</span></div>'
+            + '<div class="vc"><span class="vl">Pulse Rate</span><span class="vv">' + escHtml(v.pulse !== null && v.pulse !== undefined ? v.pulse + ' bpm' : '--') + '</span></div>'
+            + '<div class="vc"><span class="vl">Temperature</span><span class="vv">' + escHtml(v.temperature !== null && v.temperature !== undefined ? v.temperature + ' \u00B0C' : '--') + '</span></div>'
+            + '<div class="vc"><span class="vl">SpO2</span><span class="vv">' + escHtml(v.spo2 !== null && v.spo2 !== undefined ? v.spo2 + '%' : '--') + '</span></div>'
+            + '</div></div>';
+    }
+
+    if (p.diagnosis || p.consultation_notes) {
+        html += '<div class="lab-panel-sub"><h4>Latest Doctor Diagnosis</h4>'
+            + (p.diagnosis ? '<p><strong>Diagnosis:</strong> ' + escHtml(p.diagnosis) + '</p>' : '')
+            + (p.consultation_notes ? '<p><strong>Notes:</strong> ' + escHtml(p.consultation_notes) + '</p>' : '')
+            + '</div>';
+    }
+
+    labSetModalBody('labProfileBody', html);
+}
+
+function labHumanizeEntryKind(kind) {
+    var k = String(kind || '').toUpperCase();
+    var map = {
+        'OPD_NOTE': 'OPD Consultation Note',
+        'IPD_NOTE': 'IPD Clinical Round Note',
+        'PROGRESS_NOTE': 'Progress Note',
+        'DISCHARGE_SUMMARY': 'Discharge Summary',
+        'NEW': 'New Consultation',
+        'FOLLOW_UP': 'Follow-up Consultation',
+        'EMERGENCY': 'Emergency Consultation'
+    };
+    return map[k] || (k ? k.replace(/_/g, ' ') : 'Clinical Entry');
+}
+
+function labRenderClinicalEntry(e) {
+    var html = '<div class="lab-entry"><div class="lab-entry-head">'
+        + '<span><span class="ea">' + escHtml(e.author || 'Unknown Author') + '</span> '
+        + '<span class="ek">' + escHtml(labHumanizeEntryKind(e.entry_kind)) + '</span></span>'
+        + '<span class="ed">' + escHtml(fmtLabTime(e.entry_date)) + '</span>'
+        + '</div><div class="lab-entry-body">';
+    if (e.chief_complaint) html += '<p><span class="el">Chief Complaint</span>' + escHtml(e.chief_complaint) + '</p>';
+    if (e.clinical_note) html += '<p><span class="el">Clinical Note</span>' + escHtml(e.clinical_note) + '</p>';
+    if (e.notes) html += '<p><span class="el">Examinations / Findings</span>' + escHtml(e.notes) + '</p>';
+    if (e.diagnosis) html += '<div class="lab-dx"><span class="el" style="color:#065F46">Diagnosis</span>' + escHtml(e.diagnosis) + '</div>';
+    if (!e.chief_complaint && !e.clinical_note && !e.notes && !e.diagnosis) {
+        html += '<p style="color:#8a94a6;">No narrative recorded for this entry.</p>';
+    }
+    html += '</div></div>';
+    return html;
+}
+
+async function labOpenPatientClinical(patientId) {
+    if (!patientId) return;
+    labOpenPatientModal('labClinicalModal');
+    labSetModalBody('labClinicalBody', '<div class="lab-empty">Loading clinical entries...</div>');
+    var entries;
+    try { entries = await labFetchClinicalHistory(patientId); }
+    catch (e) { labSetModalBody('labClinicalBody', '<div class="lab-empty">Could not load clinical entries.</div>'); return; }
+    if (!entries.length) {
+        labSetModalBody('labClinicalBody', '<div class="lab-empty">No clinical entries recorded for this patient yet.</div>');
+        return;
+    }
+    labSetModalBody('labClinicalBody', entries.map(labRenderClinicalEntry).join(''));
+}
+
+async function labOpenPatientDiagnosis(patientId) {
+    if (!patientId) return;
+    labOpenPatientModal('labDiagnosisModal');
+    labSetModalBody('labDiagnosisBody', '<div class="lab-empty">Loading doctor entry...</div>');
+    var results;
+    try {
+        results = await Promise.all([labFetchPatientSummary(patientId), labFetchClinicalHistory(patientId)]);
+    } catch (e) { labSetModalBody('labDiagnosisBody', '<div class="lab-empty">Could not load the doctor entry.</div>'); return; }
+    var p = results[0];
+    var entries = results[1] || [];
+
+    var entry = entries.find(function (e) { return e.diagnosis || e.notes || e.chief_complaint; }) || entries[0] || null;
+
+    var html = '<div class="lab-panel-sub two" style="margin-bottom:14px">'
+        + '<div><span class="el" style="color:#94A3B8">Patient</span>'
+        + '<p style="font-weight:800;color:#1E293B;margin:2px 0">' + escHtml(p ? p.full_name : '--') + '</p>'
+        + '<p style="color:#94A3B8;font-weight:700;margin:0">' + escHtml(p ? p.hospital_number : '') + '</p></div>'
+        + '<div style="text-align:right"><span class="el" style="color:#94A3B8">Entry Date</span>'
+        + '<p style="font-weight:800;color:#1E293B;margin:2px 0">' + escHtml(entry ? fmtLabTime(entry.entry_date) : '--') + '</p>'
+        + (entry ? '<p style="color:#94A3B8;font-weight:700;margin:0">' + escHtml(entry.author || '') + '</p>' : '')
+        + '</div></div>';
+
+    var diagnosis = entry && entry.diagnosis ? entry.diagnosis : (p ? p.diagnosis : null);
+    var notes = entry && (entry.notes || entry.clinical_note) ? (entry.notes || entry.clinical_note) : (p ? p.consultation_notes : null);
+    var complaint = entry ? entry.chief_complaint : null;
+
+    html += '<div class="lab-panel-sub"><h4 style="margin-bottom:9px">Doctor\'s Clinical Context</h4>';
+    html += '<p><span class="el">Chief Complaints</span>' + escHtml(complaint || '--') + '</p>';
+    html += '<p><span class="el">Examinations &amp; Findings</span>' + escHtml(notes || '--') + '</p>';
+    html += '<div class="lab-dx" style="margin-top:8px"><span class="el" style="color:#065F46">Diagnosis</span>' + escHtml(diagnosis || 'No diagnosis recorded') + '</div>';
+    html += '</div>';
+
+    labSetModalBody('labDiagnosisBody', html);
 }
 
 /* ================= HELPERS ================= */
